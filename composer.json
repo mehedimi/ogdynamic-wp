@@ -1,0 +1,13 @@
+{
+  "name": "ogdynamic/ogdynamic-wordpress",
+  "description": "WordPress connector plugin for ogdynamic.com.",
+  "version": "0.1.0",
+  "type": "wordpress-plugin",
+  "autoload": {
+    "psr-4": {
+      "OGD\\": "includes/"
+    }
+  },
+  "require": {},
+  "require-dev": {}
+}
