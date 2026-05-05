@@ -7,10 +7,6 @@
 
 namespace OGD;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 class WooCommerce {
 	public static function product_fields(): array {
 		return array(

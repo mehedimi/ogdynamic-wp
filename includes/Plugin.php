@@ -7,20 +7,12 @@
 
 namespace OGD;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+use OGD\Traits\Singleton;
 
 final class Plugin {
-	private static $instance = null;
+	use Singleton;
 
-	public static function instance(): self {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-
-		return self::$instance;
-	}
+	private function __construct() {}
 
 	public function boot(): void {
 		load_plugin_textdomain( 'ogdynamic', false, dirname( plugin_basename( OGD_FILE ) ) . '/languages' );
@@ -29,8 +21,7 @@ final class Plugin {
 		$generator = new ImageGenerator( $settings );
 
 		( new Admin( $settings ) )->register();
-		( new RestController( $settings, $generator ) )->register();
-		( new MetaBox( $settings, $generator ) )->register();
+		RESTController::init();
 		( new MetaTags( $settings, $generator ) )->register();
 	}
 }

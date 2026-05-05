@@ -7,10 +7,6 @@
 
 namespace OGD;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 class MetaTags {
 	private Settings $settings;
 	private ImageGenerator $generator;

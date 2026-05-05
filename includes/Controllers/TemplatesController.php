@@ -1,0 +1,186 @@
+<?php
+/**
+ * Templates REST API endpoints.
+ *
+ * @package OGD
+ */
+
+namespace OGD\Controllers;
+
+use OGD\Settings;
+use WP_REST_Request;
+use WP_REST_Server;
+
+class TemplatesController {
+	private const TEMPLATE_KEY_PREFIX = 'mapping_';
+	private const TEMPLATE_KEY_SUFFIX = '_template';
+
+	public static function init(): void {
+		register_rest_route(
+			'ogdynamic/v1',
+			'/templates',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( self::class, 'get' ),
+					'permission_callback' => array( self::class, 'can_manage' ),
+				),
+			)
+		);
+
+		register_rest_route(
+			'ogdynamic/v1',
+			'/templates/(?P<post_type>[a-z0-9_-]+)',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( self::class, 'get_post_type_template' ),
+					'permission_callback' => array( self::class, 'can_manage' ),
+					'args'                => array(
+						'post_type' => array(
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_key',
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::EDITABLE,
+					'callback'            => array( self::class, 'update_post_type_template' ),
+					'permission_callback' => array( self::class, 'can_manage' ),
+					'args'                => array(
+						'template_id' => array(
+							'required'          => true,
+							'validate_callback' => array( self::class, 'validate_template_id' ),
+							'sanitize_callback' => array( self::class, 'sanitize_template_id' ),
+						),
+						'map'         => array(
+							'required'          => true,
+							'validate_callback' => array( self::class, 'validate_map' ),
+							'sanitize_callback' => array( self::class, 'sanitize_map' ),
+						),
+						'post_type' => array(
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_key',
+						),
+					),
+				),
+			)
+		);
+	}
+
+	public static function can_manage(): bool {
+		return current_user_can( 'manage_options' );
+	}
+
+	public static function get() {
+		global $wpdb;
+
+		$prefix = Settings::PREFIX . self::TEMPLATE_KEY_PREFIX;
+
+		$keys = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s ORDER BY option_name ASC",
+				$wpdb->esc_like( $prefix ) . '%'
+			)
+		);
+
+		return rest_ensure_response(
+			array(
+				'data' => array_values( array_map( 'strval', is_array( $keys ) ? $keys : array() ) ),
+			)
+		);
+	}
+
+	public static function get_post_type_template( WP_REST_Request $request ) {
+		$post_type = (string) $request->get_param( 'post_type' );
+		$option_name = self::option_name_for_post_type( $post_type );
+
+		return rest_ensure_response(
+			array(
+				'data' => get_option( $option_name, array() ),
+			)
+		);
+	}
+
+	public static function update_post_type_template( WP_REST_Request $request ) {
+		$post_type = (string) $request->get_param( 'post_type' );
+		$option_name = self::option_name_for_post_type( $post_type );
+		$template_id = (string) $request->get_param( 'template_id' );
+		$map         = $request->get_param( 'map' );
+
+		$value = array(
+			'template_id' => $template_id,
+			'map'         => is_array( $map ) ? $map : array(),
+		);
+
+		update_option( $option_name, $value, false );
+
+		return rest_ensure_response(
+			array(
+				'data' => $value,
+			)
+		);
+	}
+
+	public static function validate_template_id( $value ): bool {
+		return is_string( $value ) && (bool) preg_match( '/^[0-9A-HJKMNP-TV-Z]{26}$/i', $value );
+	}
+
+	public static function sanitize_template_id( $value ): string {
+		return strtoupper( sanitize_text_field( wp_unslash( (string) $value ) ) );
+	}
+
+	public static function validate_map( $value ): bool {
+		if ( ! is_array( $value ) ) {
+			return false;
+		}
+
+		foreach ( $value as $item ) {
+			if ( ! is_array( $item ) ) {
+				return false;
+			}
+
+			if ( ! isset( $item['attr_key'], $item['value_key'] ) ) {
+				return false;
+			}
+
+			if ( ! is_string( $item['attr_key'] ) || ! is_string( $item['value_key'] ) ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static function sanitize_map( $value ): array {
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+
+		$clean = array();
+
+		foreach ( $value as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$attr_key  = isset( $item['attr_key'] ) ? sanitize_text_field( wp_unslash( (string) $item['attr_key'] ) ) : '';
+			$value_key = isset( $item['value_key'] ) ? sanitize_text_field( wp_unslash( (string) $item['value_key'] ) ) : '';
+
+			if ( '' === $attr_key && '' === $value_key ) {
+				continue;
+			}
+
+			$clean[] = array(
+				'attr_key'  => $attr_key,
+				'value_key' => $value_key,
+			);
+		}
+
+		return $clean;
+	}
+
+	private static function option_name_for_post_type( string $post_type ): string {
+		return Settings::PREFIX . self::TEMPLATE_KEY_PREFIX . $post_type . self::TEMPLATE_KEY_SUFFIX;
+	}
+}

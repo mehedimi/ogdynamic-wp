@@ -9,10 +9,6 @@ namespace OGD;
 
 use WP_Post;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 class ImageGenerator {
 	private Settings $settings;
 

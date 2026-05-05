@@ -7,10 +7,6 @@
 
 namespace OGD;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 class Admin {
 	private Settings $settings;
 
