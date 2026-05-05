@@ -17,11 +17,10 @@ final class Plugin {
 	public function boot(): void {
 		load_plugin_textdomain( 'ogdynamic', false, dirname( plugin_basename( OGD_FILE ) ) . '/languages' );
 
-		$settings  = new Settings();
-		$generator = new ImageGenerator( $settings );
+		$generator = new ImageGenerator();
 
-		( new Admin( $settings ) )->register();
+		( new Admin() )->register();
 		RESTController::init();
-		( new MetaTags( $settings, $generator ) )->register();
+		( new MetaTags( $generator ) )->register();
 	}
 }

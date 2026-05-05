@@ -72,8 +72,8 @@ async function connect() {
         </button>
       </form>
 
-      <div v-if="api.error" class="ogd:mt-5 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700">
-        {{ api.error }}
+      <div v-if="api.error.value" class="ogd:mt-5 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700">
+        {{ api.error.value }}
       </div>
 
       <div v-if="success" class="ogd:mt-5 ogd:rounded-[14px] ogd:border ogd:border-green-200 ogd:bg-green-50 ogd:px-3.5 ogd:py-3 ogd:text-green-800">

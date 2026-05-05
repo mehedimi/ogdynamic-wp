@@ -1,4 +1,5 @@
 import { readonly, shallowRef } from 'vue'
+import axios, { AxiosError } from 'axios'
 
 type RequestOptions = {
   method?: string
@@ -8,32 +9,29 @@ type RequestOptions = {
 export function useOgdApi() {
   const loading = shallowRef(false)
   const error = shallowRef('')
+  const client = axios.create({
+    baseURL: window.ogdynamicAdmin.restUrl,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-WP-Nonce': window.ogdynamicAdmin.nonce,
+    },
+    withCredentials: true,
+  })
 
   async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     loading.value = true
     error.value = ''
 
     try {
-      const response = await fetch(`${window.ogdynamicAdmin.restUrl}${path}`, {
+      const response = await client.request<T>({
+        url: path,
         method: options.method ?? 'GET',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-WP-Nonce': window.ogdynamicAdmin.nonce,
-        },
-        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+        data: options.body,
       })
 
-      const payload = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        const message = payload?.message ?? 'Request failed.'
-        throw new Error(message)
-      }
-
-      return payload as T
+      return response.data
     } catch (caught) {
-      error.value = caught instanceof Error ? caught.message : 'Request failed.'
+      error.value = getErrorMessage(caught)
       throw caught
     } finally {
       loading.value = false
@@ -45,4 +43,13 @@ export function useOgdApi() {
     error: readonly(error),
     request,
   }
+}
+
+function getErrorMessage(caught: unknown): string {
+  if (caught instanceof AxiosError) {
+    const data = caught.response?.data as { message?: string } | undefined
+    return data?.message ?? caught.message
+  }
+
+  return caught instanceof Error ? caught.message : 'Request failed.'
 }

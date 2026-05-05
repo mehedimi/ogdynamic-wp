@@ -51,12 +51,10 @@ class ConnectionController {
 	}
 
 	public static function get() {
-		$api_key = Settings::get( 'api_key', '' );
-
 		return rest_ensure_response(
 			array(
 				'data' => array(
-					'api_key' => $api_key,
+					'api_key' => Settings::get_api_key(),
 				),
 			)
 		);
@@ -64,7 +62,6 @@ class ConnectionController {
 
 	public static function update( WP_REST_Request $request ) {
 		$api_key = $request->get_param( 'api_key' );
-
 		Settings::update( 'api_key', $api_key, false );
 
 		return rest_ensure_response(

@@ -8,11 +8,9 @@
 namespace OGD;
 
 class MetaTags {
-	private Settings $settings;
 	private ImageGenerator $generator;
 
-	public function __construct( Settings $settings, ImageGenerator $generator ) {
-		$this->settings  = $settings;
+	public function __construct( ImageGenerator $generator ) {
 		$this->generator = $generator;
 	}
 
@@ -25,7 +23,7 @@ class MetaTags {
 			return;
 		}
 
-		$settings = $this->settings->get();
+		$settings = Settings::all();
 		if ( 'disabled' === $settings['defaults']['seo_mode'] ) {
 			return;
 		}

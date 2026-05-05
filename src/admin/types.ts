@@ -55,10 +55,10 @@ export type PostTypeOption = {
 export type RuntimeConfig = {
   restUrl: string
   nonce: string
-  settings: OGDSettings
+  apiKey: string
   postTypes: PostTypeOption[]
   seoPlugin: string
-  woocommerce: boolean
+  ecoPlugins: string[]
 }
 
 declare global {

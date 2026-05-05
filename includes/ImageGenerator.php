@@ -10,11 +10,7 @@ namespace OGD;
 use WP_Post;
 
 class ImageGenerator {
-	private Settings $settings;
-
-	public function __construct( Settings $settings ) {
-		$this->settings = $settings;
-	}
+	public function __construct() {}
 
 	public function generate_for_post( int $post_id ): array {
 		$post = get_post( $post_id );
@@ -70,7 +66,7 @@ class ImageGenerator {
 	}
 
 	private function resolve_template_id( WP_Post $post, array $override ): string {
-		$settings = $this->settings->get();
+		$settings = Settings::all();
 		if ( '' !== $override['template_id'] ) {
 			return $override['template_id'];
 		}
@@ -88,7 +84,7 @@ class ImageGenerator {
 	}
 
 	private function resolve_post_params( WP_Post $post, string $template_id, array $override ): array {
-		$settings = $this->settings->get();
+		$settings = Settings::all();
 		$mappings = $settings['mappings'][ $template_id ] ?? array();
 		$params   = array();
 
@@ -281,7 +277,7 @@ class ImageGenerator {
 	}
 
 	private function fallback_result( int $post_id, string $message ): array {
-		$settings = $this->settings->get();
+		$settings = Settings::all();
 		$url      = '';
 
 		if ( 'featured_image' === $settings['defaults']['fallback_mode'] ) {

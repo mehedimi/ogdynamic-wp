@@ -8,12 +8,6 @@
 namespace OGD;
 
 class Admin {
-	private Settings $settings;
-
-	public function __construct( Settings $settings ) {
-		$this->settings = $settings;
-	}
-
 	public function register(): void {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
@@ -100,10 +94,10 @@ class Admin {
 			array(
 				'restUrl'     => esc_url_raw( rest_url( 'ogdynamic/v1/' ) ),
 				'nonce'       => wp_create_nonce( 'wp_rest' ),
-				'settings'    => $this->settings->get_public_settings(),
-				'postTypes'   => $this->settings->available_post_types(),
-				'seoPlugin'   => $this->settings->detect_seo_plugin(),
-				'woocommerce' => $this->settings->is_woocommerce_active(),
+				'apiKey'      => Settings::get_api_key(),
+				'postTypes'   => Settings::available_post_types(),
+				'seoPlugin'   => Settings::detect_seo_plugin(),
+				'ecoPlugins'  => Settings::eco_plugins(),
 			)
 		);
 	}
