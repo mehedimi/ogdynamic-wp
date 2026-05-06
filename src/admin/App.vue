@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { computed, shallowRef, watch } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
-import type { PostTypeOption } from './types'
 import Layout from './components/Layout.vue'
 import { apiKey } from './state/connection'
 
 const adminConfig = window.ogdynamicAdmin
-const postTypes = shallowRef<PostTypeOption[]>(adminConfig.postTypes)
 const seoPlugin = shallowRef(adminConfig.seoPlugin)
 const ecoPlugins = shallowRef<string[]>(adminConfig.ecoPlugins)
 const route = useRoute()
@@ -35,7 +33,6 @@ watch(
       <RouterView v-slot="{ Component }">
         <component
           :is="Component"
-          :post-types="postTypes"
           :seo-plugin="seoPlugin"
           :woocommerce-active="woocommerceActive"
         />
@@ -44,7 +41,6 @@ watch(
   <RouterView v-else v-slot="{ Component }">
     <component
       :is="Component"
-      :post-types="postTypes"
       :seo-plugin="seoPlugin"
       :woocommerce-active="woocommerceActive"
     />

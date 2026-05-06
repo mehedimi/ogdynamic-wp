@@ -5,11 +5,8 @@ import { useOgdApi } from '../composables/useOgdApi'
 import type { PostTypeOption } from '../types'
 
 type TemplatesResponse = {
-  data?: string[]
-}
-
-type PostTypesResponse = {
-  data?: PostTypeOption[]
+  data: PostTypeOption[]
+  templates: string[]
 }
 
 const wordpressApi = useOgdApi()
@@ -28,32 +25,20 @@ function isActivated(postType: string): boolean {
   return activatedPostTypes.value.has(postType)
 }
 
-function loadActivatedTemplates() {
+function loadData() {
   return wordpressApi
     .request<TemplatesResponse>('templates')
     .then((payload) => {
-      activatedTemplates.value = Array.isArray(payload.data) ? payload.data : []
+      postTypes.value = Array.isArray(payload.data) ? payload.data : []
+      activatedTemplates.value = Array.isArray(payload.templates) ? payload.templates : []
     })
     .catch(() => {
+      postTypes.value = []
       activatedTemplates.value = []
     })
 }
 
-function loadPostTypes() {
-  return wordpressApi
-    .request<PostTypesResponse>('post-types')
-    .then((payload) => {
-      postTypes.value = Array.isArray(payload.data) ? payload.data : []
-    })
-    .catch(() => {
-      postTypes.value = []
-    })
-}
-
-onMounted(() => {
-  loadPostTypes()
-  loadActivatedTemplates()
-})
+onMounted(loadData)
 </script>
 
 <template>

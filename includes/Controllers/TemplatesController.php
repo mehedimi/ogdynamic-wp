@@ -7,7 +7,7 @@
 
 namespace OGD\Controllers;
 
-use OGD\Settings;
+use OGD\Template;
 use WP_REST_Request;
 use WP_REST_Server;
 
@@ -83,42 +83,29 @@ class TemplatesController {
 	}
 
 	public static function get() {
-		global $wpdb;
-
-		$prefix = Settings::PREFIX . Settings::TEMPLATE_KEY_PREFIX;
-
-		$keys = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s ORDER BY option_name ASC",
-				$wpdb->esc_like( $prefix ) . '%'
-			)
-		);
-
-		$post_types = array_map(static function ($key) {
-            return Settings::unwrap_template_key($key);
-        }, $keys);
+		$post_types     = Template::available_post_types();
+		$activated_post_types = Template::get_activated_post_types();
 
 		return rest_ensure_response(
 			array(
-				'data' => array_values( array_unique( $post_types ) ),
+				'data'      => $post_types,
+				'templates' => $activated_post_types,
 			)
 		);
 	}
 
 	public static function get_post_type_template( WP_REST_Request $request ) {
 		$post_type = (string) $request->get_param( 'post_type' );
-		$option_name =  Settings::wrap_template_key( $post_type );
 
 		return rest_ensure_response(
 			array(
-				'data' => get_option( $option_name),
+				'data' => Template::get_mapping( $post_type ),
 			)
 		);
 	}
 
 	public static function update_post_type_template( WP_REST_Request $request ) {
-		$post_type = (string) $request->get_param( 'post_type' );
-		$option_name = Settings::wrap_template_key( $post_type );
+		$post_type   = (string) $request->get_param( 'post_type' );
 		$template_id = (string) $request->get_param( 'template_id' );
 		$map         = $request->get_param( 'map' );
 
@@ -127,7 +114,7 @@ class TemplatesController {
 			'map'         => is_array( $map ) ? $map : array(),
 		);
 
-		update_option( $option_name, $value, false );
+		Template::update_mapping( $post_type, $value );
 
 		return rest_ensure_response(
 			array(
@@ -137,10 +124,9 @@ class TemplatesController {
 	}
 
 	public static function delete_post_type_template( WP_REST_Request $request ) {
-		$post_type   = (string) $request->get_param( 'post_type' );
-		$option_name = Settings::wrap_template_key( $post_type );
+		$post_type = (string) $request->get_param( 'post_type' );
 
-		delete_option( $option_name );
+		Template::delete_mapping( $post_type );
 
 		return rest_ensure_response(
 			array(

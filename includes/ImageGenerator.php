@@ -289,7 +289,7 @@ private static function resolve_post_params( WP_Post $post, string $template_id,
 	}
 
 	private static function get_post_type_template( string $post_type ): array {
-		$template = Settings::get( 'mapping_' . sanitize_key( $post_type ) . '_template', array() );
+		$template = Template::get_mapping( $post_type );
 		$template = is_array( $template ) ? $template : array();
 		$map      = $template['map'] ?? array();
 

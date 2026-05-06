@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, shallowRef, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { postTypeMappingSources } from "../data/postTypeMappingSources";
-import type { OGDDesign, OGDDesignSchemaField, PostTypeOption } from "../types";
+import type { OGDDesign, OGDDesignSchemaField } from "../types";
 import { useOgdApi } from "../composables/useOgdApi";
 import { useOgdCloudApi } from "../composables/useOgdCloudApi";
 import FormField from "../components/forms/FormField.vue";
@@ -35,8 +35,7 @@ type TemplateMapping = {
   }>;
 };
 
-const props = defineProps<{
-  postTypes: PostTypeOption[];
+defineProps<{
   woocommerceActive: boolean;
 }>();
 
@@ -53,12 +52,7 @@ const fieldMap = reactive<Record<string, string>>({});
 const success = shallowRef("");
 
 const postType = computed(() => String(route.params.postType || ""));
-const postTypeLabel = computed(() => {
-  return (
-    props.postTypes.find((item) => item.name === postType.value)?.label ??
-    postType.value
-  );
-});
+const postTypeLabel = computed(() => postType.value.charAt(0).toUpperCase() + postType.value.slice(1));
 const createDesignUrl = computed(
   () =>
     `${window.ogdynamicAdmin.apiUrl.replace(/\/?api\/?$/, "")}/designs/create`,

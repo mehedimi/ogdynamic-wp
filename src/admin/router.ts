@@ -35,4 +35,7 @@ export const router = createRouter({
     ...adminRoutes,
     { path: "/:pathMatch(.*)*", redirect: "/" },
   ],
+  scrollBehavior() {
+    return { top: 0, behavior: 'smooth' }
+  },
 });

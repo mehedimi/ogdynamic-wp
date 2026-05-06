@@ -104,7 +104,6 @@ export type RuntimeConfig = {
   apiUrl: string;
   nonce: string;
   apiKey: string;
-  postTypes: PostTypeOption[];
   seoPlugin: string;
   ecoPlugins: string[];
 };

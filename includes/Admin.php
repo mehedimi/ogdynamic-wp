@@ -96,7 +96,6 @@ class Admin {
 				'apiUrl'      => esc_url_raw( OGD_API ),
 				'nonce'       => wp_create_nonce( 'wp_rest' ),
 				'apiKey'      => Settings::get_api_key(),
-				'postTypes'   => Settings::available_post_types(),
 			)
 		);
 	}
