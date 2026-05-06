@@ -12,15 +12,15 @@ use WP_Post;
 class ImageGenerator {
 	public function __construct() {}
 
-	public function generate_for_post( int $post_id ): array {
+	public static function generate_for_post( int $post_id ): array {
 		$post = get_post( $post_id );
 		if ( ! $post instanceof WP_Post ) {
-			return $this->empty_result( 'Post not found.' );
+			return self::empty_result( 'Post not found.' );
 		}
 
-		$override = $this->get_override( $post_id );
+		$override = self::get_override( $post_id );
 		if ( 'disabled' === $override['mode'] ) {
-			return $this->empty_result( 'ogdynamic disabled for this content.' );
+			return self::empty_result( 'ogdynamic disabled for this content.' );
 		}
 		if ( '' !== $override['custom_image_url'] ) {
 			return array(
@@ -32,13 +32,13 @@ class ImageGenerator {
 			);
 		}
 
-		$template_id = $this->resolve_template_id( $post, $override );
+		$template_id = self::resolve_template_id( $post, $override );
 		if ( '' === $template_id ) {
-			return $this->fallback_result( $post_id, 'No template configured.' );
+			return self::fallback_result( $post_id, 'No template configured.' );
 		}
 
-		$params = $this->resolve_post_params( $post, $template_id, $override );
-		$url    = $this->build_image_url( $template_id, $params );
+		$params = self::resolve_post_params( $post, $template_id, $override );
+		$url    = self::build_image_url( $template_id, $params );
 
 		return array(
 			'url'        => $url,
@@ -49,14 +49,14 @@ class ImageGenerator {
 		);
 	}
 
-	public function build_image_url( string $template_id, array $params ): string {
+	public static function build_image_url( string $template_id, array $params ): string {
 		$base  = 'https://ogdynamic.com/api/og/' . rawurlencode( $template_id );
 		$query = http_build_query( array_filter( $params, static fn( $value ) => '' !== (string) $value ), '', '&', PHP_QUERY_RFC3986 );
 
 		return $query ? $base . '?' . $query : $base;
 	}
 
-	public function sample_params(): array {
+	public static function sample_params(): array {
 		return array(
 			'title'       => get_bloginfo( 'name' ),
 			'description' => get_bloginfo( 'description' ),
@@ -65,25 +65,25 @@ class ImageGenerator {
 		);
 	}
 
-	private function resolve_template_id( WP_Post $post, array $override ): string {
+	private static function resolve_template_id( WP_Post $post, array $override ): string {
 		if ( '' !== $override['template_id'] ) {
 			return $override['template_id'];
 		}
 
-		$template = $this->get_post_type_template( $post->post_type );
+		$template = self::get_post_type_template( $post->post_type );
 		if ( '' !== $template['template_id'] ) {
 			return $template['template_id'];
 		}
 
-		$default_template = $this->get_post_type_template( 'default' );
+		$default_template = self::get_post_type_template( 'default' );
 
 		return $default_template['template_id'];
 	}
 
-	private function resolve_post_params( WP_Post $post, string $template_id, array $override ): array {
-		$template = $this->get_post_type_template( $post->post_type );
+private static function resolve_post_params( WP_Post $post, string $template_id, array $override ): array {
+		$template = self::get_post_type_template( $post->post_type );
 		if ( $template_id !== $template['template_id'] ) {
-			$template = $this->get_post_type_template( 'default' );
+			$template = self::get_post_type_template( 'default' );
 		}
 
 		$mappings = $template['map'];
@@ -92,7 +92,7 @@ class ImageGenerator {
 		if ( empty( $mappings ) ) {
 			$params = array(
 				'title'       => $override['custom_title'] ?: get_the_title( $post ),
-				'description' => $override['custom_description'] ?: $this->get_description( $post ),
+				'description' => $override['custom_description'] ?: self::get_description( $post ),
 				'image'       => get_the_post_thumbnail_url( $post, 'full' ) ?: '',
 				'url'         => get_permalink( $post ),
 				'site_name'   => get_bloginfo( 'name' ),
@@ -107,7 +107,7 @@ class ImageGenerator {
 				continue;
 			}
 
-			$params[ $attr_key ] = $this->resolve_field_value( $post, $value_key );
+			$params[ $attr_key ] = self::resolve_field_value( $post, $value_key );
 		}
 
 		foreach ( $override['custom_params'] as $key => $value ) {
@@ -169,28 +169,28 @@ class ImageGenerator {
 				$value = get_the_title( $post );
 				break;
 			case 'product_short_description':
-				$value = $this->product_value( $post, 'short_description' );
+				$value = self::product_value( $post, 'short_description' );
 				break;
 			case 'product_image':
 				$value = get_the_post_thumbnail_url( $post, 'full' ) ?: '';
 				break;
 			case 'product_gallery_image':
-				$value = $this->product_value( $post, 'gallery_image' );
+				$value = self::product_value( $post, 'gallery_image' );
 				break;
 			case 'product_price':
-				$value = $this->product_value( $post, 'price_html' );
+				$value = self::product_value( $post, 'price_html' );
 				break;
 			case 'regular_price':
-				$value = $this->product_value( $post, 'regular_price' );
+				$value = self::product_value( $post, 'regular_price' );
 				break;
 			case 'sale_price':
-				$value = $this->product_value( $post, 'sale_price' );
+				$value = self::product_value( $post, 'sale_price' );
 				break;
 			case 'currency':
 				$value = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : '';
 				break;
 			case 'sku':
-				$value = $this->product_value( $post, 'sku' );
+				$value = self::product_value( $post, 'sku' );
 				break;
 			case 'product_category':
 				$value = implode( ', ', wp_get_post_terms( $post->ID, 'product_cat', array( 'fields' => 'names' ) ) );
@@ -199,13 +199,13 @@ class ImageGenerator {
 				$value = implode( ', ', wp_get_post_terms( $post->ID, 'product_tag', array( 'fields' => 'names' ) ) );
 				break;
 			case 'stock_status':
-				$value = $this->product_value( $post, 'stock_status' );
+				$value = self::product_value( $post, 'stock_status' );
 				break;
 			case 'rating':
-				$value = $this->product_value( $post, 'rating' );
+				$value = self::product_value( $post, 'rating' );
 				break;
 			case 'review_count':
-				$value = $this->product_value( $post, 'review_count' );
+				$value = self::product_value( $post, 'review_count' );
 				break;
 			case 'product_url':
 				$value = get_permalink( $post );
@@ -215,7 +215,7 @@ class ImageGenerator {
 		return (string) $value;
 	}
 
-	private function product_value( WP_Post $post, string $field ): string {
+	private static function product_value( WP_Post $post, string $field ): string {
 		if ( ! function_exists( 'wc_get_product' ) ) {
 			return '';
 		}
@@ -250,7 +250,7 @@ class ImageGenerator {
 		return '';
 	}
 
-	private function get_description( WP_Post $post ): string {
+	private static function get_description( WP_Post $post ): string {
 		$excerpt = get_the_excerpt( $post );
 		if ( '' !== $excerpt ) {
 			return $excerpt;
@@ -259,7 +259,7 @@ class ImageGenerator {
 		return wp_trim_words( wp_strip_all_tags( $post->post_content ), 24 );
 	}
 
-	private function get_override( int $post_id ): array {
+	private static function get_override( int $post_id ): array {
 		$raw = get_post_meta( $post_id, '_ogd_override', true );
 		$raw = is_array( $raw ) ? $raw : array();
 
@@ -276,7 +276,7 @@ class ImageGenerator {
 		);
 	}
 
-	private function fallback_result( int $post_id, string $message ): array {
+	private static function fallback_result( int $post_id, string $message ): array {
 		$url = get_the_post_thumbnail_url( $post_id, 'full' ) ?: '';
 
 		return array(
@@ -288,7 +288,7 @@ class ImageGenerator {
 		);
 	}
 
-	private function get_post_type_template( string $post_type ): array {
+	private static function get_post_type_template( string $post_type ): array {
 		$template = Settings::get( 'mapping_' . sanitize_key( $post_type ) . '_template', array() );
 		$template = is_array( $template ) ? $template : array();
 		$map      = $template['map'] ?? array();
@@ -299,7 +299,7 @@ class ImageGenerator {
 		);
 	}
 
-	private function empty_result( string $message ): array {
+	private static function empty_result( string $message ): array {
 		return array(
 			'url'        => '',
 			'templateId' => '',

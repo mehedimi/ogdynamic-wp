@@ -14,17 +14,18 @@ type RequestOptions = {
   body?: unknown
 }
 
+const client = axios.create({
+  baseURL: window.ogdynamicAdmin.restUrl,
+  headers: {
+    'Content-Type': 'application/json',
+    'X-WP-Nonce': window.ogdynamicAdmin.nonce,
+  },
+  withCredentials: true,
+})
+
 export function useOgdApi() {
   const loading = shallowRef(false)
   const error = shallowRef('')
-  const client = axios.create({
-    baseURL: window.ogdynamicAdmin.restUrl,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-WP-Nonce': window.ogdynamicAdmin.nonce,
-    },
-    withCredentials: true,
-  })
 
   async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     loading.value = true

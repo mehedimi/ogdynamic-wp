@@ -8,24 +8,19 @@
 namespace OGD;
 
 class MetaTags {
-	private ImageGenerator $generator;
 
-	public function __construct( ImageGenerator $generator ) {
-		$this->generator = $generator;
+	public static function register(): void {
+		add_action( 'wp_head', array( self::class, 'output' ), 5 );
 	}
 
-	public function register(): void {
-		add_action( 'wp_head', array( $this, 'output' ), 5 );
-	}
-
-	public function output(): void {
+	public static function output(): void {
 		if ( is_admin() ) {
 			return;
 		}
 
 		$result = null;
 		if ( is_singular() ) {
-			$result = $this->generator->generate_for_post( get_queried_object_id() );
+			$result = ImageGenerator::generate_for_post( get_queried_object_id() );
 		}
 
 		if ( ! is_array( $result ) || empty( $result['url'] ) ) {

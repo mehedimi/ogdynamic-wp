@@ -9,6 +9,7 @@ namespace OGD;
 
 class Settings {
 	public const PREFIX = 'ogdy_';
+    public const TEMPLATE_KEY_PREFIX = 'mapping_';
 
 	public static function get( string $key, $default = false ) {
 		return get_option( self::option_name( $key ), $default );
@@ -46,44 +47,15 @@ class Settings {
 		return $items;
 	}
 
-	public static function detect_seo_plugin(): string {
-		if ( defined( 'WPSEO_VERSION' ) ) {
-			return 'Yoast SEO';
-		}
-		if ( defined( 'RANK_MATH_VERSION' ) ) {
-			return 'Rank Math';
-		}
-		if ( defined( 'AIOSEO_VERSION' ) ) {
-			return 'All in One SEO';
-		}
-		if ( defined( 'SEOPRESS_VERSION' ) ) {
-			return 'SEOPress';
-		}
+    public static function unwrap_template_key(string  $full_key)
+    {
+        return substr( $full_key, strlen( self::PREFIX . self::TEMPLATE_KEY_PREFIX ));
+    }
 
-		return 'None detected';
-	}
-
-	public static function eco_plugins(): array {
-		$plugins = array();
-
-		if ( class_exists( 'WooCommerce' ) ) {
-			$plugins[] = 'woocommerce';
-		}
-		if ( defined( 'EDD_VERSION' ) || class_exists( 'Easy_Digital_Downloads' ) ) {
-			$plugins[] = 'edd';
-		}
-
-		/**
-		 * Filter the detected ecommerce plugins for the admin boot payload.
-		 *
-		 * @param array<int, string> $plugins Detected plugin slugs.
-		 */
-		return array_values( array_unique( (array) apply_filters( 'ogdynamic_eco_plugins', $plugins ) ) );
-	}
-
-	public static function is_woocommerce_active(): bool {
-		return in_array( 'woocommerce', self::eco_plugins(), true );
-	}
+    public static function wrap_template_key(string  $key): string
+    {
+        return self::PREFIX . self::TEMPLATE_KEY_PREFIX . $key;
+    }
 
 	private static function option_name( string $key ): string {
 		return self::PREFIX . $key;

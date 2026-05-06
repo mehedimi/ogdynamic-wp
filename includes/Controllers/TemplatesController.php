@@ -12,8 +12,7 @@ use WP_REST_Request;
 use WP_REST_Server;
 
 class TemplatesController {
-	private const TEMPLATE_KEY_PREFIX = 'mapping_';
-	private const TEMPLATE_KEY_SUFFIX = '_template';
+
 
 	public static function init(): void {
 		register_rest_route(
@@ -86,8 +85,7 @@ class TemplatesController {
 	public static function get() {
 		global $wpdb;
 
-		$prefix = Settings::PREFIX . self::TEMPLATE_KEY_PREFIX;
-		$suffix = self::TEMPLATE_KEY_SUFFIX;
+		$prefix = Settings::PREFIX . Settings::TEMPLATE_KEY_PREFIX;
 
 		$keys = $wpdb->get_col(
 			$wpdb->prepare(
@@ -96,21 +94,9 @@ class TemplatesController {
 			)
 		);
 
-		$post_types = array();
-
-		foreach ( is_array( $keys ) ? $keys : array() as $key ) {
-			$key = (string) $key;
-
-			if ( ! str_starts_with( $key, $prefix ) || ! str_ends_with( $key, $suffix ) ) {
-				continue;
-			}
-
-			$post_type = substr( $key, strlen( $prefix ), -strlen( $suffix ) );
-
-			if ( '' !== $post_type ) {
-				$post_types[] = $post_type;
-			}
-		}
+		$post_types = array_map(static function ($key) {
+            return Settings::unwrap_template_key($key);
+        }, $keys);
 
 		return rest_ensure_response(
 			array(
@@ -121,18 +107,18 @@ class TemplatesController {
 
 	public static function get_post_type_template( WP_REST_Request $request ) {
 		$post_type = (string) $request->get_param( 'post_type' );
-		$option_name = self::option_name_for_post_type( $post_type );
+		$option_name =  Settings::wrap_template_key( $post_type );
 
 		return rest_ensure_response(
 			array(
-				'data' => get_option( $option_name, array() ),
+				'data' => get_option( $option_name),
 			)
 		);
 	}
 
 	public static function update_post_type_template( WP_REST_Request $request ) {
 		$post_type = (string) $request->get_param( 'post_type' );
-		$option_name = self::option_name_for_post_type( $post_type );
+		$option_name = Settings::wrap_template_key( $post_type );
 		$template_id = (string) $request->get_param( 'template_id' );
 		$map         = $request->get_param( 'map' );
 
@@ -152,7 +138,7 @@ class TemplatesController {
 
 	public static function delete_post_type_template( WP_REST_Request $request ) {
 		$post_type   = (string) $request->get_param( 'post_type' );
-		$option_name = self::option_name_for_post_type( $post_type );
+		$option_name = Settings::wrap_template_key( $post_type );
 
 		delete_option( $option_name );
 
@@ -164,7 +150,7 @@ class TemplatesController {
 	}
 
 	public static function validate_template_id( $value ): bool {
-		return is_string( $value ) && (bool) preg_match( '/^[0-9A-HJKMNP-TV-Z]{26}$/i', $value );
+		return is_string( $value ) && preg_match( '/^[0-9A-HJKMNP-TV-Z]{26}$/i', $value );
 	}
 
 	public static function sanitize_template_id( $value ): string {
@@ -219,9 +205,5 @@ class TemplatesController {
 		}
 
 		return $clean;
-	}
-
-	private static function option_name_for_post_type( string $post_type ): string {
-		return Settings::PREFIX . self::TEMPLATE_KEY_PREFIX . $post_type . self::TEMPLATE_KEY_SUFFIX;
 	}
 }

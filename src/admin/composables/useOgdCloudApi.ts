@@ -5,16 +5,17 @@ type ApiErrorResponse = {
   message?: string;
 };
 
+const client = axios.create({
+  baseURL: `${window.ogdynamicAdmin.apiUrl.replace(/\/$/, "")}/`,
+  headers: {
+    Accept: "application/json",
+    Authorization: `Bearer ${window.ogdynamicAdmin.apiKey}`,
+  },
+});
+
 export function useOgdCloudApi() {
   const loading = ref(false);
   const error = ref("");
-  const client = axios.create({
-    baseURL: `${window.ogdynamicAdmin.apiUrl.replace(/\/$/, "")}/`,
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${window.ogdynamicAdmin.apiKey}`,
-    },
-  });
 
   async function request<T>(path: string): Promise<T> {
     loading.value = true;

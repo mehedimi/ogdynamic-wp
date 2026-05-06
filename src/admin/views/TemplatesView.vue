@@ -4,20 +4,20 @@ import { RouterLink } from 'vue-router'
 import { useOgdApi } from '../composables/useOgdApi'
 import type { PostTypeOption } from '../types'
 
-const props = defineProps<{
-  postTypes: PostTypeOption[]
-  woocommerceActive: boolean
-}>()
-
 type TemplatesResponse = {
   data?: string[]
 }
 
+type PostTypesResponse = {
+  data?: PostTypeOption[]
+}
+
 const wordpressApi = useOgdApi()
 const activatedTemplates = shallowRef<string[]>([])
+const postTypes = shallowRef<PostTypeOption[]>([])
 
 const displayPostTypes = computed(() =>
-  props.postTypes.filter((postType) => 'attachment' !== postType.name),
+  postTypes.value.filter((postType) => 'attachment' !== postType.name),
 )
 
 const activatedPostTypes = computed(() => {
@@ -39,14 +39,25 @@ function loadActivatedTemplates() {
     })
 }
 
-onMounted(loadActivatedTemplates)
+function loadPostTypes() {
+  return wordpressApi
+    .request<PostTypesResponse>('post-types')
+    .then((payload) => {
+      postTypes.value = Array.isArray(payload.data) ? payload.data : []
+    })
+    .catch(() => {
+      postTypes.value = []
+    })
+}
+
+onMounted(() => {
+  loadPostTypes()
+  loadActivatedTemplates()
+})
 </script>
 
 <template>
   <section>
-    <div class="ogd:mb-4 ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:border-rose-100 ogd:bg-rose-50 ogd:px-3 ogd:py-1.5 ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide ogd:text-rose-500">
-      OG image templates
-    </div>
     <h1 class="ogd:m-0 ogd:font-display ogd:text-3xl ogd:font-bold ogd:tracking-[-0.03em] ogd:text-gray-900">Templates</h1>
     <p class="ogd:mt-2 ogd:mb-7 ogd:max-w-[620px] ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500">Choose a post type to configure the OG image template WordPress should use when generating social share images.</p>
 
