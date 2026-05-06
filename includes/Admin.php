@@ -8,37 +8,37 @@
 namespace OGD;
 
 class Admin {
-	public function register(): void {
-		add_action( 'admin_menu', array( $this, 'add_menu' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
-		add_filter( 'script_loader_tag', array( $this, 'module_script_tag' ), 10, 3 );
+	public static function register(): void {
+		add_action( 'admin_menu', array( self::class, 'add_menu' ) );
+		add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue' ) );
+		add_filter( 'script_loader_tag', array( self::class, 'module_script_tag' ), 10, 3 );
 	}
 
-	public function add_menu(): void {
+	public static function add_menu(): void {
 		add_menu_page(
 			__( 'ogdynamic', 'ogdynamic' ),
 			__( 'ogdynamic', 'ogdynamic' ),
 			'manage_options',
 			'ogdynamic',
-			array( $this, 'render' ),
+			array( self::class, 'render' ),
 			'dashicons-format-image',
 			58
 		);
 
 	}
 
-	public function enqueue( string $hook ): void {
+	public static function enqueue( string $hook ): void {
 		if ( 'toplevel_page_ogdynamic' !== $hook ) {
 			return;
 		}
 
-		if ( $this->is_dev_mode() ) {
-			$this->enqueue_dev_assets();
-			$this->localize_admin_script();
+		if ( self::is_dev_mode() ) {
+			self::enqueue_dev_assets();
+			self::localize_admin_script();
 			return;
 		}
 
-		$asset = $this->asset_files();
+		$asset = self::asset_files();
 
 		wp_enqueue_script(
 			'ogdynamic-admin',
@@ -52,10 +52,10 @@ class Admin {
 			wp_enqueue_style( 'ogdynamic-admin', $asset['css'], array(), OGD_VERSION );
 		}
 
-		$this->localize_admin_script();
+		self::localize_admin_script();
 	}
 
-	public function module_script_tag( string $tag, string $handle, string $src ): string {
+	public static function module_script_tag( string $tag, string $handle, string $src ): string {
 		if ( ! in_array( $handle, array( 'ogdynamic-vite-client', 'ogdynamic-admin' ), true ) ) {
 			return $tag;
 		}
@@ -67,8 +67,8 @@ class Admin {
 		);
 	}
 
-	private function enqueue_dev_assets(): void {
-		$server = $this->dev_server_url();
+	private static function enqueue_dev_assets(): void {
+		$server = self::dev_server_url();
 
 		wp_enqueue_script(
 			'ogdynamic-vite-client',
@@ -87,22 +87,21 @@ class Admin {
 		);
 	}
 
-	private function localize_admin_script(): void {
+	private static function localize_admin_script(): void {
 		wp_localize_script(
 			'ogdynamic-admin',
 			'ogdynamicAdmin',
 			array(
 				'restUrl'     => esc_url_raw( rest_url( 'ogdynamic/v1/' ) ),
+				'apiUrl'      => esc_url_raw( OGD_API ),
 				'nonce'       => wp_create_nonce( 'wp_rest' ),
 				'apiKey'      => Settings::get_api_key(),
 				'postTypes'   => Settings::available_post_types(),
-				'seoPlugin'   => Settings::detect_seo_plugin(),
-				'ecoPlugins'  => Settings::eco_plugins(),
 			)
 		);
 	}
 
-	public function render(): void {
+	public static function render(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
@@ -113,7 +112,7 @@ class Admin {
 		echo '</div></div>';
 	}
 
-	private function asset_files(): array {
+	private static function asset_files(): array {
 		$manifest_path = OGD_PATH . 'dist/admin/.vite/manifest.json';
 
 		if ( file_exists( $manifest_path ) ) {
@@ -134,11 +133,11 @@ class Admin {
 		);
 	}
 
-	private function is_dev_mode(): bool {
+	private static function is_dev_mode(): bool {
 		return defined( 'OGDYNAMIC_DEV' ) && true === OGDYNAMIC_DEV;
 	}
 
-	private function dev_server_url(): string {
+	private static function dev_server_url(): string {
 		$server = defined( 'OGDYNAMIC_DEV_SERVER' ) ? (string) OGDYNAMIC_DEV_SERVER : 'http://127.0.0.1:5173';
 
 		return untrailingslashit( $server );

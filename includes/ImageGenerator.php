@@ -66,26 +66,27 @@ class ImageGenerator {
 	}
 
 	private function resolve_template_id( WP_Post $post, array $override ): string {
-		$settings = Settings::all();
 		if ( '' !== $override['template_id'] ) {
 			return $override['template_id'];
 		}
 
-		if ( 'product' === $post->post_type && '' !== $settings['defaults']['product_template'] ) {
-			return (string) $settings['defaults']['product_template'];
+		$template = $this->get_post_type_template( $post->post_type );
+		if ( '' !== $template['template_id'] ) {
+			return $template['template_id'];
 		}
 
-		$post_type_templates = $settings['defaults']['post_templates'];
-		if ( isset( $post_type_templates[ $post->post_type ] ) && '' !== $post_type_templates[ $post->post_type ] ) {
-			return (string) $post_type_templates[ $post->post_type ];
-		}
+		$default_template = $this->get_post_type_template( 'default' );
 
-		return (string) $settings['defaults']['global_template'];
+		return $default_template['template_id'];
 	}
 
 	private function resolve_post_params( WP_Post $post, string $template_id, array $override ): array {
-		$settings = Settings::all();
-		$mappings = $settings['mappings'][ $template_id ] ?? array();
+		$template = $this->get_post_type_template( $post->post_type );
+		if ( $template_id !== $template['template_id'] ) {
+			$template = $this->get_post_type_template( 'default' );
+		}
+
+		$mappings = $template['map'];
 		$params   = array();
 
 		if ( empty( $mappings ) ) {
@@ -98,8 +99,15 @@ class ImageGenerator {
 			);
 		}
 
-		foreach ( $mappings as $variable => $mapping ) {
-			$params[ $variable ] = $this->resolve_field_value( $post, $mapping );
+		foreach ( $mappings as $mapping ) {
+			$attr_key  = (string) ( $mapping['attr_key'] ?? '' );
+			$value_key = (string) ( $mapping['value_key'] ?? '' );
+
+			if ( '' === $attr_key || '' === $value_key ) {
+				continue;
+			}
+
+			$params[ $attr_key ] = $this->resolve_field_value( $post, $value_key );
 		}
 
 		foreach ( $override['custom_params'] as $key => $value ) {
@@ -118,10 +126,7 @@ class ImageGenerator {
 		return $params;
 	}
 
-	private function resolve_field_value( WP_Post $post, array $mapping ): string {
-		$source   = $mapping['source'] ?? '';
-		$fallback = $mapping['fallback'] ?? '';
-
+	private function resolve_field_value( WP_Post $post, string $source ): string {
 		$value = '';
 		switch ( $source ) {
 			case 'post_title':
@@ -205,14 +210,9 @@ class ImageGenerator {
 			case 'product_url':
 				$value = get_permalink( $post );
 				break;
-			case 'custom_meta':
-				$value = get_post_meta( $post->ID, (string) ( $mapping['meta_key'] ?? '' ), true );
-				break;
-			default:
-				$value = (string) ( $mapping['static'] ?? '' );
 		}
 
-		return '' !== (string) $value ? (string) $value : (string) $fallback;
+		return (string) $value;
 	}
 
 	private function product_value( WP_Post $post, string $field ): string {
@@ -277,15 +277,7 @@ class ImageGenerator {
 	}
 
 	private function fallback_result( int $post_id, string $message ): array {
-		$settings = Settings::all();
-		$url      = '';
-
-		if ( 'featured_image' === $settings['defaults']['fallback_mode'] ) {
-			$url = get_the_post_thumbnail_url( $post_id, 'full' ) ?: '';
-		}
-		if ( '' === $url && '' !== $settings['defaults']['fallback_image_url'] ) {
-			$url = $settings['defaults']['fallback_image_url'];
-		}
+		$url = get_the_post_thumbnail_url( $post_id, 'full' ) ?: '';
 
 		return array(
 			'url'        => esc_url_raw( $url ),
@@ -293,6 +285,17 @@ class ImageGenerator {
 			'params'     => array(),
 			'fallback'   => true,
 			'message'    => $message,
+		);
+	}
+
+	private function get_post_type_template( string $post_type ): array {
+		$template = Settings::get( 'mapping_' . sanitize_key( $post_type ) . '_template', array() );
+		$template = is_array( $template ) ? $template : array();
+		$map      = $template['map'] ?? array();
+
+		return array(
+			'template_id' => isset( $template['template_id'] ) ? (string) $template['template_id'] : '',
+			'map'         => is_array( $map ) ? $map : array(),
 		);
 	}
 

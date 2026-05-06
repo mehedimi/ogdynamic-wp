@@ -19,7 +19,7 @@ final class Plugin {
 
 		$generator = new ImageGenerator();
 
-		( new Admin() )->register();
+		Admin::register();
 		RESTController::init();
 		( new MetaTags( $generator ) )->register();
 	}

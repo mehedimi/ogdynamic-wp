@@ -1,82 +1,82 @@
 <script setup lang="ts">
-import { reactive, shallowRef } from 'vue'
-import type { OGDSettings, PostTypeOption } from '../types'
+import { computed, onMounted, shallowRef } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useOgdApi } from '../composables/useOgdApi'
-import FormField from '../components/forms/FormField.vue'
-import SelectInput from '../components/forms/SelectInput.vue'
+import type { PostTypeOption } from '../types'
 
 const props = defineProps<{
-  settings: OGDSettings
   postTypes: PostTypeOption[]
   woocommerceActive: boolean
 }>()
-const emit = defineEmits<{ settingsUpdated: [settings: OGDSettings] }>()
 
-const api = useOgdApi()
-const success = shallowRef('')
-const draft = reactive(structuredClone(props.settings.defaults))
-
-function templateLabel(template: { id?: string; name?: string; title?: string }) {
-  return template.name || template.title || template.id || 'Untitled template'
+type TemplatesResponse = {
+  data?: string[]
 }
 
-function templateOptions(defaultLabel: string) {
-  return [
-    { label: defaultLabel, value: '' },
-    ...settingsTemplates(),
-  ]
+const wordpressApi = useOgdApi()
+const activatedTemplates = shallowRef<string[]>([])
+
+const displayPostTypes = computed(() =>
+  props.postTypes.filter((postType) => 'attachment' !== postType.name),
+)
+
+const activatedPostTypes = computed(() => {
+  return new Set(activatedTemplates.value)
+})
+
+function isActivated(postType: string): boolean {
+  return activatedPostTypes.value.has(postType)
 }
 
-function settingsTemplates() {
-  return props.settings.templates.map((template) => ({
-    label: templateLabel(template),
-    value: template.id ?? '',
-  }))
+function loadActivatedTemplates() {
+  return wordpressApi
+    .request<TemplatesResponse>('templates')
+    .then((payload) => {
+      activatedTemplates.value = Array.isArray(payload.data) ? payload.data : []
+    })
+    .catch(() => {
+      activatedTemplates.value = []
+    })
 }
 
-async function save() {
-  const next = structuredClone(props.settings)
-  next.defaults = structuredClone(draft)
-  const payload = await api.request<{ settings: OGDSettings }>('settings', { method: 'POST', body: next })
-  emit('settingsUpdated', payload.settings)
-  success.value = 'Template settings saved.'
-}
-
-async function refreshTemplates() {
-  const payload = await api.request<{ settings: OGDSettings }>('templates/refresh', { method: 'POST' })
-  emit('settingsUpdated', payload.settings)
-  success.value = 'Templates refreshed.'
-}
+onMounted(loadActivatedTemplates)
 </script>
 
 <template>
   <section>
+    <div class="ogd:mb-4 ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:border-rose-100 ogd:bg-rose-50 ogd:px-3 ogd:py-1.5 ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide ogd:text-rose-500">
+      OG image templates
+    </div>
     <h1 class="ogd:m-0 ogd:font-display ogd:text-3xl ogd:font-bold ogd:tracking-[-0.03em] ogd:text-gray-900">Templates</h1>
-    <p class="ogd:mt-2 ogd:mb-7 ogd:max-w-[620px] ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500">Choose the global template and content-specific fallbacks WordPress should use when generating social image URLs.</p>
+    <p class="ogd:mt-2 ogd:mb-7 ogd:max-w-[620px] ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500">Choose a post type to configure the OG image template WordPress should use when generating social share images.</p>
 
-    <div class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6">
-      <div v-if="settings.templates.length === 0" class="ogd:mb-5 ogd:rounded-2xl ogd:border ogd:border-dashed ogd:border-rose-200 ogd:bg-rose-50 ogd:p-[18px] ogd:text-rose-800">
-        No templates are cached yet. Connect an account, then refresh templates from ogdynamic.
-      </div>
-
-      <FormField label="Global default template">
-        <SelectInput v-model="draft.global_template" :options="templateOptions('Select template')" />
-      </FormField>
-
-      <FormField v-for="postType in postTypes" :key="postType.name" :label="`${postType.label} template`">
-        <SelectInput v-model="draft.post_templates[postType.name]" :options="templateOptions('Use global default')" />
-      </FormField>
-
-      <FormField v-if="woocommerceActive" label="WooCommerce product template">
-        <SelectInput v-model="draft.product_template" :options="templateOptions('Use global default')" />
-      </FormField>
-
-      <div class="ogd:flex ogd:flex-wrap ogd:gap-2.5">
-        <button class="ogd:inline-flex ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border ogd:border-transparent ogd:bg-gray-900 ogd:px-[18px] ogd:py-2.5 ogd:text-[13px] ogd:font-semibold ogd:text-white" type="button" @click="save">Save templates</button>
-        <button class="ogd:inline-flex ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border ogd:border-gray-200 ogd:bg-white ogd:px-[18px] ogd:py-2.5 ogd:text-[13px] ogd:font-semibold ogd:text-gray-700" type="button" @click="refreshTemplates">Refresh from ogdynamic</button>
-      </div>
-      <div v-if="api.error" class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700">{{ api.error }}</div>
-      <div v-if="success" class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-green-200 ogd:bg-green-50 ogd:px-3.5 ogd:py-3 ogd:text-green-800">{{ success }}</div>
+    <div class="ogd:grid ogd:grid-cols-3 ogd:gap-[18px] max-[1100px]:ogd:grid-cols-2 max-[720px]:ogd:grid-cols-1">
+      <RouterLink
+        v-for="postType in displayPostTypes"
+        :key="postType.name"
+        :to="`/templates/${postType.name}`"
+        class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6 ogd:no-underline ogd:transition ogd:hover:border-rose-100 ogd:hover:shadow-[0_18px_48px_rgba(17,24,39,0.08)]"
+      >
+        <div class="ogd:flex ogd:items-start ogd:justify-between ogd:gap-3">
+          <span class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:border-rose-100 ogd:bg-rose-50 ogd:px-2.5 ogd:py-1 ogd:font-display ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide ogd:text-rose-500">
+            {{ postType.name }}
+          </span>
+          <span
+            class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:px-2.5 ogd:py-1 ogd:text-[11px] ogd:font-semibold ogd:tracking-wide"
+            :class="
+              isActivated(postType.name)
+                ? 'ogd:border ogd:border-emerald-200 ogd:bg-emerald-50 ogd:text-emerald-700'
+                : 'ogd:border ogd:border-gray-200 ogd:bg-gray-50 ogd:text-gray-500'
+            "
+          >
+            {{ isActivated(postType.name) ? 'Activated' : 'Not activated' }}
+          </span>
+        </div>
+        <h2 class="ogd:mt-4 ogd:mb-1.5 ogd:font-display ogd:text-base ogd:font-bold ogd:text-gray-900">{{ postType.label }}</h2>
+        <p class="ogd:mt-0 ogd:mb-0 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500">
+          {{ isActivated(postType.name) ? 'This post type has an active OG image template.' : 'No OG image template activated for this post type.' }}
+        </p>
+      </RouterLink>
     </div>
   </section>
 </template>

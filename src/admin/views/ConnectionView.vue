@@ -1,16 +1,14 @@
 <script setup lang="ts">
-import { reactive, shallowRef } from 'vue'
-import type { OGDSettings } from '../types'
+import { computed, reactive, shallowRef } from 'vue'
 import { useOgdApi } from '../composables/useOgdApi'
+import { apiKey, setApiKey } from '../state/connection'
 import FormField from '../components/forms/FormField.vue'
 import TextInput from '../components/forms/TextInput.vue'
-
-const props = defineProps<{ settings: OGDSettings }>()
-const emit = defineEmits<{ settingsUpdated: [settings: OGDSettings] }>()
 
 const api = useOgdApi()
 const form = reactive({ api_key: '' })
 const success = shallowRef('')
+const connectionStatus = computed(() => (apiKey.value !== '' ? 'connected' : 'disconnected'))
 
 type ConnectionResponse = {
   data: {
@@ -24,42 +22,26 @@ async function testConnection() {
     method: 'PUT',
     body: { api_key: form.api_key },
   })
-  emit('settingsUpdated', createSettings(payload.data.api_key))
+  setApiKey(payload.data.api_key)
   success.value = 'Connection verified and saved.'
   form.api_key = ''
 }
 
 async function disconnect() {
   const payload = await api.request<ConnectionResponse>('connection', { method: 'DELETE' })
-  emit('settingsUpdated', createSettings(payload.data.api_key))
+  setApiKey(payload.data.api_key)
   success.value = 'Disconnected from ogdynamic.'
-}
-
-function createSettings(apiKey: string): OGDSettings {
-  return {
-    ...props.settings,
-    api_key: apiKey,
-    connection: {
-      ...props.settings.connection,
-      status: apiKey !== '' ? 'connected' : 'disconnected',
-      account_label: '',
-      plan: '',
-      usage: null,
-      last_checked_at: apiKey !== '' ? new Date().toISOString() : '',
-      last_error: '',
-    },
-  }
 }
 </script>
 
 <template>
   <section>
     <h1 class="ogd:m-0 ogd:font-display ogd:text-3xl ogd:font-bold ogd:tracking-[-0.03em] ogd:text-gray-900">Connection</h1>
-    <p class="ogd:mt-2 ogd:mb-7 ogd:max-w-[620px] ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500">Connect this WordPress site to ogdynamic with an API key, validate the account, and refresh credentials when needed.</p>
+    <p class="ogd:mt-2 ogd:mb-7 ogd:max-w-155 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500">Connect this WordPress site to ogdynamic with an API key, validate the account, and refresh credentials when needed.</p>
 
     <div class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6">
-      <span class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:px-2.5 ogd:py-1 ogd:font-display ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide" :class="settings.connection.status === 'connected' ? 'ogd:border-green-200 ogd:bg-green-50 ogd:text-green-600' : 'ogd:border-amber-200 ogd:bg-amber-50 ogd:text-amber-600'">
-        {{ settings.connection.status }}
+      <span class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:px-2.5 ogd:py-1 ogd:font-display ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide" :class="connectionStatus === 'connected' ? 'ogd:border-green-200 ogd:bg-green-50 ogd:text-green-600' : 'ogd:border-amber-200 ogd:bg-amber-50 ogd:text-amber-600'">
+        {{ connectionStatus }}
       </span>
 
       <div class="ogd:mt-6">
@@ -77,9 +59,7 @@ function createSettings(apiKey: string): OGDSettings {
         </button>
       </div>
 
-      <p v-if="settings.connection.account_label" class="ogd:mt-4 ogd:mb-[18px] ogd:text-gray-500">Account: {{ settings.connection.account_label }}</p>
-      <p v-if="settings.connection.plan" class="ogd:mt-0 ogd:mb-[18px] ogd:text-gray-500">Plan: {{ settings.connection.plan }}</p>
-      <div v-if="api.error" class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700">{{ api.error }}</div>
+      <div v-if="api.error.value" class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700">{{ api.error }}</div>
       <div v-if="success" class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-green-200 ogd:bg-green-50 ogd:px-3.5 ogd:py-3 ogd:text-green-800">{{ success }}</div>
     </div>
   </section>

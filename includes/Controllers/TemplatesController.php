@@ -64,6 +64,17 @@ class TemplatesController {
 						),
 					),
 				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( self::class, 'delete_post_type_template' ),
+					'permission_callback' => array( self::class, 'can_manage' ),
+					'args'                => array(
+						'post_type' => array(
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_key',
+						),
+					),
+				),
 			)
 		);
 	}
@@ -76,6 +87,7 @@ class TemplatesController {
 		global $wpdb;
 
 		$prefix = Settings::PREFIX . self::TEMPLATE_KEY_PREFIX;
+		$suffix = self::TEMPLATE_KEY_SUFFIX;
 
 		$keys = $wpdb->get_col(
 			$wpdb->prepare(
@@ -84,9 +96,25 @@ class TemplatesController {
 			)
 		);
 
+		$post_types = array();
+
+		foreach ( is_array( $keys ) ? $keys : array() as $key ) {
+			$key = (string) $key;
+
+			if ( ! str_starts_with( $key, $prefix ) || ! str_ends_with( $key, $suffix ) ) {
+				continue;
+			}
+
+			$post_type = substr( $key, strlen( $prefix ), -strlen( $suffix ) );
+
+			if ( '' !== $post_type ) {
+				$post_types[] = $post_type;
+			}
+		}
+
 		return rest_ensure_response(
 			array(
-				'data' => array_values( array_map( 'strval', is_array( $keys ) ? $keys : array() ) ),
+				'data' => array_values( array_unique( $post_types ) ),
 			)
 		);
 	}
@@ -122,12 +150,25 @@ class TemplatesController {
 		);
 	}
 
+	public static function delete_post_type_template( WP_REST_Request $request ) {
+		$post_type   = (string) $request->get_param( 'post_type' );
+		$option_name = self::option_name_for_post_type( $post_type );
+
+		delete_option( $option_name );
+
+		return rest_ensure_response(
+			array(
+				'data' => array(),
+			)
+		);
+	}
+
 	public static function validate_template_id( $value ): bool {
 		return is_string( $value ) && (bool) preg_match( '/^[0-9A-HJKMNP-TV-Z]{26}$/i', $value );
 	}
 
 	public static function sanitize_template_id( $value ): string {
-		return strtoupper( sanitize_text_field( wp_unslash( (string) $value ) ) );
+		return sanitize_text_field( wp_unslash( (string) $value ) );
 	}
 
 	public static function validate_map( $value ): bool {

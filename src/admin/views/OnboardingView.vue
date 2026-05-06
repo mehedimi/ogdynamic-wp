@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { reactive, shallowRef } from 'vue'
-import type { OGDSettings } from '../types'
 import { useOgdApi } from '../composables/useOgdApi'
+import { setApiKey } from '../state/connection'
 import FormField from '../components/forms/FormField.vue'
 import TextInput from '../components/forms/TextInput.vue'
-
-const props = defineProps<{ settings: OGDSettings }>()
-const emit = defineEmits<{ settingsUpdated: [settings: OGDSettings] }>()
 
 const api = useOgdApi()
 const form = reactive({ api_key: '' })
@@ -27,34 +24,18 @@ async function connect() {
       body: { api_key: form.api_key },
     })
 
-    emit('settingsUpdated', createSettings(payload.data.api_key))
+    setApiKey(payload.data.api_key)
     success.value = 'Connection verified. Loading your dashboard…'
     form.api_key = ''
   } catch {
     // Error state is handled by useOgdApi.
   }
 }
-
-function createSettings(apiKey: string): OGDSettings {
-  return {
-    ...props.settings,
-    api_key: apiKey,
-    connection: {
-      ...props.settings.connection,
-      status: apiKey !== '' ? 'connected' : 'disconnected',
-      account_label: '',
-      plan: '',
-      usage: null,
-      last_checked_at: apiKey !== '' ? new Date().toISOString() : '',
-      last_error: '',
-    },
-  }
-}
 </script>
 
 <template>
   <section class="ogd:grid ogd:min-h-[calc(100vh-190px)] ogd:place-items-center">
-    <div class="ogd:w-full ogd:max-w-[560px] ogd:rounded-[28px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-8 ogd:shadow-[0_24px_80px_rgba(17,24,39,0.08)]">
+    <div class="ogd:w-full ogd:max-w-140 ogd:rounded-[28px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-8 ogd:shadow-[0_24px_80px_rgba(17,24,39,0.08)]">
       <span class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:border-rose-100 ogd:bg-rose-50 ogd:px-3 ogd:py-1 ogd:font-display ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide ogd:text-rose-500">
         Setup required
       </span>
@@ -64,7 +45,7 @@ function createSettings(apiKey: string): OGDSettings {
       </h1>
 
       <p class="ogd:mt-0 ogd:mb-7 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500">
-        Add your ogdynamic API key to start fetching templates and generating social preview images from WordPress content.
+        Add your ogdynamic API key to start generating social preview images from WordPress content.
       </p>
 
       <form class="ogd:grid ogd:gap-4" @submit.prevent="connect">
