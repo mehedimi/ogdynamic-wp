@@ -12,25 +12,43 @@ const api = useOgdApi()
 const form = reactive({ api_key: '' })
 const success = shallowRef('')
 
+type ConnectionResponse = {
+  data: {
+    api_key: string
+  }
+}
+
 async function testConnection() {
   success.value = ''
-  const payload = await api.request<{ connected: boolean; settings: OGDSettings }>('connection/test', {
-    method: 'POST',
+  const payload = await api.request<ConnectionResponse>('connection', {
+    method: 'PUT',
     body: { api_key: form.api_key },
   })
-  emit('settingsUpdated', payload.settings)
+  emit('settingsUpdated', createSettings(payload.data.api_key))
   success.value = 'Connection verified and saved.'
   form.api_key = ''
 }
 
 async function disconnect() {
-  const next = structuredClone(props.settings)
-  next.api_key = ''
-  next.connection.status = 'disconnected'
-  next.connection.account_label = ''
-  const payload = await api.request<{ settings: OGDSettings }>('settings', { method: 'POST', body: next })
-  emit('settingsUpdated', payload.settings)
+  const payload = await api.request<ConnectionResponse>('connection', { method: 'DELETE' })
+  emit('settingsUpdated', createSettings(payload.data.api_key))
   success.value = 'Disconnected from ogdynamic.'
+}
+
+function createSettings(apiKey: string): OGDSettings {
+  return {
+    ...props.settings,
+    api_key: apiKey,
+    connection: {
+      ...props.settings.connection,
+      status: apiKey !== '' ? 'connected' : 'disconnected',
+      account_label: '',
+      plan: '',
+      usage: null,
+      last_checked_at: apiKey !== '' ? new Date().toISOString() : '',
+      last_error: '',
+    },
+  }
 }
 </script>
 

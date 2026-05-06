@@ -1,6 +1,14 @@
 import { readonly, shallowRef } from 'vue'
 import axios, { AxiosError } from 'axios'
 
+type RestErrorResponse = {
+  message?: string
+  data?: {
+    params?: Record<string, string>
+    details?: Record<string, { message?: string }>
+  }
+}
+
 type RequestOptions = {
   method?: string
   body?: unknown
@@ -47,9 +55,33 @@ export function useOgdApi() {
 
 function getErrorMessage(caught: unknown): string {
   if (caught instanceof AxiosError) {
-    const data = caught.response?.data as { message?: string } | undefined
-    return data?.message ?? caught.message
+    const data = caught.response?.data as RestErrorResponse | undefined
+    const detailMessage = getRestDetailMessage(data)
+
+    return detailMessage ?? data?.message ?? caught.message
   }
 
   return caught instanceof Error ? caught.message : 'Request failed.'
+}
+
+function getRestDetailMessage(data: RestErrorResponse | undefined): string | undefined {
+  if (!data?.data) {
+    return undefined
+  }
+
+  const details = data.data.details
+  if (details) {
+    for (const detail of Object.values(details)) {
+      if (detail.message) {
+        return detail.message
+      }
+    }
+  }
+
+  const params = data.data.params
+  if (params) {
+    return Object.values(params).find((message) => message !== '')
+  }
+
+  return undefined
 }

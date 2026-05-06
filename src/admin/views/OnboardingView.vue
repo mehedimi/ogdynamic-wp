@@ -5,27 +5,49 @@ import { useOgdApi } from '../composables/useOgdApi'
 import FormField from '../components/forms/FormField.vue'
 import TextInput from '../components/forms/TextInput.vue'
 
-defineProps<{ settings: OGDSettings }>()
+const props = defineProps<{ settings: OGDSettings }>()
 const emit = defineEmits<{ settingsUpdated: [settings: OGDSettings] }>()
 
 const api = useOgdApi()
 const form = reactive({ api_key: '' })
 const success = shallowRef('')
 
+type ConnectionResponse = {
+  data: {
+    api_key: string
+  }
+}
+
 async function connect() {
   success.value = ''
 
   try {
-    const payload = await api.request<{ connected: boolean; settings: OGDSettings }>('connection/test', {
-      method: 'POST',
+    const payload = await api.request<ConnectionResponse>('connection', {
+      method: 'PUT',
       body: { api_key: form.api_key },
     })
 
-    emit('settingsUpdated', payload.settings)
+    emit('settingsUpdated', createSettings(payload.data.api_key))
     success.value = 'Connection verified. Loading your dashboard…'
     form.api_key = ''
   } catch {
     // Error state is handled by useOgdApi.
+  }
+}
+
+function createSettings(apiKey: string): OGDSettings {
+  return {
+    ...props.settings,
+    api_key: apiKey,
+    connection: {
+      ...props.settings.connection,
+      status: apiKey !== '' ? 'connected' : 'disconnected',
+      account_label: '',
+      plan: '',
+      usage: null,
+      last_checked_at: apiKey !== '' ? new Date().toISOString() : '',
+      last_error: '',
+    },
   }
 }
 </script>

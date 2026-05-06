@@ -11,7 +11,7 @@ const seoPlugin = shallowRef(adminConfig.seoPlugin)
 const ecoPlugins = shallowRef<string[]>(adminConfig.ecoPlugins)
 const route = useRoute()
 const router = useRouter()
-const isConnected = computed(() => '' !== adminConfig.apiKey)
+const isConnected = computed(() => '' !== settings.api_key)
 const woocommerceActive = computed(() => ecoPlugins.value.includes('woocommerce'))
 
 function replaceSettings(next: OGDSettings) {

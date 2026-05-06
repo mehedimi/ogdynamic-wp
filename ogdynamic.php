@@ -13,6 +13,8 @@
  * @package OGD
  */
 
+use OGD\Plugin;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -21,6 +23,10 @@ define( 'OGD_VERSION', '0.1.0' );
 define( 'OGD_FILE', __FILE__ );
 define( 'OGD_PATH', plugin_dir_path( __FILE__ ) );
 define( 'OGD_URL', plugin_dir_url( __FILE__ ) );
+
+if ( ! defined( 'OGD_API' ) ) {
+	define( 'OGD_API', 'https://ogdynamic.com/api' );
+}
 
 $ogd_autoload = OGD_PATH . 'vendor/autoload.php';
 
@@ -40,6 +46,6 @@ require_once $ogd_autoload;
 add_action(
 	'plugins_loaded',
 	static function () {
-		\OGD\Plugin::instance()->boot();
+		Plugin::instance()->boot();
 	}
 );
