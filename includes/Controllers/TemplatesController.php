@@ -99,7 +99,8 @@ class TemplatesController {
 
 		return rest_ensure_response(
 			array(
-				'data' => Template::get_mapping( $post_type ),
+				'data'    => Template::get_mapping( $post_type ),
+				'sources' => Template::get_mapping_sources( $post_type ),
 			)
 		);
 	}
@@ -153,11 +154,11 @@ class TemplatesController {
 				return false;
 			}
 
-			if ( ! isset( $item['attr_key'], $item['value_key'] ) ) {
+			if ( ! isset( $item['attr_key'], $item['key'] ) ) {
 				return false;
 			}
 
-			if ( ! is_string( $item['attr_key'] ) || ! is_string( $item['value_key'] ) ) {
+			if ( ! is_string( $item['attr_key'] ) || ! is_string( $item['key'] ) ) {
 				return false;
 			}
 		}
@@ -177,16 +178,16 @@ class TemplatesController {
 				continue;
 			}
 
-			$attr_key  = isset( $item['attr_key'] ) ? sanitize_text_field( wp_unslash( (string) $item['attr_key'] ) ) : '';
-			$value_key = isset( $item['value_key'] ) ? sanitize_text_field( wp_unslash( (string) $item['value_key'] ) ) : '';
+			$attr_key = isset( $item['attr_key'] ) ? sanitize_text_field( wp_unslash( (string) $item['attr_key'] ) ) : '';
+			$key      = isset( $item['key'] ) ? sanitize_text_field( wp_unslash( (string) $item['key'] ) ) : '';
 
-			if ( '' === $attr_key && '' === $value_key ) {
+			if ( '' === $attr_key && '' === $key ) {
 				continue;
 			}
 
 			$clean[] = array(
-				'attr_key'  => $attr_key,
-				'value_key' => $value_key,
+				'attr_key' => $attr_key,
+				'key'      => $key,
 			);
 		}
 

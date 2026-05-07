@@ -11,8 +11,95 @@ class Template {
 
 	public const POST_TYPE_KEY_PREFIX = 'mapping_';
 
+	private static ?array $sources_config = null;
+
+	private static function get_sources(): array {
+		if ( null === self::$sources_config ) {
+			$site_sources   = array(
+				array( 'key' => 'site_name', 'label' => 'Site name' ),
+				array( 'key' => 'site_tagline', 'label' => 'Site tagline' ),
+			);
+			$post_sources   = array(
+				array( 'key' => 'post_title', 'label' => 'Post title' ),
+				array( 'key' => 'excerpt', 'label' => 'Excerpt' ),
+				array( 'key' => 'trimmed_content', 'label' => 'Trimmed content' ),
+				array( 'key' => 'featured_image', 'label' => 'Featured image' ),
+				array( 'key' => 'author_name', 'label' => 'Author name' ),
+				array( 'key' => 'published_date', 'label' => 'Published date' ),
+				array( 'key' => 'modified_date', 'label' => 'Modified date' ),
+				array( 'key' => 'category', 'label' => 'Category' ),
+				array( 'key' => 'tags', 'label' => 'Tags' ),
+				...$site_sources,
+			);
+			$page_sources   = array(
+				array( 'key' => 'post_title', 'label' => 'Page title' ),
+				array( 'key' => 'excerpt', 'label' => 'Excerpt' ),
+				array( 'key' => 'trimmed_content', 'label' => 'Trimmed content' ),
+				array( 'key' => 'featured_image', 'label' => 'Featured image' ),
+				array( 'key' => 'author_name', 'label' => 'Author name' ),
+				array( 'key' => 'published_date', 'label' => 'Published date' ),
+				array( 'key' => 'modified_date', 'label' => 'Modified date' ),
+				...$site_sources,
+			);
+			self::$sources_config = array(
+				'default' => $site_sources,
+				'post'    => $post_sources,
+				'page'    => $page_sources,
+				'product' => array(
+					...$post_sources,
+					array( 'key' => 'product_title', 'label' => 'Product title' ),
+					array( 'key' => 'product_short_description', 'label' => 'Product short description' ),
+					array( 'key' => 'product_image', 'label' => 'Product image' ),
+					array( 'key' => 'product_price', 'label' => 'Product price' ),
+					array( 'key' => 'regular_price', 'label' => 'Regular price' ),
+					array( 'key' => 'sale_price', 'label' => 'Sale price' ),
+					array( 'key' => 'currency', 'label' => 'Currency' ),
+					array( 'key' => 'sku', 'label' => 'SKU' ),
+					array( 'key' => 'product_category', 'label' => 'Product category' ),
+					array( 'key' => 'product_tags', 'label' => 'Product tags' ),
+					array( 'key' => 'stock_status', 'label' => 'Stock status' ),
+					array( 'key' => 'rating', 'label' => 'Rating' ),
+					array( 'key' => 'review_count', 'label' => 'Review count' ),
+				),
+				'home'    => $site_sources,
+				'blog'    => $site_sources,
+				'category' => array(
+					array( 'key' => 'category', 'label' => 'Category name' ),
+					...$site_sources,
+				),
+				'tag'      => array(
+					array( 'key' => 'tag', 'label' => 'Tag name' ),
+					...$site_sources,
+				),
+				'author'   => array(
+					array( 'key' => 'author_name', 'label' => 'Author name' ),
+					...$site_sources,
+				),
+				'date'     => $site_sources,
+				'search'   => $site_sources,
+			);
+		}
+
+		return self::$sources_config;
+	}
+
+	public static function get_mapping_sources( string $post_type ): array {
+		$sources = self::get_sources();
+
+		if ( isset( $sources[ $post_type ] ) ) {
+			return $sources[ $post_type ];
+		}
+
+		return (array) apply_filters( 'ogdynamic_mapping_sources', $sources )[ $post_type ] ?? array();
+	}
+
 	public static function available_post_types(): array {
 		$post_types = array(
+			array(
+				'name'        => 'default',
+				'label'       => 'Default',
+				'description' => 'OG image template for any post type without a specific template.',
+			),
 			array(
 				'name'        => 'post',
 				'label'       => 'Single Post',

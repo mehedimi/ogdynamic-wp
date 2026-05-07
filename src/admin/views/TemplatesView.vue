@@ -70,7 +70,7 @@ onMounted(loadData)
         </div>
         <h2 class="ogd:mt-4 ogd:mb-1.5 ogd:font-display ogd:text-base ogd:font-bold ogd:text-gray-900">{{ postType.label }}</h2>
         <p class="ogd:mt-0 ogd:mb-0 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500">
-          {{ isActivated(postType.name) ? 'This post type has an active OG image template.' : 'No OG image template activated for this post type.' }}
+          {{ postType.description }}
         </p>
       </RouterLink>
     </div>

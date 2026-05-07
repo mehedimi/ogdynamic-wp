@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, shallowRef, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
-import { postTypeMappingSources } from "../data/postTypeMappingSources";
 import type { OGDDesign, OGDDesignSchemaField } from "../types";
 import { useOgdApi } from "../composables/useOgdApi";
 import { useOgdCloudApi } from "../composables/useOgdCloudApi";
@@ -23,7 +22,7 @@ type FieldOption = {
 };
 
 type MappingSourceOption = {
-  value_key: string;
+  key: string;
   label: string;
 };
 
@@ -31,19 +30,16 @@ type TemplateMapping = {
   template_id: string;
   map: Array<{
     attr_key: string;
-    value_key: string;
+    key: string;
   }>;
 };
-
-defineProps<{
-  woocommerceActive: boolean;
-}>();
 
 const route = useRoute();
 const router = useRouter();
 const wordpressApi = useOgdApi();
 const cloudApi = useOgdCloudApi();
 const designs = shallowRef<OGDDesign[]>([]);
+const mappingSources = shallowRef<Record<string, MappingSourceOption[]>>({});
 const fields = shallowRef<FieldOption[]>([]);
 const savedFieldMap = shallowRef<Record<string, string>>({});
 const savedTemplateId = shallowRef("");
@@ -70,12 +66,12 @@ const designOptions = computed(() => [
   })),
 ]);
 const sourceOptions = computed(() => {
-  const sources = postTypeMappingSources as Record<string, MappingSourceOption[]>;
+  const sources = mappingSources.value as Record<string, MappingSourceOption[]>;
   return [
-    { value_key: "", label: "Do not override" },
+    { key: "", label: "Do not override" },
     ...(sources[postType.value] ?? sources.default ?? []),
   ].map((option) => ({
-    value: option.value_key,
+    value: option.key,
     label: option.label,
   }));
 });
@@ -93,21 +89,24 @@ watch(selectedDesign, async (designId) => {
 });
 
 async function load() {
-  await loadDesigns();
-  await loadSavedMapping();
+  await Promise.all([loadDesigns(), loadSavedMapping()]);
 }
 
 async function loadSavedMapping() {
   const payload = await wordpressApi.request<{
     data: Partial<TemplateMapping>;
+    sources: MappingSourceOption[];
   }>(`templates/${postType.value}`);
+  
+  mappingSources.value = { [postType.value]: payload.sources ?? [] };
+
   const savedMap: Record<string, string> = {};
 
   if (payload.data && !Array.isArray(payload.data)) {
     for (const item of Array.isArray(payload.data.map)
       ? payload.data.map
       : []) {
-      savedMap[item.attr_key] = item.value_key;
+      savedMap[item.attr_key] = item.key;
     }
 
     savedTemplateId.value =
@@ -162,7 +161,7 @@ function unwrapItem(payload: ApiItemResponse<OGDDesign> | OGDDesign): OGDDesign 
 async function save() {
   const map = fields.value.map((field) => ({
     attr_key: field.key,
-    value_key: fieldMap[field.key] ?? "",
+    key: fieldMap[field.key] ?? "",
   }));
 
   await wordpressApi.request<{ data: TemplateMapping }>(

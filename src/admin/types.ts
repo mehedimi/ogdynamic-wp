@@ -97,6 +97,7 @@ export type OGDDesign = {
 export type PostTypeOption = {
   name: string;
   label: string;
+  description?: string;
 };
 
 export type RuntimeConfig = {
