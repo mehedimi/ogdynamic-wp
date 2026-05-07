@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, shallowRef } from "vue";
+import { computed, shallowRef } from "vue";
 import { RouterLink } from "vue-router";
 import { useOgdCloudApi } from "../composables/useOgdCloudApi";
-import type { ApiData, PostTypeOption, User } from "../types";
+import type { ApiData, User } from "../types";
 
 const cloudApi = useOgdCloudApi();
 
@@ -22,7 +22,7 @@ function loadAccount() {
 void loadAccount();
 
 const isConnected = computed(() => {
-  return account && !cloudApi.error.value;
+  return Boolean(account.value) && !cloudApi.error.value;
 });
 </script>
 
@@ -42,6 +42,7 @@ const isConnected = computed(() => {
 
     <div class="ogd:grid ogd:grid-cols-1 ogd:gap-4.5">
       <article
+        v-if="!cloudApi.loading.value"
         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
       >
         <span
@@ -86,16 +87,16 @@ const isConnected = computed(() => {
           v-if="isConnected"
         >
           <RouterLink
+            class="ogd:inline-flex ogd:items-center ogd:justify-center ogd:rounded-full ogd:border! ogd:border-gray-900! ogd:bg-gray-900! ogd:px-4.5 ogd:py-2.5 ogd:text-[13px]! ogd:font-semibold ogd:text-white! ogd:no-underline ogd:transition ogd:hover:border-rose-500! ogd:hover:bg-rose-500! ogd:hover:text-white!"
+            to="/templates"
+          >
+            Manage OG Templates
+          </RouterLink>
+          <RouterLink
             class="ogd:inline-flex ogd:items-center ogd:justify-center ogd:rounded-full ogd:border! ogd:border-gray-200! ogd:bg-white! ogd:px-4.5 ogd:py-2.5 ogd:text-[13px]! ogd:font-semibold ogd:text-gray-700! ogd:no-underline ogd:transition ogd:hover:border-rose-200! ogd:hover:bg-rose-50! ogd:hover:text-gray-900!"
             to="/connection"
           >
             Update connection
-          </RouterLink>
-          <RouterLink
-            class="ogd:inline-flex ogd:items-center ogd:justify-center ogd:rounded-full ogd:border! ogd:border-gray-200! ogd:bg-white! ogd:px-4.5 ogd:py-2.5 ogd:text-[13px]! ogd:font-semibold ogd:text-gray-700! ogd:no-underline ogd:transition ogd:hover:border-rose-200! ogd:hover:bg-rose-50! ogd:hover:text-gray-900!"
-            to="/templates"
-          >
-            Manage OG templates
           </RouterLink>
         </div>
 
@@ -104,6 +105,31 @@ const isConnected = computed(() => {
           class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700"
         >
           {{ cloudApi.error.value }}
+        </div>
+      </article>
+      <article
+        v-else
+        class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
+      >
+        <div class="ogd:animate-pulse">
+          <div class="ogd:h-6 ogd:w-24 ogd:rounded-full ogd:bg-gray-100"></div>
+          <div
+            class="ogd:mt-4 ogd:h-5 ogd:w-36 ogd:rounded-md ogd:bg-gray-100"
+          ></div>
+          <div class="ogd:mt-3 ogd:grid ogd:gap-2">
+            <div
+              class="ogd:h-4 ogd:w-full ogd:max-w-120 ogd:rounded-md ogd:bg-gray-100"
+            ></div>
+            <div
+              class="ogd:h-4 ogd:w-full ogd:max-w-88 ogd:rounded-md ogd:bg-gray-100"
+            ></div>
+          </div>
+          <div
+            class="ogd:mt-5 ogd:grid ogd:grid-cols-2 ogd:gap-3 max-[720px]:ogd:grid-cols-1"
+          >
+            <div class="ogd:h-10 ogd:rounded-full ogd:bg-gray-100"></div>
+            <div class="ogd:h-10 ogd:rounded-full ogd:bg-gray-100"></div>
+          </div>
         </div>
       </article>
     </div>
