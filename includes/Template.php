@@ -95,61 +95,90 @@ class Template {
 				),
 				...$site_sources,
 			);
+			$product_sources      = array(
+				array(
+					'key'   => 'post_title',
+					'label' => 'Product title',
+				),
+				array(
+					'key'   => 'excerpt',
+					'label' => 'Product excerpt',
+				),
+				array(
+					'key'   => 'trimmed_content',
+					'label' => 'Product description',
+				),
+				array(
+					'key'   => 'featured_image',
+					'label' => 'Product image',
+				),
+				array(
+					'key'   => 'author_name',
+					'label' => 'Product author',
+				),
+				array(
+					'key'   => 'published_date',
+					'label' => 'Published date',
+				),
+				array(
+					'key'   => 'modified_date',
+					'label' => 'Modified date',
+				),
+				array(
+					'key'   => 'product_short_description',
+					'label' => 'Product short description',
+				),
+				array(
+					'key'   => 'product_price',
+					'label' => 'Product price',
+				),
+				array(
+					'key'   => 'regular_price',
+					'label' => 'Regular price',
+				),
+				array(
+					'key'   => 'sale_price',
+					'label' => 'Sale price',
+				),
+				array(
+					'key'   => 'currency',
+					'label' => 'Currency',
+				),
+				array(
+					'key'   => 'sku',
+					'label' => 'SKU',
+				),
+				array(
+					'key'   => 'product_category',
+					'label' => 'Product category',
+				),
+				array(
+					'key'   => 'product_tags',
+					'label' => 'Product tags',
+				),
+				array(
+					'key'   => 'product_attributes',
+					'label' => 'Product attributes',
+				),
+				array(
+					'key'   => 'stock_status',
+					'label' => 'Stock status',
+				),
+				array(
+					'key'   => 'rating',
+					'label' => 'Rating',
+				),
+				array(
+					'key'   => 'review_count',
+					'label' => 'Review count',
+				),
+				...$site_sources,
+			);
 			self::$sources_config = array(
 				'default'  => $site_sources,
 				'post'     => $post_sources,
 				'page'     => $page_sources,
-				'product'  => array(
-					...$post_sources,
-					array(
-						'key'   => 'product_short_description',
-						'label' => 'Product short description',
-					),
-					array(
-						'key'   => 'product_price',
-						'label' => 'Product price',
-					),
-					array(
-						'key'   => 'regular_price',
-						'label' => 'Regular price',
-					),
-					array(
-						'key'   => 'sale_price',
-						'label' => 'Sale price',
-					),
-					array(
-						'key'   => 'currency',
-						'label' => 'Currency',
-					),
-					array(
-						'key'   => 'sku',
-						'label' => 'SKU',
-					),
-					array(
-						'key'   => 'product_category',
-						'label' => 'Product category',
-					),
-					array(
-						'key'   => 'product_tags',
-						'label' => 'Product tags',
-					),
-					array(
-						'key'   => 'product_attributes',
-						'label' => 'Product attributes',
-					),
-					array(
-						'key'   => 'stock_status',
-						'label' => 'Stock status',
-					),
-					array(
-						'key'   => 'rating',
-						'label' => 'Rating',
-					),
-					array(
-						'key'   => 'review_count',
-						'label' => 'Review count',
-					),
-				),
+				'product'  => $product_sources,
 				'home'     => $site_sources,
 				'blog'     => $site_sources,
 				'category' => array(
@@ -208,44 +237,62 @@ class Template {
 				'label'       => 'Page',
 				'description' => 'OG image template for pages.',
 			),
+		);
+
+		if ( self::is_woocommerce_active() ) {
+			$post_types[] = array(
+				'name'        => 'product',
+				'label'       => 'Product',
+				'description' => 'OG image template for WooCommerce products.',
+			);
+		}
+
+		$post_types = array_merge(
+			$post_types,
 			array(
-				'name'        => 'home',
-				'label'       => 'Homepage',
-				'description' => 'OG image template for the site homepage.',
-			),
-			array(
-				'name'        => 'blog',
-				'label'       => 'Blog Page',
-				'description' => 'OG image template for the blog listing page.',
-			),
-			array(
-				'name'        => 'category',
-				'label'       => 'Category Archive',
-				'description' => 'OG image template for category archive pages.',
-			),
-			array(
-				'name'        => 'tag',
-				'label'       => 'Tag Archive',
-				'description' => 'OG image template for tag archive pages.',
-			),
-			array(
-				'name'        => 'author',
-				'label'       => 'Author Archive',
-				'description' => 'OG image template for author archive pages.',
-			),
-			array(
-				'name'        => 'date',
-				'label'       => 'Date Archive',
-				'description' => 'OG image template for date-based archive pages.',
-			),
-			array(
-				'name'        => 'search',
-				'label'       => 'Search Results',
-				'description' => 'OG image template for search results pages.',
-			),
+				array(
+					'name'        => 'home',
+					'label'       => 'Homepage',
+					'description' => 'OG image template for the site homepage.',
+				),
+				array(
+					'name'        => 'blog',
+					'label'       => 'Blog Page',
+					'description' => 'OG image template for the blog listing page.',
+				),
+				array(
+					'name'        => 'category',
+					'label'       => 'Category Archive',
+					'description' => 'OG image template for category archive pages.',
+				),
+				array(
+					'name'        => 'tag',
+					'label'       => 'Tag Archive',
+					'description' => 'OG image template for tag archive pages.',
+				),
+				array(
+					'name'        => 'author',
+					'label'       => 'Author Archive',
+					'description' => 'OG image template for author archive pages.',
+				),
+				array(
+					'name'        => 'date',
+					'label'       => 'Date Archive',
+					'description' => 'OG image template for date-based archive pages.',
+				),
+				array(
+					'name'        => 'search',
+					'label'       => 'Search Results',
+					'description' => 'OG image template for search results pages.',
+				),
+			)
 		);
 
 		return (array) apply_filters( 'ogdynamic_available_post_types', $post_types );
+	}
+
+	private static function is_woocommerce_active(): bool {
+		return class_exists( 'WooCommerce' ) || function_exists( 'WC' );
 	}
 
 	public static function option_name( string $post_type ): string {

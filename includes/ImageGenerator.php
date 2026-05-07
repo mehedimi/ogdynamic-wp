@@ -118,9 +118,9 @@ class ImageGenerator {
 	private static function get_mapping_for_key( string $key ): ?array {
 		$mapping = Template::get_mapping( $key );
 
-        if ( empty($mapping) && 'default' !== $key ) {
-            $mapping = Template::get_mapping( 'default' );
-        }
+		if ( empty( $mapping ) && 'default' !== $key ) {
+			$mapping = Template::get_mapping( 'default' );
+		}
 
 		if ( empty( $mapping ) ) {
 			return null;
@@ -513,9 +513,9 @@ class ImageGenerator {
 			case 'price_html':
 				return wp_strip_all_tags( $product->get_price_html() );
 			case 'regular_price':
-				return $product->get_regular_price();
+				return self::format_product_price( $product->get_regular_price() );
 			case 'sale_price':
-				return $product->get_sale_price();
+				return self::format_product_price( $product->get_sale_price() );
 			case 'sku':
 				return $product->get_sku();
 			case 'stock_status':
@@ -526,6 +526,27 @@ class ImageGenerator {
 				return (string) $product->get_review_count();
 		}
 		return '';
+	}
+
+	private static function format_product_price( string $price ): string {
+		if ( '' === $price ) {
+			return '';
+		}
+
+		if ( ! function_exists( 'wc_price' ) ) {
+			return $price;
+		}
+
+		$charset = get_bloginfo( 'charset' );
+		if ( '' === $charset ) {
+			$charset = 'UTF-8';
+		}
+
+		return html_entity_decode(
+			wp_strip_all_tags( wc_price( $price ) ),
+			ENT_QUOTES,
+			$charset
+		);
 	}
 
 	private static function product_attributes( WP_Post $post ): array {

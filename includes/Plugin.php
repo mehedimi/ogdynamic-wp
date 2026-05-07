@@ -15,12 +15,12 @@ final class Plugin {
 	public function boot(): void {
 		load_plugin_textdomain( 'ogdynamic', false, dirname( plugin_basename( OGDYNAMIC_FILE ) ) . '/languages' );
 
-        RESTController::init();
+		RESTController::init();
 
-        if(is_admin()) {
-            Admin::register();
-        } else {
-            MetaTags::register();
-        }
+		if ( is_admin() ) {
+			Admin::register();
+		} else {
+			MetaTags::register();
+		}
 	}
 }

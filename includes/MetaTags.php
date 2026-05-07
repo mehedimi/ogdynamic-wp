@@ -15,9 +15,9 @@ class MetaTags {
 
 	public static function output(): void {
 
-        if(!ImageGenerator::has_generated_image()) {
-            return;
-        }
+		if ( ! ImageGenerator::has_generated_image() ) {
+			return;
+		}
 
 		echo "\n<!-- ogdynamic -->\n";
 		echo '<meta property="og:image" content="' . esc_url( ImageGenerator::get_image_url() ) . "\" />\n";
