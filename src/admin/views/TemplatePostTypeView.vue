@@ -1,19 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, shallowRef, watch } from "vue";
+import { computed, reactive, ref, shallowRef, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
-import type { OGDDesign, OGDDesignSchemaField } from "../types";
+import type { ApiData, OGDDesign, OGDDesignListItem } from "../types";
 import { useOgdApi } from "../composables/useOgdApi";
 import { useOgdCloudApi } from "../composables/useOgdCloudApi";
 import FormField from "../components/forms/FormField.vue";
 import SelectInput from "../components/forms/SelectInput.vue";
-
-type ApiListResponse<T> = {
-  data?: T[];
-};
-
-type ApiItemResponse<T> = {
-  data?: T;
-};
 
 type FieldOption = {
   key: string;
@@ -36,60 +28,84 @@ type TemplateMapping = {
 
 const route = useRoute();
 const router = useRouter();
+
+const templateExists = ref(false);
+
 const wordpressApi = useOgdApi();
 const cloudApi = useOgdCloudApi();
-const designs = shallowRef<OGDDesign[]>([]);
-const mappingSources = shallowRef<Record<string, MappingSourceOption[]>>({});
-const fields = shallowRef<FieldOption[]>([]);
-const savedFieldMap = shallowRef<Record<string, string>>({});
-const savedTemplateId = shallowRef("");
-const selectedDesign = shallowRef("");
-const fieldMap = reactive<Record<string, string>>({});
-const success = shallowRef("");
 
+const wpDeleteApi = useOgdApi();
+
+const designs = shallowRef<OGDDesignListItem[]>([]);
+const design = shallowRef<OGDDesign>();
+
+const formPayload = reactive<TemplateMapping>({
+  template_id: "",
+  map: [],
+});
+
+const fieldMap = computed(() => {
+  return (key: string): string => {
+    return formPayload.map.find((map) => map.attr_key === key)?.key || "";
+  };
+});
+
+const mappingSources = shallowRef<MappingSourceOption[]>([]);
+
+const fields = computed<FieldOption[]>(() => {
+  return (
+    design.value?.template.schema.flatMap((section) => {
+      return section.fields
+        .filter((field) => field.allowOverride)
+        .flatMap((field) => {
+          return {
+            key: field.key,
+            label: field.label,
+          };
+        });
+    }) || []
+  );
+});
+
+const success = shallowRef("");
 const postType = computed(() => String(route.params.postType || ""));
-const postTypeLabel = computed(() => postType.value.charAt(0).toUpperCase() + postType.value.slice(1));
+
+const postTypeLabel = computed(
+  () => postType.value.charAt(0).toUpperCase() + postType.value.slice(1),
+);
 const createDesignUrl = computed(
   () =>
     `${window.ogdynamicAdmin.apiUrl.replace(/\/?api\/?$/, "")}/designs/create`,
 );
+
 const selectedDesignPreviewUrl = computed(() =>
-  selectedDesign.value
-    ? `https://cdn.ogdynamic.com/d/${selectedDesign.value}`
+  formPayload.template_id
+    ? `https://cdn.ogdynamic.com/d/${formPayload.template_id}`
     : "",
 );
-const designOptions = computed(() => [
-  { label: "Select design", value: "" },
-  ...designs.value.map((design) => ({
-    label: designLabel(design),
-    value: design.id ?? "",
-  })),
-]);
+
+const designOptions = computed(() =>
+  [{ label: "Select your design", value: "" }].concat(
+    designs.value.map((d) => ({ label: d.name, value: d.id })),
+  ),
+);
+
 const sourceOptions = computed(() => {
-  const sources = mappingSources.value as Record<string, MappingSourceOption[]>;
-  return [
-    { key: "", label: "Do not override" },
-    ...(sources[postType.value] ?? sources.default ?? []),
-  ].map((option) => ({
-    value: option.key,
-    label: option.label,
-  }));
+  return [{ value: "", label: "Do not override" }].concat(
+    mappingSources.value.map((d) => ({ value: d.key, label: d.label })),
+  );
 });
 
-watch(selectedDesign, async (designId) => {
-  success.value = "";
-  fields.value = [];
-  clearFieldMap();
-
-  if (!designId) {
-    return;
-  }
-
-  await loadDesign(designId);
-});
+watch(
+  () => formPayload.template_id,
+  async (designId) => {
+    success.value = "";
+    await loadDesign(designId);
+  },
+);
 
 async function load() {
-  await Promise.all([loadDesigns(), loadSavedMapping()]);
+  return Promise.all([loadDesigns(), loadSavedMapping()]);
 }
 
 async function loadSavedMapping() {
@@ -97,86 +113,40 @@ async function loadSavedMapping() {
     data: Partial<TemplateMapping>;
     sources: MappingSourceOption[];
   }>(`templates/${postType.value}`);
-  
-  mappingSources.value = { [postType.value]: payload.sources ?? [] };
 
-  const savedMap: Record<string, string> = {};
+  mappingSources.value = payload.sources;
 
-  if (payload.data && !Array.isArray(payload.data)) {
-    for (const item of Array.isArray(payload.data.map)
-      ? payload.data.map
-      : []) {
-      savedMap[item.attr_key] = item.key;
-    }
-
-    savedTemplateId.value =
-      typeof payload.data.template_id === "string"
-        ? payload.data.template_id
-        : "";
-    selectedDesign.value = savedTemplateId.value;
-  } else {
-    savedTemplateId.value = "";
-    selectedDesign.value = "";
+  if (!Array.isArray(payload.data)) {
+    formPayload.map = payload.data.map || [];
+    formPayload.template_id = payload.data.template_id || "";
+    templateExists.value = true;
   }
-
-  savedFieldMap.value = savedMap;
-
-  Object.assign(fieldMap, savedMap);
 }
 
 async function loadDesigns() {
-  const payload = await cloudApi.request<ApiListResponse<OGDDesign> | OGDDesign[]>(
-    "v1/designs",
-  );
-  designs.value = Array.isArray(payload) ? payload : (payload.data ?? []);
-}
+  const { data } = await cloudApi.request<ApiData<OGDDesign[]>>("v1/designs");
 
-async function refreshDesigns() {
-  await loadDesigns();
+  designs.value = data;
 }
 
 async function loadDesign(designId: string) {
-  const payload = await cloudApi.request<ApiItemResponse<OGDDesign> | OGDDesign>(
+  const { data } = await cloudApi.request<ApiData<OGDDesign>>(
     `v1/designs/${designId}?include=template`,
   );
-  const design = unwrapItem(payload);
-  fields.value = designFields(design);
 
-  for (const field of fields.value) {
-    fieldMap[field.key] =
-      savedFieldMap.value[field.key] ?? fieldMap[field.key] ?? "";
-  }
-
-  savedFieldMap.value = {};
-}
-
-function unwrapItem(payload: ApiItemResponse<OGDDesign> | OGDDesign): OGDDesign {
-  if ("data" in payload && payload.data) {
-    return payload.data;
-  }
-
-  return payload as OGDDesign;
+  design.value = data;
 }
 
 async function save() {
-  const map = fields.value.map((field) => ({
-    attr_key: field.key,
-    key: fieldMap[field.key] ?? "",
-  }));
-
-  await wordpressApi.request<{ data: TemplateMapping }>(
+  await wpDeleteApi.request<{ data: TemplateMapping }>(
     `templates/${postType.value}`,
     {
       method: "PUT",
-      body: {
-        template_id: selectedDesign.value,
-        map,
-      },
+      body: formPayload,
     },
   );
-
-  savedTemplateId.value = selectedDesign.value;
   success.value = "OG image template updated.";
+  templateExists.value = true;
 }
 
 async function deactivate() {
@@ -184,95 +154,34 @@ async function deactivate() {
     method: "DELETE",
   });
 
-  selectedDesign.value = "";
-  fields.value = [];
-  savedFieldMap.value = {};
-  savedTemplateId.value = "";
-  clearFieldMap();
-  success.value = "OG image template deactivated.";
   await router.push("/templates");
-}
-
-function clearFieldMap() {
-  for (const key of Object.keys(fieldMap)) {
-    delete fieldMap[key];
-  }
-}
-
-function designLabel(design: OGDDesign): string {
-  return design.name || design.title || design.id || "Untitled design";
-}
-
-function designFields(design: OGDDesign): FieldOption[] {
-  const schemaFields =
-    design.template?.schema?.flatMap((group) => group.fields ?? []) ?? [];
-  const overrideFields = schemaFields
-    .filter((field) => true === field.allowOverride)
-    .map((field) => normalizeSchemaField(field))
-    .filter((field) => field.key !== "");
-
-  if (overrideFields.length > 0) {
-    return overrideFields;
-  }
-
-  const rawFields =
-    design.available_fields ??
-    design.editable_fields ??
-    design.fields ??
-    design.variables ??
-    [];
-
-  if (!Array.isArray(rawFields)) {
-    return [];
-  }
-
-  return rawFields
-    .map((field) => normalizeField(field))
-    .filter((field): field is FieldOption => field !== null);
-}
-
-function normalizeSchemaField(field: OGDDesignSchemaField): FieldOption {
-  return {
-    key: field.key ?? "",
-    label: field.label ?? field.key ?? "",
-    type: field.type,
-  };
-}
-
-function normalizeField(field: unknown): FieldOption | null {
-  if (typeof field === "string") {
-    return { key: field, label: field };
-  }
-
-  if (!field || typeof field !== "object") {
-    return null;
-  }
-
-  const item = field as Record<string, unknown>;
-  const key = item.key ?? item.name ?? item.id ?? item.attr_key;
-  const label = item.label ?? item.title ?? item.name ?? key;
-
-  if (typeof key !== "string") {
-    return null;
-  }
-
-  return {
-    key,
-    label: typeof label === "string" ? label : key,
-  };
 }
 
 function fieldInputId(key: string): string {
   return `ogd-template-map-${key}`;
 }
 
-onMounted(load);
+function setFieldMapValue(attr_key: string, key: string) {
+  let map = formPayload.map.find((map) => map.attr_key === attr_key);
+
+  if (map) {
+    map.key = key;
+  } else {
+    formPayload.map.push({
+      key,
+      attr_key,
+    });
+  }
+}
+
+load();
 </script>
 
 <template>
   <section>
+    <!-- Page heading and return navigation. -->
     <RouterLink
-      class="ogd:mb-5 ogd:inline-flex ogd:text-sm ogd:font-semibold ogd:text-rose-500 ogd:no-underline ogd:hover:text-rose-600"
+      class="ogd:mb-5 ogd:inline-flex ogd:text-sm! ogd:font-semibold! ogd:text-rose-500! ogd:hover:text-rose-600!"
       to="/templates"
     >
       Back to post types
@@ -290,39 +199,98 @@ onMounted(load);
       values for this post type.
     </p>
 
+    <!-- Design selector skeleton while the WordPress mapping data loads. -->
     <div
+      v-if="wordpressApi.loading.value"
+      class="ogd:mb-4.5 ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
+    >
+      <div class="ogd:animate-pulse">
+        <div
+          class="ogd:grid ogd:grid-cols-[minmax(0,1fr)_auto] ogd:items-end ogd:gap-4 max-[720px]:ogd:grid-cols-1 max-[720px]:ogd:items-stretch"
+        >
+          <div>
+            <div class="ogd:h-4 ogd:w-28 ogd:rounded-md ogd:bg-gray-100"></div>
+            <div
+              class="ogd:mt-2 ogd:h-11 ogd:w-full ogd:rounded-xl ogd:bg-gray-100"
+            ></div>
+          </div>
+          <div
+            class="ogd:flex ogd:flex-wrap ogd:justify-end ogd:gap-2.5 max-[720px]:ogd:justify-start"
+          >
+            <div
+              class="ogd:h-10 ogd:w-32 ogd:rounded-full ogd:bg-gray-100"
+            ></div>
+            <div
+              class="ogd:h-10 ogd:w-34 ogd:rounded-full ogd:bg-gray-100"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Design selector and helper actions. -->
+    <div
+      v-else
       class="ogd:mb-4.5 ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
     >
       <div
-        class="ogd:grid ogd:grid-cols-[minmax(0,1fr)_auto] ogd:items-end ogd:gap-4 max-[720px]:ogd:grid-cols-1 max-[720px]:ogd:items-stretch"
+        class="ogd:flex ogd:gap-12 ogd:justify-center ogd:items-center max-[720px]:ogd:grid-cols-1 max-[720px]:ogd:items-stretch"
       >
-        <FormField forId="design-id" label="OG image design">
-          <SelectInput
-            id="design-id"
-            v-model="selectedDesign"
-            :options="designOptions"
-            :disabled="cloudApi.loading.value"
-          />
-        </FormField>
+        <SelectInput
+          id="design-id"
+          v-model="formPayload.template_id"
+          :options="designOptions"
+          :disabled="cloudApi.loading.value"
+        />
         <div
           class="ogd:flex ogd:flex-wrap ogd:justify-end ogd:gap-2.5 max-[720px]:ogd:justify-start"
         >
+          <button
+            class="ogd:inline-flex ogd:size-10 ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:rounded-full ogd:border ogd:border-gray-200 ogd:bg-white ogd:text-gray-700 ogd:transition ogd:hover:border-rose-200 ogd:hover:bg-rose-50 ogd:hover:text-gray-900 ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
+            type="button"
+            title="Refresh designs"
+            aria-label="Refresh designs"
+            :disabled="cloudApi.loading.value"
+            @click="loadDesigns"
+          >
+            <svg
+              class="ogd:size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+              <path d="M3 21v-5h5" />
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+              <path d="M16 8h5V3" />
+            </svg>
+          </button>
           <a
-            class="ogd:inline-flex ogd:items-center ogd:justify-center ogd:rounded-full ogd:border ogd:border-gray-200 ogd:bg-white ogd:px-4.5 ogd:py-2.5 ogd:text-[13px] ogd:font-semibold ogd:text-gray-700 ogd:no-underline ogd:transition ogd:hover:border-rose-200 ogd:hover:bg-rose-50 ogd:hover:text-gray-900"
+            class="ogd:inline-flex ogd:size-10 ogd:items-center ogd:justify-center ogd:rounded-full ogd:border ogd:border-gray-200 ogd:bg-white ogd:text-gray-700 ogd:no-underline ogd:transition ogd:hover:border-rose-200 ogd:hover:bg-rose-50 ogd:hover:text-gray-900"
             :href="createDesignUrl"
+            title="Create design"
+            aria-label="Create design"
             target="_blank"
             rel="noreferrer"
           >
-            Create design
+            <svg
+              class="ogd:size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14" />
+              <path d="M12 5v14" />
+            </svg>
           </a>
-          <button
-            class="ogd:inline-flex ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:rounded-full ogd:border ogd:border-gray-200 ogd:bg-white ogd:px-4.5 ogd:py-2.5 ogd:text-[13px] ogd:font-semibold ogd:text-gray-700 ogd:transition ogd:hover:border-rose-200 ogd:hover:bg-rose-50 ogd:hover:text-gray-900 ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
-            type="button"
-            :disabled="cloudApi.loading.value"
-            @click="refreshDesigns"
-          >
-            Refresh designs
-          </button>
         </div>
       </div>
       <div
@@ -336,8 +304,43 @@ onMounted(load);
     <div
       class="ogd:grid ogd:grid-cols-[minmax(0,1.1fr)_minmax(420px,1.6fr)] ogd:gap-6 max-[1024px]:ogd:grid-cols-1"
     >
+      <!-- Mapping form skeleton while the selected design detail loads. -->
       <div
-        v-if="selectedDesign"
+        v-if="formPayload.template_id && cloudApi.loading.value"
+        class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
+      >
+        <div class="ogd:animate-pulse">
+          <div class="ogd:h-5 ogd:w-36 ogd:rounded-md ogd:bg-gray-100"></div>
+          <div
+            class="ogd:mt-3 ogd:h-4 ogd:w-full ogd:rounded-md ogd:bg-gray-100"
+          ></div>
+          <div
+            class="ogd:mt-2 ogd:h-4 ogd:w-4/5 ogd:rounded-md ogd:bg-gray-100"
+          ></div>
+          <div class="ogd:mt-5 ogd:grid ogd:gap-4">
+            <div v-for="item in 4" :key="item">
+              <div
+                class="ogd:h-4 ogd:w-28 ogd:rounded-md ogd:bg-gray-100"
+              ></div>
+              <div
+                class="ogd:mt-2 ogd:h-10 ogd:w-full ogd:rounded-xl ogd:bg-gray-100"
+              ></div>
+            </div>
+          </div>
+          <div class="ogd:mt-5 ogd:flex ogd:flex-wrap ogd:gap-2.5">
+            <div
+              class="ogd:h-10 ogd:w-34 ogd:rounded-full ogd:bg-gray-100"
+            ></div>
+            <div
+              class="ogd:h-10 ogd:w-40 ogd:rounded-full ogd:bg-gray-100"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Field mapping form for the selected OG image design. -->
+      <div
+        v-else-if="formPayload.template_id && fields.length"
         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
       >
         <h2
@@ -352,14 +355,7 @@ onMounted(load);
           generated OG image.
         </p>
 
-        <div
-          v-if="fields.length === 0"
-          class="ogd:rounded-2xl ogd:border ogd:border-dashed ogd:border-rose-200 ogd:bg-rose-50 ogd:p-4.5 ogd:text-rose-800"
-        >
-          No override fields found for this design.
-        </div>
-
-        <div v-else class="ogd:grid ogd:gap-4">
+        <div class="ogd:grid ogd:gap-4">
           <FormField
             v-for="field in fields"
             :key="field.key"
@@ -368,7 +364,10 @@ onMounted(load);
           >
             <SelectInput
               :id="fieldInputId(field.key)"
-              v-model="fieldMap[field.key]"
+              :modelValue="fieldMap(field.key)"
+              @update:model-value="
+                setFieldMapValue(field.key, $event as string)
+              "
               :options="sourceOptions"
             />
           </FormField>
@@ -378,16 +377,20 @@ onMounted(load);
           <button
             class="ogd:inline-flex ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border ogd:border-transparent ogd:bg-gray-900 ogd:px-4.5 ogd:py-2.5 ogd:text-[13px] ogd:font-semibold ogd:text-white ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
             type="button"
-            :disabled="!selectedDesign || wordpressApi.loading.value"
+            :disabled="
+              !formPayload.template_id ||
+              wordpressApi.loading.value ||
+              wpDeleteApi.loading.value
+            "
             @click="save"
           >
-            {{ savedTemplateId ? "Update Template" : "Activate Template" }}
+            {{ templateExists ? "Update Template" : "Activate Template" }}
           </button>
           <button
-            v-if="savedTemplateId"
+            v-if="templateExists"
             class="ogd:inline-flex ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border ogd:border-rose-200 ogd:bg-white ogd:px-4.5 ogd:py-2.5 ogd:text-[13px] ogd:font-semibold ogd:text-rose-500 ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
             type="button"
-            :disabled="wordpressApi.loading.value"
+            :disabled="wpDeleteApi.loading.value"
             @click="deactivate"
           >
             Deactivate Template
@@ -408,9 +411,18 @@ onMounted(load);
         </div>
       </div>
 
+      <!-- Selected design preview. -->
       <div class="ogd:grid ogd:gap-4 ogd:self-start">
         <div
-          v-if="selectedDesign"
+          v-if="formPayload.template_id && cloudApi.loading.value"
+          class="ogd:overflow-hidden ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-4"
+        >
+          <div
+            class="ogd:aspect-1200/630 ogd:w-full ogd:animate-pulse ogd:rounded-[14px] ogd:bg-gray-100"
+          ></div>
+        </div>
+        <div
+          v-else-if="formPayload.template_id"
           class="ogd:overflow-hidden ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white"
         >
           <img

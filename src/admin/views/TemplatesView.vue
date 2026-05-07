@@ -46,7 +46,27 @@ onMounted(loadData)
     <h1 class="ogd:m-0 ogd:font-display ogd:text-3xl ogd:font-bold ogd:tracking-[-0.03em] ogd:text-gray-900">Templates</h1>
     <p class="ogd:mt-2 ogd:mb-7 ogd:max-w-[620px] ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500">Choose a post type to configure the OG image template WordPress should use when generating social share images.</p>
 
-    <div class="ogd:grid ogd:grid-cols-3 ogd:gap-[18px] max-[1100px]:ogd:grid-cols-2 max-[720px]:ogd:grid-cols-1">
+    <div v-if="wordpressApi.loading.value" class="ogd:grid ogd:grid-cols-3 ogd:gap-[18px] max-[1100px]:ogd:grid-cols-2 max-[720px]:ogd:grid-cols-1">
+      <article
+        v-for="item in 6"
+        :key="item"
+        class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
+      >
+        <div class="ogd:animate-pulse">
+          <div class="ogd:flex ogd:items-start ogd:justify-between ogd:gap-3">
+            <div class="ogd:h-6 ogd:w-16 ogd:rounded-full ogd:bg-gray-100"></div>
+            <div class="ogd:h-6 ogd:w-24 ogd:rounded-full ogd:bg-gray-100"></div>
+          </div>
+          <div class="ogd:mt-4 ogd:h-5 ogd:w-32 ogd:rounded-md ogd:bg-gray-100"></div>
+          <div class="ogd:mt-3 ogd:grid ogd:gap-2">
+            <div class="ogd:h-4 ogd:w-full ogd:rounded-md ogd:bg-gray-100"></div>
+            <div class="ogd:h-4 ogd:w-4/5 ogd:rounded-md ogd:bg-gray-100"></div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div v-else class="ogd:grid ogd:grid-cols-3 ogd:gap-[18px] max-[1100px]:ogd:grid-cols-2 max-[720px]:ogd:grid-cols-1">
       <RouterLink
         v-for="postType in displayPostTypes"
         :key="postType.name"

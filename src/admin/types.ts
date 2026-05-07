@@ -6,16 +6,25 @@ export type OGDDesignSpecItem = {
   value: string;
 };
 
+export type OGDDesignContentValue = string | OGDDesignSpecItem[];
+
+export type OGDDesignContent = Record<
+  string,
+  OGDDesignContentValue | undefined
+>;
+
 export type OGDDesignTextStyle = {
   font?: string;
   size?: number;
   color?: OGDColor;
   weight?: number;
+  italic?: boolean;
   letterSpacing?: number;
   lineHeight?: number;
   display?: string;
   margin?: OGDSpacing;
   padding?: OGDSpacing;
+  borderColor?: OGDColor;
   borderWidth?: number;
   borderRadius?: number;
   bgColor?: OGDColor;
@@ -67,32 +76,42 @@ export type OGDDesignTemplate = {
   description: string;
   category: string;
   schema: OGDDesignSchemaGroup[];
-  content: Record<string, string | OGDDesignSpecItem[] | undefined>;
+  content: OGDDesignContent;
   style: OGDDesignStyle;
   created_at: string;
   updated_at: string;
 };
 
-export type OGDDesign = {
+export type OGDDesignListItem = {
+  id: string;
+  user_id: number;
+  ident_name: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OGDDesignConfig = {
+  format: string;
+};
+
+export type OGDDesignDetail = {
   id: string;
   user_id: number;
   ident_name: string;
   name: string;
   title?: string;
-  content: Record<string, string | OGDDesignSpecItem[] | undefined>;
+  content: OGDDesignContent;
   style: OGDDesignStyle;
-  config: {
-    format: string;
-  };
+  config: OGDDesignConfig;
   is_active: boolean;
   created_at: string;
   updated_at: string;
   template: OGDDesignTemplate;
-  fields?: unknown[];
-  variables?: unknown[];
-  editable_fields?: unknown[];
-  available_fields?: unknown[];
 };
+
+export type OGDDesign = OGDDesignDetail;
 
 export type PostTypeOption = {
   name: string;
