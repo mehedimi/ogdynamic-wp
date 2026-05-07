@@ -10,8 +10,8 @@ namespace OGD;
 class Settings {
 	public const PREFIX = 'ogdy_';
 
-	public static function get( string $key, $default = false ) {
-		return get_option( self::option_name( $key ), $default );
+	public static function get( string $key, $fallback = false ) {
+		return get_option( self::option_name( $key ), $fallback );
 	}
 
 	public static function update( string $key, $value, bool $autoload = false ): bool {

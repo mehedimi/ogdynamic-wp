@@ -24,7 +24,6 @@ class Admin {
 			'dashicons-format-image',
 			58
 		);
-
 	}
 
 	public static function enqueue( string $hook ): void {
@@ -44,12 +43,12 @@ class Admin {
 			'ogdynamic-admin',
 			$asset['js'],
 			array(),
-			OGD_VERSION,
+			OGDYNAMIC_VERSION,
 			true
 		);
 
 		if ( '' !== $asset['css'] ) {
-			wp_enqueue_style( 'ogdynamic-admin', $asset['css'], array(), OGD_VERSION );
+			wp_enqueue_style( 'ogdynamic-admin', $asset['css'], array(), OGDYNAMIC_VERSION );
 		}
 
 		self::localize_admin_script();
@@ -61,6 +60,7 @@ class Admin {
 		}
 
 		return sprintf(
+			// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
 			'<script type="module" src="%s" id="%s-js"></script>' . "\n",
 			esc_url( $src ),
 			esc_attr( $handle )
@@ -74,7 +74,7 @@ class Admin {
 			'ogdynamic-vite-client',
 			$server . '/@vite/client',
 			array(),
-			null,
+			OGDYNAMIC_VERSION,
 			true
 		);
 
@@ -82,7 +82,7 @@ class Admin {
 			'ogdynamic-admin',
 			$server . '/src/admin/main.ts',
 			array( 'ogdynamic-vite-client' ),
-			null,
+			OGDYNAMIC_VERSION,
 			true
 		);
 	}
@@ -92,10 +92,10 @@ class Admin {
 			'ogdynamic-admin',
 			'ogdynamicAdmin',
 			array(
-				'restUrl'     => esc_url_raw( rest_url( 'ogdynamic/v1/' ) ),
-				'apiUrl'      => esc_url_raw( OGD_API ),
-				'nonce'       => wp_create_nonce( 'wp_rest' ),
-				'apiKey'      => Settings::get_api_key(),
+				'restUrl' => esc_url_raw( rest_url( 'ogdynamic/v1/' ) ),
+				'apiUrl'  => esc_url_raw( OGDYNAMIC_API ),
+				'nonce'   => wp_create_nonce( 'wp_rest' ),
+				'apiKey'  => Settings::get_api_key(),
 			)
 		);
 	}
@@ -112,23 +112,23 @@ class Admin {
 	}
 
 	private static function asset_files(): array {
-		$manifest_path = OGD_PATH . 'dist/admin/.vite/manifest.json';
+		$manifest_path = OGDYNAMIC_PATH . 'dist/admin/.vite/manifest.json';
 
 		if ( file_exists( $manifest_path ) ) {
-			$manifest = json_decode( (string) file_get_contents( $manifest_path ), true );
+			$manifest = wp_json_file_decode( $manifest_path, array( 'associative' => true ) );
 			$entry    = $manifest['src/admin/main.ts'] ?? null;
 
 			if ( is_array( $entry ) ) {
 				return array(
-					'js'  => OGD_URL . 'dist/admin/' . $entry['file'],
-					'css' => isset( $entry['css'][0] ) ? OGD_URL . 'dist/admin/' . $entry['css'][0] : '',
+					'js'  => OGDYNAMIC_URL . 'dist/admin/' . $entry['file'],
+					'css' => isset( $entry['css'][0] ) ? OGDYNAMIC_URL . 'dist/admin/' . $entry['css'][0] : '',
 				);
 			}
 		}
 
 		return array(
-			'js'  => OGD_URL . 'assets/admin/fallback.js',
-			'css' => OGD_URL . 'assets/admin/fallback.css',
+			'js'  => OGDYNAMIC_URL . 'assets/admin/fallback.js',
+			'css' => OGDYNAMIC_URL . 'assets/admin/fallback.css',
 		);
 	}
 

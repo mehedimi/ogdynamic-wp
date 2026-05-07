@@ -19,18 +19,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OGD_VERSION', '0.1.0' );
-define( 'OGD_FILE', __FILE__ );
-define( 'OGD_PATH', plugin_dir_path( __FILE__ ) );
-define( 'OGD_URL', plugin_dir_url( __FILE__ ) );
+define( 'OGDYNAMIC_VERSION', '0.1.0' );
+define( 'OGDYNAMIC_FILE', __FILE__ );
+define( 'OGDYNAMIC_PATH', plugin_dir_path( __FILE__ ) );
+define( 'OGDYNAMIC_URL', plugin_dir_url( __FILE__ ) );
 
-if ( ! defined( 'OGD_API' ) ) {
-	define( 'OGD_API', 'https://ogdynamic.com/api' );
+if ( ! defined( 'OGDYNAMIC_API' ) ) {
+	define( 'OGDYNAMIC_API', 'https://ogdynamic.com/api' );
 }
 
-$ogd_autoload = OGD_PATH . 'vendor/autoload.php';
+$ogdynamic_autoload = OGDYNAMIC_PATH . 'vendor/autoload.php';
 
-if ( ! file_exists( $ogd_autoload ) ) {
+if ( ! file_exists( $ogdynamic_autoload ) ) {
 	add_action(
 		'admin_notices',
 		static function () {
@@ -41,7 +41,7 @@ if ( ! file_exists( $ogd_autoload ) ) {
 	return;
 }
 
-require_once $ogd_autoload;
+require_once $ogdynamic_autoload;
 
 add_action(
 	'plugins_loaded',

@@ -1,7 +1,7 @@
 {
   "name": "ogdynamic/ogdynamic-wordpress",
   "description": "WordPress connector plugin for ogdynamic.com.",
-  "version": "0.1.0",
+  "license": "proprietary",
   "type": "wordpress-plugin",
   "autoload": {
     "psr-4": {
@@ -9,5 +9,19 @@
     }
   },
   "require": {},
-  "require-dev": {}
+  "require-dev": {
+    "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
+    "phpcompatibility/phpcompatibility-wp": "^2.1",
+    "squizlabs/php_codesniffer": "^3.11",
+    "wp-coding-standards/wpcs": "^3.2"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
+  "scripts": {
+    "lint:php": "phpcs",
+    "fix:php": "phpcbf"
+  }
 }

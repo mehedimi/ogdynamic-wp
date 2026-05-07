@@ -12,13 +12,15 @@ use OGD\Traits\Singleton;
 final class Plugin {
 	use Singleton;
 
-	private function __construct() {}
-
 	public function boot(): void {
-		load_plugin_textdomain( 'ogdynamic', false, dirname( plugin_basename( OGD_FILE ) ) . '/languages' );
+		load_plugin_textdomain( 'ogdynamic', false, dirname( plugin_basename( OGDYNAMIC_FILE ) ) . '/languages' );
 
-		Admin::register();
-		RESTController::init();
-		MetaTags::register();
+        RESTController::init();
+
+        if(is_admin()) {
+            Admin::register();
+        } else {
+            MetaTags::register();
+        }
 	}
 }

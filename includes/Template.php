@@ -15,64 +15,162 @@ class Template {
 
 	private static function get_sources(): array {
 		if ( null === self::$sources_config ) {
-			$site_sources   = array(
-				array( 'key' => 'site_name', 'label' => 'Site name' ),
-				array( 'key' => 'site_tagline', 'label' => 'Site tagline' ),
+			$site_sources         = array(
+				array(
+					'key'   => 'site_name',
+					'label' => 'Site name',
+				),
+				array(
+					'key'   => 'site_tagline',
+					'label' => 'Site tagline',
+				),
 			);
-			$post_sources   = array(
-				array( 'key' => 'post_title', 'label' => 'Post title' ),
-				array( 'key' => 'excerpt', 'label' => 'Excerpt' ),
-				array( 'key' => 'trimmed_content', 'label' => 'Trimmed content' ),
-				array( 'key' => 'featured_image', 'label' => 'Featured image' ),
-				array( 'key' => 'author_name', 'label' => 'Author name' ),
-				array( 'key' => 'published_date', 'label' => 'Published date' ),
-				array( 'key' => 'modified_date', 'label' => 'Modified date' ),
-				array( 'key' => 'category', 'label' => 'Category' ),
-				array( 'key' => 'tags', 'label' => 'Tags' ),
+			$post_sources         = array(
+				array(
+					'key'   => 'post_title',
+					'label' => 'Post title',
+				),
+				array(
+					'key'   => 'excerpt',
+					'label' => 'Excerpt',
+				),
+				array(
+					'key'   => 'trimmed_content',
+					'label' => 'Trimmed content',
+				),
+				array(
+					'key'   => 'featured_image',
+					'label' => 'Featured image',
+				),
+				array(
+					'key'   => 'author_name',
+					'label' => 'Author name',
+				),
+				array(
+					'key'   => 'published_date',
+					'label' => 'Published date',
+				),
+				array(
+					'key'   => 'modified_date',
+					'label' => 'Modified date',
+				),
+				array(
+					'key'   => 'category',
+					'label' => 'Category',
+				),
+				array(
+					'key'   => 'tags',
+					'label' => 'Tags',
+				),
 				...$site_sources,
 			);
-			$page_sources   = array(
-				array( 'key' => 'post_title', 'label' => 'Page title' ),
-				array( 'key' => 'excerpt', 'label' => 'Excerpt' ),
-				array( 'key' => 'trimmed_content', 'label' => 'Trimmed content' ),
-				array( 'key' => 'featured_image', 'label' => 'Featured image' ),
-				array( 'key' => 'author_name', 'label' => 'Author name' ),
-				array( 'key' => 'published_date', 'label' => 'Published date' ),
-				array( 'key' => 'modified_date', 'label' => 'Modified date' ),
+			$page_sources         = array(
+				array(
+					'key'   => 'post_title',
+					'label' => 'Page title',
+				),
+				array(
+					'key'   => 'excerpt',
+					'label' => 'Excerpt',
+				),
+				array(
+					'key'   => 'trimmed_content',
+					'label' => 'Trimmed content',
+				),
+				array(
+					'key'   => 'featured_image',
+					'label' => 'Featured image',
+				),
+				array(
+					'key'   => 'author_name',
+					'label' => 'Author name',
+				),
+				array(
+					'key'   => 'published_date',
+					'label' => 'Published date',
+				),
+				array(
+					'key'   => 'modified_date',
+					'label' => 'Modified date',
+				),
 				...$site_sources,
 			);
 			self::$sources_config = array(
-				'default' => $site_sources,
-				'post'    => $post_sources,
-				'page'    => $page_sources,
-				'product' => array(
+				'default'  => $site_sources,
+				'post'     => $post_sources,
+				'page'     => $page_sources,
+				'product'  => array(
 					...$post_sources,
-					array( 'key' => 'product_title', 'label' => 'Product title' ),
-					array( 'key' => 'product_short_description', 'label' => 'Product short description' ),
-					array( 'key' => 'product_image', 'label' => 'Product image' ),
-					array( 'key' => 'product_price', 'label' => 'Product price' ),
-					array( 'key' => 'regular_price', 'label' => 'Regular price' ),
-					array( 'key' => 'sale_price', 'label' => 'Sale price' ),
-					array( 'key' => 'currency', 'label' => 'Currency' ),
-					array( 'key' => 'sku', 'label' => 'SKU' ),
-					array( 'key' => 'product_category', 'label' => 'Product category' ),
-					array( 'key' => 'product_tags', 'label' => 'Product tags' ),
-					array( 'key' => 'stock_status', 'label' => 'Stock status' ),
-					array( 'key' => 'rating', 'label' => 'Rating' ),
-					array( 'key' => 'review_count', 'label' => 'Review count' ),
+					array(
+						'key'   => 'product_short_description',
+						'label' => 'Product short description',
+					),
+					array(
+						'key'   => 'product_price',
+						'label' => 'Product price',
+					),
+					array(
+						'key'   => 'regular_price',
+						'label' => 'Regular price',
+					),
+					array(
+						'key'   => 'sale_price',
+						'label' => 'Sale price',
+					),
+					array(
+						'key'   => 'currency',
+						'label' => 'Currency',
+					),
+					array(
+						'key'   => 'sku',
+						'label' => 'SKU',
+					),
+					array(
+						'key'   => 'product_category',
+						'label' => 'Product category',
+					),
+					array(
+						'key'   => 'product_tags',
+						'label' => 'Product tags',
+					),
+					array(
+						'key'   => 'product_attributes',
+						'label' => 'Product attributes',
+					),
+					array(
+						'key'   => 'stock_status',
+						'label' => 'Stock status',
+					),
+					array(
+						'key'   => 'rating',
+						'label' => 'Rating',
+					),
+					array(
+						'key'   => 'review_count',
+						'label' => 'Review count',
+					),
 				),
-				'home'    => $site_sources,
-				'blog'    => $site_sources,
+				'home'     => $site_sources,
+				'blog'     => $site_sources,
 				'category' => array(
-					array( 'key' => 'category', 'label' => 'Category name' ),
+					array(
+						'key'   => 'category',
+						'label' => 'Category name',
+					),
 					...$site_sources,
 				),
 				'tag'      => array(
-					array( 'key' => 'tag', 'label' => 'Tag name' ),
+					array(
+						'key'   => 'tag',
+						'label' => 'Tag name',
+					),
 					...$site_sources,
 				),
 				'author'   => array(
-					array( 'key' => 'author_name', 'label' => 'Author name' ),
+					array(
+						'key'   => 'author_name',
+						'label' => 'Author name',
+					),
 					...$site_sources,
 				),
 				'date'     => $site_sources,
@@ -175,6 +273,7 @@ class Template {
 
 		$prefix = Settings::PREFIX . self::POST_TYPE_KEY_PREFIX;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$keys = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s ORDER BY option_name ASC",
@@ -182,8 +281,11 @@ class Template {
 			)
 		);
 
-		return array_map( static function ( $key ) {
-			return self::unwrap_post_type( $key );
-		}, $keys );
+		return array_map(
+			static function ( $key ) {
+				return self::unwrap_post_type( $key );
+			},
+			$keys
+		);
 	}
 }

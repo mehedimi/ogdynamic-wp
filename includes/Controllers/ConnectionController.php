@@ -97,7 +97,7 @@ class ConnectionController {
 
 	private static function verify_api_key( string $api_key ) {
 		$response = wp_remote_get(
-			trailingslashit( OGD_API ) . 'v1/me',
+			trailingslashit( OGDYNAMIC_API ) . 'v1/me',
 			array(
 				'timeout' => 12,
 				'headers' => array(
@@ -118,5 +118,4 @@ class ConnectionController {
 
 		return true;
 	}
-
 }

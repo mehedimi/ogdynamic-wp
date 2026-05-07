@@ -57,7 +57,7 @@ class TemplatesController {
 							'validate_callback' => array( self::class, 'validate_map' ),
 							'sanitize_callback' => array( self::class, 'sanitize_map' ),
 						),
-						'post_type' => array(
+						'post_type'   => array(
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_key',
 						),
@@ -83,7 +83,7 @@ class TemplatesController {
 	}
 
 	public static function get() {
-		$post_types     = Template::available_post_types();
+		$post_types           = Template::available_post_types();
 		$activated_post_types = Template::get_activated_post_types();
 
 		return rest_ensure_response(
