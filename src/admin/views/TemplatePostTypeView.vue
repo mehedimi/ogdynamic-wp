@@ -150,7 +150,7 @@ async function save() {
 }
 
 async function deactivate() {
-  await wordpressApi.request<{ data: [] }>(`templates/${postType.value}`, {
+  await wpDeleteApi.request<{ data: [] }>(`templates/${postType.value}`, {
     method: "DELETE",
   });
 
@@ -423,7 +423,11 @@ load();
               <path d="M18 6 6 18" />
               <path d="m6 6 12 12" />
             </svg>
-            Deactivate Template
+            {{
+              wpDeleteApi.loading.value
+                ? "Deactivating..."
+                : "Deactivate Template"
+            }}
           </button>
         </div>
 
