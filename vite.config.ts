@@ -5,24 +5,25 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
   server: {
-    host: '127.0.0.1',
+    host: "127.0.0.1",
     port: 5173,
     strictPort: true,
     cors: true,
   },
+  base: "./",
   build: {
-    outDir: 'dist/admin',
+    outDir: "dist/admin",
     emptyOutDir: true,
     manifest: true,
-    rollupOptions: {
+    rolldownOptions: {
       input: {
-        admin: 'src/admin/main.ts',
+        admin: "src/admin/main.ts",
       },
       output: {
-        entryFileNames: 'assets/[name].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name][extname]',
+        entryFileNames: "assets/[name].js",
+        chunkFileNames: "assets/[name]-[hash].js",
+        assetFileNames: "assets/[name][extname]",
       },
     },
   },
-})
+});

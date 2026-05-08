@@ -47,10 +47,7 @@ class Admin {
 			true
 		);
 
-		if ( '' !== $asset['css'] ) {
-			wp_enqueue_style( 'ogdynamic-admin', $asset['css'], array(), OGDYNAMIC_VERSION );
-		}
-
+		wp_enqueue_style( 'ogdynamic-admin', $asset['css'], array(), OGDYNAMIC_VERSION );
 		self::localize_admin_script();
 	}
 
@@ -114,21 +111,12 @@ class Admin {
 	private static function asset_files(): array {
 		$manifest_path = OGDYNAMIC_PATH . 'dist/admin/.vite/manifest.json';
 
-		if ( file_exists( $manifest_path ) ) {
-			$manifest = wp_json_file_decode( $manifest_path, array( 'associative' => true ) );
-			$entry    = $manifest['src/admin/main.ts'] ?? null;
-
-			if ( is_array( $entry ) ) {
-				return array(
-					'js'  => OGDYNAMIC_URL . 'dist/admin/' . $entry['file'],
-					'css' => isset( $entry['css'][0] ) ? OGDYNAMIC_URL . 'dist/admin/' . $entry['css'][0] : '',
-				);
-			}
-		}
+		$manifest = wp_json_file_decode( $manifest_path, array( 'associative' => true ) );
+		$entry    = $manifest['src/admin/main.ts'] ?? null;
 
 		return array(
-			'js'  => OGDYNAMIC_URL . 'assets/admin/fallback.js',
-			'css' => OGDYNAMIC_URL . 'assets/admin/fallback.css',
+			'js'  => OGDYNAMIC_URL . 'dist/admin/' . $entry['file'],
+			'css' => isset( $entry['css'][0] ) ? OGDYNAMIC_URL . 'dist/admin/' . $entry['css'][0] : '',
 		);
 	}
 
