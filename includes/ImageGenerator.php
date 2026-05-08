@@ -14,7 +14,8 @@ use WP_User;
 class ImageGenerator {
 	private const CDN_BASE_URL = 'https://cdn.ogdynamic.com/d/';
 
-	protected static ?array $query = null;
+	protected static ?array $query              = null;
+	protected static ?bool $has_generated_image = null;
 
 	protected static ?string $template_id = null;
 
@@ -49,15 +50,20 @@ class ImageGenerator {
 	}
 
 	public static function has_generated_image(): bool {
+		if ( null !== self::$has_generated_image ) {
+			return self::$has_generated_image;
+		}
+
 		$attrs = self::get_attrs();
 
 		if ( null === $attrs ) {
-			return false;
+			self::$has_generated_image = false;
+		} else {
+			self::$query               = $attrs;
+			self::$has_generated_image = true;
 		}
 
-		self::$query = $attrs;
-
-		return true;
+		return self::$has_generated_image;
 	}
 
 	protected static function get_template_url(): string {
