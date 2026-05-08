@@ -193,10 +193,9 @@ load();
       {{ postTypeLabel }} OG Image Template
     </h1>
     <p
-      class="ogd:mt-2 ogd:mb-7 ogd:max-w-155 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
+      class="ogd:mt-2! ogd:mb-6 ogd:max-w-140 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
     >
-      Select an OG image design, then map its override fields to WordPress
-      values for this post type.
+      Map an ogdynamic design to WordPress sources for this post type.
     </p>
 
     <!-- Design selector skeleton while the WordPress mapping data loads. -->
@@ -234,16 +233,18 @@ load();
       class="ogd:mb-4.5 ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
     >
       <div
-        class="ogd:flex ogd:gap-12 ogd:justify-center ogd:items-center max-[720px]:ogd:grid-cols-1 max-[720px]:ogd:items-stretch"
+        class="ogd:flex ogd:items-center ogd:justify-between ogd:gap-4 max-[720px]:ogd:flex-col max-[720px]:ogd:items-stretch"
       >
-        <SelectInput
-          id="design-id"
-          v-model="formPayload.template_id"
-          :options="designOptions"
-          :disabled="cloudApi.loading.value"
-        />
+        <div class="ogd:flex-1">
+          <SelectInput
+            id="design-id"
+            v-model="formPayload.template_id"
+            :options="designOptions"
+            :disabled="cloudApi.loading.value"
+          />
+        </div>
         <div
-          class="ogd:flex ogd:flex-wrap ogd:justify-end ogd:gap-2.5 max-[720px]:ogd:justify-start"
+          class="ogd:flex ogd:shrink-0 ogd:flex-wrap ogd:justify-end ogd:gap-2.5 max-[720px]:ogd:justify-start"
         >
           <button
             class="ogd:inline-flex ogd:size-10 ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:rounded-full ogd:border ogd:border-gray-200 ogd:bg-white ogd:text-gray-700 ogd:transition ogd:hover:border-rose-200 ogd:hover:bg-rose-50 ogd:hover:text-gray-900 ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
@@ -344,12 +345,12 @@ load();
         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
       >
         <h2
-          class="ogd:m-0 ogd:font-display ogd:text-base ogd:font-bold ogd:text-gray-900"
+          class="ogd:m-0! ogd:font-display ogd:text-base ogd:font-bold ogd:text-gray-900"
         >
           OG image mapping
         </h2>
         <p
-          class="ogd:mt-2 ogd:mb-5 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500"
+          class="ogd:mt-2! ogd:mb-5 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500"
         >
           Link each overridable template field to a WordPress source used in the
           generated OG image.
@@ -384,6 +385,21 @@ load();
             "
             @click="save"
           >
+            <svg
+              class="ogd:size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect width="18" height="14" x="3" y="5" rx="2" />
+              <path d="m3 15 4.5-4.5a2 2 0 0 1 2.8 0L15 15" />
+              <path d="m14 14 1.5-1.5a2 2 0 0 1 2.8 0L21 15" />
+              <circle cx="16" cy="9" r="1" />
+            </svg>
             {{ templateExists ? "Update Template" : "Activate Template" }}
           </button>
           <button
@@ -393,6 +409,19 @@ load();
             :disabled="wpDeleteApi.loading.value"
             @click="deactivate"
           >
+            <svg
+              class="ogd:size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
             Deactivate Template
           </button>
         </div>
@@ -415,21 +444,45 @@ load();
       <div class="ogd:grid ogd:gap-4 ogd:self-start">
         <div
           v-if="formPayload.template_id && cloudApi.loading.value"
-          class="ogd:overflow-hidden ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-4"
+          class="ogd:overflow-hidden ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white"
         >
-          <div
-            class="ogd:aspect-1200/630 ogd:w-full ogd:animate-pulse ogd:rounded-[14px] ogd:bg-gray-100"
-          ></div>
+          <div class="ogd:animate-pulse">
+            <div class="ogd:border-b ogd:border-gray-100 ogd:p-4">
+              <div
+                class="ogd:h-5 ogd:w-24 ogd:rounded-md ogd:bg-gray-100"
+              ></div>
+              <div
+                class="ogd:mt-2 ogd:h-4 ogd:w-40 ogd:rounded-md ogd:bg-gray-100"
+              ></div>
+            </div>
+            <div class="ogd:bg-gray-50 ogd:p-3">
+              <div
+                class="ogd:aspect-1200/630 ogd:w-full ogd:rounded-[14px] ogd:bg-gray-100"
+              ></div>
+            </div>
+          </div>
         </div>
         <div
           v-else-if="formPayload.template_id"
           class="ogd:overflow-hidden ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white"
         >
-          <img
-            :src="selectedDesignPreviewUrl"
-            :alt="`${postTypeLabel} design preview`"
-            class="ogd:block ogd:w-full ogd:max-h-105 ogd:object-cover"
-          />
+          <div class="ogd:border-b ogd:border-gray-100 ogd:p-4">
+            <h2
+              class="ogd:m-0! ogd:font-display ogd:text-base ogd:font-bold ogd:text-gray-900"
+            >
+              Preview
+            </h2>
+            <p class="ogd:mt-1! ogd:mb-0! ogd:text-sm ogd:text-gray-500">
+              {{ design?.name }}
+            </p>
+          </div>
+          <div class="ogd:bg-w ogd:p-3">
+            <img
+              :src="selectedDesignPreviewUrl"
+              :alt="`${postTypeLabel} design preview`"
+              class="ogd:block ogd:w-full ogd:rounded-[14px] ogd:border! ogd:border-gray-100!"
+            />
+          </div>
         </div>
       </div>
     </div>
