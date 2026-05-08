@@ -5,7 +5,7 @@ import type { ApiData, OGDDesign, OGDDesignListItem } from "../types";
 import { useOgdApi } from "../composables/useOgdApi";
 import { useOgdCloudApi } from "../composables/useOgdCloudApi";
 import FormField from "../components/forms/FormField.vue";
-import SelectInput from "../components/forms/SelectInput.vue";
+import SearchableSelectInput from "../components/forms/SearchableSelectInput.vue";
 
 type FieldOption = {
   key: string;
@@ -236,11 +236,12 @@ load();
         class="ogd:flex ogd:items-center ogd:justify-between ogd:gap-4 max-[720px]:ogd:flex-col max-[720px]:ogd:items-stretch"
       >
         <div class="ogd:flex-1">
-          <SelectInput
+          <SearchableSelectInput
             id="design-id"
             v-model="formPayload.template_id"
             :options="designOptions"
             :disabled="cloudApi.loading.value"
+            placeholder="Search designs"
           />
         </div>
         <div
@@ -363,7 +364,7 @@ load();
             :label="field.label"
             :for-id="fieldInputId(field.key)"
           >
-            <SelectInput
+            <SearchableSelectInput
               :id="fieldInputId(field.key)"
               :modelValue="fieldMap(field.key)"
               @update:model-value="
