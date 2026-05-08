@@ -130,11 +130,17 @@ async function loadDesigns() {
 }
 
 async function loadDesign(designId: string) {
+  if ("" === designId) {
+    design.value = undefined;
+    return;
+  }
+
   const { data } = await cloudApi.request<ApiData<OGDDesign>>(
     `v1/designs/${designId}?include=template`,
   );
 
   design.value = data;
+  autoMapEmptyFields();
 }
 
 async function save() {
@@ -172,6 +178,51 @@ function setFieldMapValue(attr_key: string, key: string) {
       attr_key,
     });
   }
+}
+
+function autoMapEmptyFields() {
+  for (const field of fields.value) {
+    const mapped = formPayload.map.find((map) => map.attr_key === field.key);
+
+    if (mapped) {
+      continue;
+    }
+
+    const source = findMatchingSource(field);
+
+    if (source) {
+      formPayload.map.push({
+        attr_key: field.key,
+        key: source.key,
+      });
+    }
+  }
+}
+
+function findMatchingSource(field: FieldOption): MappingSourceOption | undefined {
+  const normalizedField = normalizeMappingKey(field.key);
+  const normalizedLabel = normalizeMappingKey(field.label);
+  const fieldKeys = [normalizedField, normalizedLabel].filter(Boolean);
+
+  return mappingSources.value.find((source) => {
+    const sourceKeys = [
+      normalizeMappingKey(source.key),
+      normalizeMappingKey(source.label),
+    ];
+
+    return fieldKeys.some((fieldKey) =>
+      sourceKeys.some(
+        (sourceKey) =>
+          sourceKey === fieldKey ||
+          sourceKey.endsWith(fieldKey) ||
+          fieldKey.endsWith(sourceKey),
+      ),
+    );
+  });
+}
+
+function normalizeMappingKey(key: string): string {
+  return key.replace(/url$/i, "").replace(/[^a-z0-9]/gi, "").toLowerCase();
 }
 
 load();
