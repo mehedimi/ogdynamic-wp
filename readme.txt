@@ -1,6 +1,6 @@
 === ogdynamic ===
 Contributors: mehedimi
-Tags: og:image, open graph, social media, ogdynamic, dynamic images, WooCommerce
+Tags: open graph, social images, dynamic images, woocommerce, seo
 Requires at least: 6.3
 Tested up to: 6.8
 Requires PHP: 7.4
@@ -29,6 +29,30 @@ Connect WordPress to ogdynamic and generate dynamic Open Graph images for posts,
 2. Choose an OG image template for each content type
 3. Map WordPress fields to template variables
 4. ogdynamic automatically generates the right image for each page
+
+= External Service =
+
+This plugin connects to the ogdynamic service at [ogdynamic.com](https://ogdynamic.com).
+
+The service is used to:
+
+* Verify your API key when you connect the plugin
+* Fetch your ogdynamic account and design/template data in the WordPress admin
+* Generate and serve dynamic Open Graph images from ogdynamic infrastructure
+
+When an OG image is configured, the plugin adds an image URL from `cdn.ogdynamic.com` to the page's social meta tags. The URL contains the selected template/design ID and the mapped field values needed to render that image, such as title, excerpt, featured image URL, product price, SKU, categories, tags, or other fields you choose in the mapping UI.
+
+Normal site visitors do not download the generated OG image during a regular page load. Social platforms and link preview tools fetch the image from ogdynamic's CDN when someone shares or previews the page URL.
+
+An ogdynamic account and API key are required because the image rendering work is performed by ogdynamic's servers instead of your WordPress server.
+
+Service links:
+
+* Service: [https://ogdynamic.com](https://ogdynamic.com)
+* API token page: [https://ogdynamic.com/settings/tokens](https://ogdynamic.com/settings/tokens)
+* Terms of Service: [https://ogdynamic.com/terms](https://ogdynamic.com/terms)
+* Privacy Policy: [https://ogdynamic.com/privacy](https://ogdynamic.com/privacy)
+* Source code: [https://github.com/mehedimi/ogdynamic-wp](https://github.com/mehedimi/ogdynamic-wp)
 
 == Installation ==
 

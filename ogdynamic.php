@@ -4,8 +4,8 @@
  * Plugin URI: https://ogdynamic.com
  * Description: Connect WordPress to ogdynamic and generate dynamic Open Graph images for posts, pages, products, and archives.
  * Version: 0.1.0
- * Author: ogdynamic
- * Author URI: https://ogdynamic.com
+ * Author: mehedimi
+ * Author URI: https://mehedi.im
  * Text Domain: ogdynamic
  * Requires at least: 6.3
  * Requires PHP: 7.4

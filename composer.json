@@ -1,7 +1,12 @@
 {
   "name": "ogdynamic/ogdynamic-wordpress",
   "description": "WordPress connector plugin for ogdynamic.com.",
+  "version": "0.1.0",
   "license": "GPL-2.0-or-later",
+  "homepage": "https://github.com/mehedimi/ogdynamic-wp",
+  "support": {
+    "source": "https://github.com/mehedimi/ogdynamic-wp"
+  },
   "type": "wordpress-plugin",
   "autoload": {
     "psr-4": {
