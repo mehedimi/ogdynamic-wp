@@ -9,9 +9,12 @@ namespace OGD;
 
 class MetaTags {
 
+	static bool $output_via_plugins = false;
+
+
 	public static function register(): void {
 		if ( self::is_rank_math_active() ) {
-			self::register_rank_math_filters();
+			self::handle_rank_math_og();
 		}
 
 		if ( self::is_yoast_seo_active() ) {
@@ -37,8 +40,42 @@ class MetaTags {
 		add_action( 'wp_head', array( self::class, 'output' ), PHP_INT_MAX );
 	}
 
+	public static function handle_rank_math_og(): void {
+
+		self::$output_via_plugins = true;
+
+		add_filter(
+			'rank_math/opengraph/twitter/image',
+			function ( $attachment_url ) {
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_twitter_image_url() : $attachment_url;
+			}
+		);
+
+		add_filter(
+			'rank_math/opengraph/facebook/image',
+			function ( $attachment_url ) {
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_image_url() : $attachment_url;
+			}
+		);
+
+		add_filter(
+			'rank_math/opengraph/facebook/image_array',
+			function ( $urls ) {
+				if ( ! ImageGenerator::has_generated_image() ) {
+					return $urls;
+				}
+
+				return array(
+					'width'  => 1200,
+					'height' => 630,
+					'url'    => ImageGenerator::get_image_url(),
+				);
+			}
+		);
+	}
+
 	public static function output(): void {
-		if ( ! ImageGenerator::has_generated_image() ) {
+		if ( self::$output_via_plugins || ! ImageGenerator::has_generated_image() ) {
 			return;
 		}
 
@@ -53,36 +90,6 @@ class MetaTags {
 ',
 			esc_url( ImageGenerator::get_image_url() ),
 			esc_url( ImageGenerator::get_twitter_image_url() )
-		);
-	}
-
-	private static function register_rank_math_filters(): void {
-		add_filter(
-			'rank_math/opengraph/facebook/image',
-			static function ( $image ) {
-				return ImageGenerator::has_generated_image() ? '' : $image;
-			}
-		);
-
-		add_filter(
-			'rank_math/opengraph/twitter/image',
-			static function ( $image ) {
-				return ImageGenerator::has_generated_image() ? '' : $image;
-			}
-		);
-
-		add_filter(
-			'rank_math/opengraph/pre_set_default_image',
-			static function ( $pre_set ) {
-				return ImageGenerator::has_generated_image() ? true : $pre_set;
-			}
-		);
-
-		add_filter(
-			'rank_math/opengraph/pre_set_content_image',
-			static function ( $pre_set ) {
-				return ImageGenerator::has_generated_image() ? true : $pre_set;
-			}
 		);
 	}
 
@@ -218,8 +225,7 @@ class MetaTags {
 	}
 
 	private static function is_rank_math_active(): bool {
-		return defined( 'RANK_MATH_VERSION' )
-			|| self::is_plugin_active( 'seo-by-rank-math/rank-math.php' );
+		return defined( 'RANK_MATH_VERSION' ) || class_exists( 'RankMath' );
 	}
 
 	private static function is_yoast_seo_active(): bool {
