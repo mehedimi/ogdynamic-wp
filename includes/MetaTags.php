@@ -42,13 +42,18 @@ class MetaTags {
 			return;
 		}
 
-		echo "\n<!-- ogdynamic -->\n";
-		echo '<meta property="og:image" content="' . esc_url( ImageGenerator::get_image_url() ) . "\" />\n";
-		echo '<meta property="og:image:width" content="1200" />' . "\n";
-		echo '<meta property="og:image:height" content="630" />' . "\n";
-		echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
-		echo '<meta name="twitter:image" content="' . esc_url( ImageGenerator::get_twitter_image_url() ) . "\" />\n";
-		echo "<!-- /ogdynamic -->\n";
+		printf(
+			'<!-- ogdynamic -->
+<meta property="og:image" content="%s" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="%s" />
+<!-- /ogdynamic -->
+',
+			esc_url( ImageGenerator::get_image_url() ),
+			esc_url( ImageGenerator::get_twitter_image_url() )
+		);
 	}
 
 	private static function register_rank_math_filters(): void {

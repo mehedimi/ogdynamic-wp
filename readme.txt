@@ -1,23 +1,24 @@
 === ogdynamic ===
-Contributors: (author name)
+Contributors: mehedimi
 Tags: og:image, open graph, social media, ogdynamic, dynamic images, WooCommerce
 Requires at least: 6.3
 Tested up to: 6.8
 Requires PHP: 7.4
 Stable tag: 0.1.0
-License: proprietary
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Connect WordPress to ogdynamic and generate dynamic Open Graph images for posts, pages, products, and archives.
 
 == Description ==
 
-ogdynamic connects your WordPress site to [ogdynamic.com](https://ogdynamic.com) to automatically generate dynamic Open Graph images for your content.
+**ogdynamic** connects your WordPress site to [ogdynamic.com](https://ogdynamic.com) to automatically generate dynamic Open Graph images for your content.
 
 = Features =
 
 * **Dynamic OG Images** - Automatically generate Open Graph images for posts, pages, products, and archive pages
 * **WooCommerce Support** - Product images include price, SKU, stock status, and attributes
-* **SEO Plugin Compatibility** - Works with Rank Math, Yoast SEO, AIOSEO, SEOPress, The SEO Framework, and Squirrly SEO
+* **SEO Plugin Compatibility** - When ogdynamic generates an OG image, it automatically prevents conflicts with popular SEO plugins by disabling their og:image output
 * **Field Mapping** - Map WordPress content to image template variables using an intuitive admin interface
 * **Archive Pages** - Support for homepage, blog, category, tag, author, date, and search result pages
 * **Performance** - Images served via CDN for fast loading
@@ -59,7 +60,10 @@ Yes, you need to create an account at [ogdynamic.com](https://ogdynamic.com) to 
 
 = Which SEO plugins are supported? =
 
-ogdynamic is compatible with:
+ogdynamic works completely independently and doesn't require any SEO plugin to function.
+
+However, if you have one of these SEO plugins installed, ogdynamic will automatically prevent conflicts by disabling their og:image output when ogdynamic has generated an image for the page:
+
 * Rank Math
 * Yoast SEO
 * All in One SEO Pack (AIOSEO)
@@ -67,7 +71,7 @@ ogdynamic is compatible with:
 * The SEO Framework
 * Squirrly SEO
 
-When ogdynamic generates an image for a page, it automatically disables the Open Graph image from these plugins to prevent conflicts.
+If a page doesn't have an ogdynamic image configured, the SEO plugin's og:image tags will be used normally.
 
 = Does it support WooCommerce? =
 
@@ -84,7 +88,7 @@ Yes, you can create templates for custom post types. Use the "Default" template 
 * Template configuration per post type
 * Field mapping between WordPress data and OG image templates
 * WooCommerce product support
-* SEO plugin integration (Rank Math, Yoast, AIOSEO, SEOPress, The SEO Framework, Squirrly)
+* SEO plugin compatibility - prevents conflicts with Rank Math, Yoast, AIOSEO, SEOPress, The SEO Framework, and Squirrly when ogdynamic generates an image
 * Archive page support (homepage, blog, category, tag, author, date, search)
 * Multisite support
 

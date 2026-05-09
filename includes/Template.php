@@ -18,159 +18,159 @@ class Template {
 			$site_sources         = array(
 				array(
 					'key'   => 'site_name',
-					'label' => 'Site name',
+					'label' => __( 'Site name', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'site_tagline',
-					'label' => 'Site tagline',
+					'label' => __( 'Site tagline', 'ogdynamic' ),
 				),
 			);
 			$post_sources         = array(
 				array(
 					'key'   => 'post_title',
-					'label' => 'Post title',
+					'label' => __( 'Post title', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'excerpt',
-					'label' => 'Excerpt',
+					'label' => __( 'Excerpt', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'trimmed_content',
-					'label' => 'Trimmed content',
+					'label' => __( 'Trimmed content', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'featured_image',
-					'label' => 'Featured image',
+					'label' => __( 'Featured image', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'author_name',
-					'label' => 'Author name',
+					'label' => __( 'Author name', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'published_date',
-					'label' => 'Published date',
+					'label' => __( 'Published date', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'modified_date',
-					'label' => 'Modified date',
+					'label' => __( 'Modified date', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'category',
-					'label' => 'Category',
+					'label' => __( 'Category', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'tags',
-					'label' => 'Tags',
+					'label' => __( 'Tags', 'ogdynamic' ),
 				),
 				...$site_sources,
 			);
 			$page_sources         = array(
 				array(
 					'key'   => 'post_title',
-					'label' => 'Page title',
+					'label' => __( 'Page title', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'excerpt',
-					'label' => 'Excerpt',
+					'label' => __( 'Excerpt', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'trimmed_content',
-					'label' => 'Trimmed content',
+					'label' => __( 'Trimmed content', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'featured_image',
-					'label' => 'Featured image',
+					'label' => __( 'Featured image', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'author_name',
-					'label' => 'Author name',
+					'label' => __( 'Author name', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'published_date',
-					'label' => 'Published date',
+					'label' => __( 'Published date', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'modified_date',
-					'label' => 'Modified date',
+					'label' => __( 'Modified date', 'ogdynamic' ),
 				),
 				...$site_sources,
 			);
 			$product_sources      = array(
 				array(
 					'key'   => 'post_title',
-					'label' => 'Product title',
+					'label' => __( 'Product title', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'excerpt',
-					'label' => 'Product excerpt',
+					'label' => __( 'Product excerpt', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'trimmed_content',
-					'label' => 'Product description',
+					'label' => __( 'Product description', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'featured_image',
-					'label' => 'Product image',
+					'label' => __( 'Product image', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'author_name',
-					'label' => 'Product author',
+					'label' => __( 'Product author', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'published_date',
-					'label' => 'Published date',
+					'label' => __( 'Published date', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'modified_date',
-					'label' => 'Modified date',
+					'label' => __( 'Modified date', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'product_short_description',
-					'label' => 'Product short description',
+					'label' => __( 'Product short description', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'product_price',
-					'label' => 'Product price',
+					'label' => __( 'Product price', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'regular_price',
-					'label' => 'Regular price',
+					'label' => __( 'Regular price', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'sale_price',
-					'label' => 'Sale price',
+					'label' => __( 'Sale price', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'currency',
-					'label' => 'Currency',
+					'label' => __( 'Currency', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'sku',
-					'label' => 'SKU',
+					'label' => __( 'SKU', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'product_category',
-					'label' => 'Product category',
+					'label' => __( 'Product category', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'product_tags',
-					'label' => 'Product tags',
+					'label' => __( 'Product tags', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'product_attributes',
-					'label' => 'Product attributes',
+					'label' => __( 'Product attributes', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'stock_status',
-					'label' => 'Stock status',
+					'label' => __( 'Stock status', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'rating',
-					'label' => 'Rating',
+					'label' => __( 'Rating', 'ogdynamic' ),
 				),
 				array(
 					'key'   => 'review_count',
-					'label' => 'Review count',
+					'label' => __( 'Review count', 'ogdynamic' ),
 				),
 				...$site_sources,
 			);
@@ -184,21 +184,21 @@ class Template {
 				'category' => array(
 					array(
 						'key'   => 'category',
-						'label' => 'Category name',
+						'label' => __( 'Category name', 'ogdynamic' ),
 					),
 					...$site_sources,
 				),
 				'tag'      => array(
 					array(
 						'key'   => 'tag',
-						'label' => 'Tag name',
+						'label' => __( 'Tag name', 'ogdynamic' ),
 					),
 					...$site_sources,
 				),
 				'author'   => array(
 					array(
 						'key'   => 'author_name',
-						'label' => 'Author name',
+						'label' => __( 'Author name', 'ogdynamic' ),
 					),
 					...$site_sources,
 				),
@@ -224,26 +224,26 @@ class Template {
 		$post_types = array(
 			array(
 				'name'        => 'default',
-				'label'       => 'Default',
-				'description' => 'OG image template for any post type without a specific template.',
+				'label'       => __( 'Default', 'ogdynamic' ),
+				'description' => __( 'OG image template for any post type without a specific template.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'post',
-				'label'       => 'Single Post',
-				'description' => 'OG image template for single blog posts.',
+				'label'       => __( 'Single Post', 'ogdynamic' ),
+				'description' => __( 'OG image template for single blog posts.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'page',
-				'label'       => 'Page',
-				'description' => 'OG image template for pages.',
+				'label'       => __( 'Page', 'ogdynamic' ),
+				'description' => __( 'OG image template for pages.', 'ogdynamic' ),
 			),
 		);
 
 		if ( self::is_woocommerce_active() ) {
 			$post_types[] = array(
 				'name'        => 'product',
-				'label'       => 'Product',
-				'description' => 'OG image template for WooCommerce products.',
+				'label'       => __( 'Product', 'ogdynamic' ),
+				'description' => __( 'OG image template for WooCommerce products.', 'ogdynamic' ),
 			);
 		}
 
@@ -252,38 +252,38 @@ class Template {
 			array(
 				array(
 					'name'        => 'home',
-					'label'       => 'Homepage',
-					'description' => 'OG image template for the site homepage.',
+					'label'       => __( 'Homepage', 'ogdynamic' ),
+					'description' => __( 'OG image template for the site homepage.', 'ogdynamic' ),
 				),
 				array(
 					'name'        => 'blog',
-					'label'       => 'Blog Page',
-					'description' => 'OG image template for the blog listing page.',
+					'label'       => __( 'Blog Page', 'ogdynamic' ),
+					'description' => __( 'OG image template for the blog listing page.', 'ogdynamic' ),
 				),
 				array(
 					'name'        => 'category',
-					'label'       => 'Category Archive',
-					'description' => 'OG image template for category archive pages.',
+					'label'       => __( 'Category Archive', 'ogdynamic' ),
+					'description' => __( 'OG image template for category archive pages.', 'ogdynamic' ),
 				),
 				array(
 					'name'        => 'tag',
-					'label'       => 'Tag Archive',
-					'description' => 'OG image template for tag archive pages.',
+					'label'       => __( 'Tag Archive', 'ogdynamic' ),
+					'description' => __( 'OG image template for tag archive pages.', 'ogdynamic' ),
 				),
 				array(
 					'name'        => 'author',
-					'label'       => 'Author Archive',
-					'description' => 'OG image template for author archive pages.',
+					'label'       => __( 'Author Archive', 'ogdynamic' ),
+					'description' => __( 'OG image template for author archive pages.', 'ogdynamic' ),
 				),
 				array(
 					'name'        => 'date',
-					'label'       => 'Date Archive',
-					'description' => 'OG image template for date-based archive pages.',
+					'label'       => __( 'Date Archive', 'ogdynamic' ),
+					'description' => __( 'OG image template for date-based archive pages.', 'ogdynamic' ),
 				),
 				array(
 					'name'        => 'search',
-					'label'       => 'Search Results',
-					'description' => 'OG image template for search results pages.',
+					'label'       => __( 'Search Results', 'ogdynamic' ),
+					'description' => __( 'OG image template for search results pages.', 'ogdynamic' ),
 				),
 			)
 		);
