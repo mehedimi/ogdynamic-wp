@@ -9,7 +9,7 @@ namespace OGD;
 
 class MetaTags {
 
-	static bool $output_via_plugins = false;
+	private static bool $output_via_plugins = false;
 
 
 	public static function register(): void {
@@ -18,11 +18,11 @@ class MetaTags {
 		}
 
 		if ( self::is_yoast_seo_active() ) {
-			self::register_yoast_seo_filters();
+			self::handle_yoast_seo_filters();
 		}
 
 		if ( self::is_aioseo_active() ) {
-			self::register_aioseo_filters();
+			self::handle_aioseo_filters();
 		}
 
 		if ( self::is_seopress_active() ) {
@@ -37,7 +37,7 @@ class MetaTags {
 			self::register_squirrly_seo_filters();
 		}
 
-		add_action( 'wp_head', array( self::class, 'output' ), PHP_INT_MAX );
+		add_action( 'wp_head', array( self::class, 'output' ) );
 	}
 
 	public static function handle_rank_math_og(): void {
@@ -93,23 +93,48 @@ class MetaTags {
 		);
 	}
 
-	private static function register_yoast_seo_filters(): void {
+	private static function handle_yoast_seo_filters(): void {
+		self::$output_via_plugins = true;
+
 		add_filter(
 			'wpseo_opengraph_image',
 			static function ( $image ) {
-				return ImageGenerator::has_generated_image() ? '' : $image;
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_image_url() : $image;
 			}
 		);
 
 		add_filter(
 			'wpseo_twitter_image',
 			static function ( $image ) {
-				return ImageGenerator::has_generated_image() ? '' : $image;
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_twitter_image_url() : $image;
+			}
+		);
+
+		add_filter(
+			'wpseo_opengraph_image_type',
+			static function ( $type ) {
+				return ImageGenerator::has_generated_image() ? false : $type;
+			}
+		);
+
+		add_filter(
+			'wpseo_opengraph_image_width',
+			static function ( $width ) {
+				return ImageGenerator::has_generated_image() ? 1200 : $width;
+			}
+		);
+
+		add_filter(
+			'wpseo_opengraph_image_height',
+			static function ( $height ) {
+				return ImageGenerator::has_generated_image() ? 630 : $height;
 			}
 		);
 	}
 
-	private static function register_aioseo_filters(): void {
+	private static function handle_aioseo_filters(): void {
+		self::$output_via_plugins = true;
+
 		add_filter(
 			'aioseo_facebook_tags',
 			static function ( $tags ) {
@@ -117,14 +142,9 @@ class MetaTags {
 					return $tags;
 				}
 
-				unset(
-					$tags['og:image'],
-					$tags['og:image:secure_url'],
-					$tags['og:image:width'],
-					$tags['og:image:height'],
-					$tags['og:image:type'],
-					$tags['twitter:card']
-				);
+				$tags['og:image']        = ImageGenerator::get_image_url();
+				$tags['og:image:width']  = 1200;
+				$tags['og:image:height'] = 630;
 
 				return $tags;
 			}
@@ -137,9 +157,7 @@ class MetaTags {
 					return $tags;
 				}
 
-				unset(
-					$tags['twitter:image']
-				);
+				$tags['twitter:image'] = ImageGenerator::get_twitter_image_url();
 
 				return $tags;
 			}
@@ -153,11 +171,17 @@ class MetaTags {
 				return ImageGenerator::has_generated_image() ? '' : $image;
 			}
 		);
-
 		add_filter(
 			'seopress_social_twitter_card_thumb',
 			static function ( $image ) {
 				return ImageGenerator::has_generated_image() ? '' : $image;
+			}
+		);
+
+		add_filter(
+			'seopress_social_twitter_card_summary',
+			static function ( $card ) {
+				return ImageGenerator::has_generated_image() ? '' : $card;
 			}
 		);
 	}
@@ -229,14 +253,12 @@ class MetaTags {
 	}
 
 	private static function is_yoast_seo_active(): bool {
-		return defined( 'WPSEO_VERSION' )
-			|| self::is_plugin_active( 'wordpress-seo/wp-seo.php' );
+		return defined( 'WPSEO_VERSION' ) || function_exists( 'YoastSEO' );
 	}
 
 	private static function is_aioseo_active(): bool {
 		return defined( 'AIOSEO_VERSION' )
-			|| function_exists( 'aioseo' )
-			|| self::is_plugin_active( 'all-in-one-seo-pack/all_in_one_seo_pack.php' );
+			|| function_exists( 'aioseo' );
 	}
 
 	private static function is_seopress_active(): bool {

@@ -9,7 +9,7 @@ namespace OGD;
 
 use OGD\Traits\Singleton;
 
-final class Plugin {
+final class OGDynamic {
 	use Singleton;
 
 	public function boot(): void {

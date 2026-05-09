@@ -13,7 +13,7 @@
  * @package OGD
  */
 
-use OGD\Plugin;
+use OGD\OGDynamic;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -46,6 +46,6 @@ require_once $ogdynamic_autoload;
 add_action(
 	'plugins_loaded',
 	static function () {
-		Plugin::instance()->boot();
+		OGDynamic::instance()->boot();
 	}
 );
