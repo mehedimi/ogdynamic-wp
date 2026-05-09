@@ -8,124 +8,354 @@
 namespace OGD;
 
 use WP_Post;
+use WP_Term;
+use WP_User;
 
 class ImageGenerator {
-	private Settings $settings;
+	private const CDN_BASE_URL = 'https://cdn.ogdynamic.com/d/';
 
-	public function __construct( Settings $settings ) {
-		$this->settings = $settings;
+	protected static ?array $query              = null;
+	protected static ?bool $has_generated_image = null;
+
+	protected static ?string $template_id = null;
+
+	public static function get_template_key(): ?string {
+		if ( is_category() ) {
+			$key = 'category';
+		} elseif ( is_tag() ) {
+			$key = 'tag';
+		} elseif ( is_author() ) {
+			$key = 'author';
+		} elseif ( is_date() ) {
+			$key = 'date';
+		} elseif ( is_search() ) {
+			$key = 'search';
+		} elseif ( is_front_page() ) {
+			$key = 'home';
+		} elseif ( is_home() ) {
+			$key = 'blog';
+		} elseif ( is_singular( 'product' ) ) {
+			$key = 'product';
+		} elseif ( is_singular( 'post' ) ) {
+			$key = 'post';
+		} elseif ( is_singular( 'page' ) ) {
+			$key = 'page';
+		} else {
+			$key = null;
+		}
+
+		$key = apply_filters( 'ogdynamic_template_key', $key );
+
+		return is_string( $key ) && '' !== $key ? sanitize_key( $key ) : null;
 	}
 
-	public function generate_for_post( int $post_id ): array {
-		$post = get_post( $post_id );
-		if ( ! $post instanceof WP_Post ) {
-			return $this->empty_result( 'Post not found.' );
+	public static function has_generated_image(): bool {
+		if ( null !== self::$has_generated_image ) {
+			return self::$has_generated_image;
 		}
 
-		$override = $this->get_override( $post_id );
-		if ( 'disabled' === $override['mode'] ) {
-			return $this->empty_result( 'ogdynamic disabled for this content.' );
-		}
-		if ( '' !== $override['custom_image_url'] ) {
-			return array(
-				'url'        => esc_url_raw( $override['custom_image_url'] ),
-				'templateId' => '',
-				'params'     => array(),
-				'fallback'   => false,
-				'message'    => 'Using custom image override.',
-			);
+		$attrs = self::get_attrs();
+
+		if ( null === $attrs ) {
+			self::$has_generated_image = false;
+		} else {
+			self::$query               = $attrs;
+			self::$has_generated_image = true;
 		}
 
-		$template_id = $this->resolve_template_id( $post, $override );
-		if ( '' === $template_id ) {
-			return $this->fallback_result( $post_id, 'No template configured.' );
+		return self::$has_generated_image;
+	}
+
+	protected static function get_template_url(): string {
+		return self::CDN_BASE_URL . self::$template_id;
+	}
+
+	public static function get_image_url(): string {
+		$url = self::get_template_url();
+
+		if ( empty( self::$query ) ) {
+			return $url;
 		}
 
-		$params = $this->resolve_post_params( $post, $template_id, $override );
-		$url    = $this->build_image_url( $template_id, $params );
+		return $url . '?' . http_build_query( self::$query );
+	}
 
-		return array(
-			'url'        => $url,
-			'templateId' => $template_id,
-			'params'     => $params,
-			'fallback'   => false,
-			'message'    => '',
+	public static function get_twitter_image_url(): string {
+		return self::get_template_url() . '?' . http_build_query(
+			array_merge(
+				self::$query,
+				array(
+					'config' => array(
+						'intent' => 'twitter',
+					),
+				)
+			)
 		);
 	}
 
-	public function build_image_url( string $template_id, array $params ): string {
-		$base  = 'https://ogdynamic.com/api/og/' . rawurlencode( $template_id );
-		$query = http_build_query( array_filter( $params, static fn( $value ) => '' !== (string) $value ), '', '&', PHP_QUERY_RFC3986 );
+	public static function get_attrs(): ?array {
+		$mapping = self::get_current_mapping();
+
+		if ( null === $mapping ) {
+			return null;
+		}
+
+		return self::get_mapping_attrs( $mapping['key'], $mapping['mapping'] );
+	}
+
+	public static function build_image_url( string $template_id, array $params ): string {
+		$base_url = (string) apply_filters( 'ogdynamic_image_base_url', self::CDN_BASE_URL );
+		$base     = trailingslashit( $base_url ) . rawurlencode( $template_id );
+		$query    = http_build_query( self::filter_params( $params ), '', '&', PHP_QUERY_RFC3986 );
 
 		return $query ? $base . '?' . $query : $base;
 	}
 
-	public function sample_params(): array {
+	private static function get_current_mapping(): ?array {
+		$key = self::get_template_key();
+
+		if ( null === $key ) {
+			$key = 'default';
+		}
+
+		return self::get_mapping_for_key( $key );
+	}
+
+	private static function get_mapping_for_key( string $key ): ?array {
+		$mapping = Template::get_mapping( $key );
+
+		if ( empty( $mapping ) && 'default' !== $key ) {
+			$mapping = Template::get_mapping( 'default' );
+		}
+
+		if ( empty( $mapping ) ) {
+			return null;
+		}
+
+		self::$template_id = $mapping['template_id'];
+
 		return array(
-			'title'       => get_bloginfo( 'name' ),
-			'description' => get_bloginfo( 'description' ),
-			'site_name'   => get_bloginfo( 'name' ),
-			'url'         => home_url( '/' ),
+			'key'     => $key,
+			'mapping' => $mapping,
 		);
 	}
 
-	private function resolve_template_id( WP_Post $post, array $override ): string {
-		$settings = $this->settings->get();
-		if ( '' !== $override['template_id'] ) {
-			return $override['template_id'];
+	private static function get_mapping_attrs( string $key, array $mapping ): array {
+		$method = 'get_' . $key . '_data';
+		if ( ! method_exists( self::class, $method ) ) {
+			return array();
 		}
 
-		if ( 'product' === $post->post_type && '' !== $settings['defaults']['product_template'] ) {
-			return (string) $settings['defaults']['product_template'];
-		}
-
-		$post_type_templates = $settings['defaults']['post_templates'];
-		if ( isset( $post_type_templates[ $post->post_type ] ) && '' !== $post_type_templates[ $post->post_type ] ) {
-			return (string) $post_type_templates[ $post->post_type ];
-		}
-
-		return (string) $settings['defaults']['global_template'];
+		return self::$method( $mapping );
 	}
 
-	private function resolve_post_params( WP_Post $post, string $template_id, array $override ): array {
-		$settings = $this->settings->get();
-		$mappings = $settings['mappings'][ $template_id ] ?? array();
-		$params   = array();
+	private static function get_mapping_attrs_for_object( WP_Post $post, array $mapping ): array {
+		return self::filter_params( self::resolve_mapping( $post, $mapping ) );
+	}
 
-		if ( empty( $mappings ) ) {
-			$params = array(
-				'title'       => $override['custom_title'] ?: get_the_title( $post ),
-				'description' => $override['custom_description'] ?: $this->get_description( $post ),
-				'image'       => get_the_post_thumbnail_url( $post, 'full' ) ?: '',
-				'url'         => get_permalink( $post ),
-				'site_name'   => get_bloginfo( 'name' ),
-			);
+	/**
+	 * Default template data.
+	 * Only supports site-wide values like site_name and site_tagline.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_default_data( array $mapping ): array {
+		return self::resolve_archive_mapping( $mapping );
+	}
+
+	/**
+	 * Single post template data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_post_data( array $mapping ): array {
+		$post = get_post();
+		if ( ! $post ) {
+			return array();
 		}
+		return self::resolve_mapping( $post, $mapping );
+	}
 
-		foreach ( $mappings as $variable => $mapping ) {
-			$params[ $variable ] = $this->resolve_field_value( $post, $mapping );
+	/**
+	 * Page template data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_page_data( array $mapping ): array {
+		$post = get_post();
+		if ( ! $post ) {
+			return array();
 		}
+		return self::resolve_mapping( $post, $mapping );
+	}
 
-		foreach ( $override['custom_params'] as $key => $value ) {
-			if ( '' !== $key && '' !== $value ) {
-				$params[ sanitize_key( $key ) ] = $value;
+	/**
+	 * Homepage template data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_home_data( array $mapping ): array {
+		return self::resolve_archive_mapping( $mapping );
+	}
+
+	/**
+	 * Blog listing page template data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_blog_data( array $mapping ): array {
+		return self::resolve_archive_mapping( $mapping );
+	}
+
+	/**
+	 * Category archive template data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_category_data( array $mapping ): array {
+		$term = get_queried_object();
+		if ( ! $term ) {
+			return array();
+		}
+		return self::resolve_mapping( $term, $mapping );
+	}
+
+	/**
+	 * Tag archive template data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_tag_data( array $mapping ): array {
+		$term = get_queried_object();
+		if ( ! $term ) {
+			return array();
+		}
+		return self::resolve_mapping( $term, $mapping );
+	}
+
+	/**
+	 * Author archive template data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_author_data( array $mapping ): array {
+		$term = get_queried_object();
+		if ( ! $term ) {
+			return array();
+		}
+		return self::resolve_mapping( $term, $mapping );
+	}
+
+	/**
+	 * Date archive template data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_date_data( array $mapping ): array {
+		return self::resolve_archive_mapping( $mapping );
+	}
+
+	/**
+	 * Search results template data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_search_data( array $mapping ): array {
+		return self::resolve_archive_mapping( $mapping );
+	}
+
+	/**
+	 * WooCommerce product template data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values.
+	 */
+	private static function get_product_data( array $mapping ): array {
+		$post = get_post();
+		if ( ! $post ) {
+			return array();
+		}
+		return self::resolve_mapping( $post, $mapping );
+	}
+
+	/**
+	 * Resolve field values using a post or term object.
+	 *
+	 * @param WP_Post|WP_Term|WP_User|null $source_object  Post, term, or user object.
+	 * @param array                        $mapping  Template field mapping.
+	 * @return array Resolved field values keyed by attribute name.
+	 */
+	private static function resolve_mapping( $source_object, array $mapping ): array {
+		$params = array();
+		foreach ( $mapping['map'] ?? array() as $item ) {
+			$attr_key = (string) ( $item['attr_key'] ?? '' );
+			$key      = (string) ( $item['key'] ?? '' );
+			if ( '' === $attr_key || '' === $key ) {
+				continue;
 			}
+			$params[ $attr_key ] = self::resolve_field_value( $source_object, $key );
 		}
-
-		if ( '' !== $override['custom_title'] ) {
-			$params['title'] = $override['custom_title'];
-		}
-		if ( '' !== $override['custom_description'] ) {
-			$params['description'] = $override['custom_description'];
-		}
-
-		return $params;
+		return self::filter_params( $params );
 	}
 
-	private function resolve_field_value( WP_Post $post, array $mapping ): string {
-		$source   = $mapping['source'] ?? '';
-		$fallback = $mapping['fallback'] ?? '';
+	/**
+	 * Resolve field values for archive pages (home, blog, date, search).
+	 * Archive pages don't have a specific object, only site-wide data.
+	 *
+	 * @param array $mapping Template field mapping.
+	 * @return array Resolved field values keyed by attribute name.
+	 */
+	private static function resolve_archive_mapping( array $mapping ): array {
+		$params = array();
+		foreach ( $mapping['map'] ?? array() as $item ) {
+			$attr_key = (string) ( $item['attr_key'] ?? '' );
+			$key      = (string) ( $item['key'] ?? '' );
+			if ( '' === $attr_key || '' === $key ) {
+				continue;
+			}
+			$params[ $attr_key ] = self::resolve_archive_field( $key );
+		}
+		return self::filter_params( $params );
+	}
 
+	/**
+	 * Dispatch field resolution based on object type.
+	 *
+	 * @param WP_Post|WP_Term|WP_User|null $source_object Post, term, user, or null object.
+	 * @param string                       $source  Field source identifier.
+	 * @return mixed Resolved field value.
+	 */
+	private static function resolve_field_value( $source_object, string $source ) {
+		if ( $source_object instanceof WP_Post ) {
+			return self::resolve_post_field( $source_object, $source );
+		}
+		if ( $source_object instanceof WP_Term ) {
+			return self::resolve_term_field( $source_object, $source );
+		}
+		if ( $source_object instanceof WP_User ) {
+			return self::resolve_user_field( $source_object, $source );
+		}
+		return '';
+	}
+
+	/**
+	 * Resolve field values for WordPress post objects.
+	 *
+	 * @param WP_Post $post   Post object.
+	 * @param string  $source  Field source identifier.
+	 * @return mixed Resolved field value.
+	 */
+	private static function resolve_post_field( WP_Post $post, string $source ) {
 		$value = '';
 		switch ( $source ) {
 			case 'post_title':
@@ -138,7 +368,8 @@ class ImageGenerator {
 				$value = wp_trim_words( wp_strip_all_tags( $post->post_content ), 24 );
 				break;
 			case 'featured_image':
-				$value = get_the_post_thumbnail_url( $post, 'full' ) ?: '';
+				$image_url = get_the_post_thumbnail_url( $post, 'full' );
+				$value     = false !== $image_url ? $image_url : '';
 				break;
 			case 'author_name':
 				$value = get_the_author_meta( 'display_name', (int) $post->post_author );
@@ -150,99 +381,149 @@ class ImageGenerator {
 				$value = get_the_modified_date( '', $post );
 				break;
 			case 'category':
-				$value = implode( ', ', wp_get_post_terms( $post->ID, 'category', array( 'fields' => 'names' ) ) );
+				$value = implode( ', ', self::term_names( $post->ID, 'category' ) );
 				break;
 			case 'tags':
-				$value = implode( ', ', wp_get_post_terms( $post->ID, 'post_tag', array( 'fields' => 'names' ) ) );
-				break;
-			case 'permalink':
-				$value = get_permalink( $post );
+				$value = self::term_names( $post->ID, 'post_tag' );
 				break;
 			case 'site_name':
 				$value = get_bloginfo( 'name' );
 				break;
-			case 'site_description':
+			case 'site_tagline':
 				$value = get_bloginfo( 'description' );
 				break;
-			case 'product_title':
-				$value = get_the_title( $post );
-				break;
 			case 'product_short_description':
-				$value = $this->product_value( $post, 'short_description' );
-				break;
-			case 'product_image':
-				$value = get_the_post_thumbnail_url( $post, 'full' ) ?: '';
-				break;
-			case 'product_gallery_image':
-				$value = $this->product_value( $post, 'gallery_image' );
+				$value = self::product_value( $post, 'short_description' );
 				break;
 			case 'product_price':
-				$value = $this->product_value( $post, 'price_html' );
+				$value = self::product_value( $post, 'price_html' );
 				break;
 			case 'regular_price':
-				$value = $this->product_value( $post, 'regular_price' );
+				$value = self::product_value( $post, 'regular_price' );
 				break;
 			case 'sale_price':
-				$value = $this->product_value( $post, 'sale_price' );
+				$value = self::product_value( $post, 'sale_price' );
 				break;
 			case 'currency':
 				$value = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : '';
 				break;
 			case 'sku':
-				$value = $this->product_value( $post, 'sku' );
+				$value = self::product_value( $post, 'sku' );
 				break;
 			case 'product_category':
-				$value = implode( ', ', wp_get_post_terms( $post->ID, 'product_cat', array( 'fields' => 'names' ) ) );
+				$value = implode( ', ', self::term_names( $post->ID, 'product_cat' ) );
 				break;
 			case 'product_tags':
-				$value = implode( ', ', wp_get_post_terms( $post->ID, 'product_tag', array( 'fields' => 'names' ) ) );
+				$value = self::term_names( $post->ID, 'product_tag' );
+				break;
+			case 'product_attributes':
+				$value = self::product_attributes( $post );
 				break;
 			case 'stock_status':
-				$value = $this->product_value( $post, 'stock_status' );
+				$value = self::product_value( $post, 'stock_status' );
 				break;
 			case 'rating':
-				$value = $this->product_value( $post, 'rating' );
+				$value = self::product_value( $post, 'rating' );
 				break;
 			case 'review_count':
-				$value = $this->product_value( $post, 'review_count' );
+				$value = self::product_value( $post, 'review_count' );
 				break;
-			case 'product_url':
-				$value = get_permalink( $post );
-				break;
-			case 'custom_meta':
-				$value = get_post_meta( $post->ID, (string) ( $mapping['meta_key'] ?? '' ), true );
-				break;
-			default:
-				$value = (string) ( $mapping['static'] ?? '' );
 		}
-
-		return '' !== (string) $value ? (string) $value : (string) $fallback;
+		return $value;
 	}
 
-	private function product_value( WP_Post $post, string $field ): string {
+	/**
+	 * Resolve field values for WordPress term objects.
+	 *
+	 * @param WP_Term $term   Term object.
+	 * @param string  $source  Field source identifier.
+	 * @return string Resolved field value.
+	 */
+	private static function resolve_term_field( WP_Term $term, string $source ): string {
+		$value = '';
+		switch ( $source ) {
+			case 'category':
+			case 'tag':
+				$value = $term->name;
+				break;
+			case 'site_name':
+				$value = get_bloginfo( 'name' );
+				break;
+			case 'site_tagline':
+				$value = get_bloginfo( 'description' );
+				break;
+		}
+		return (string) $value;
+	}
+
+	/**
+	 * Resolve field values for WordPress user objects.
+	 *
+	 * @param WP_User $user   User object.
+	 * @param string  $source Field source identifier.
+	 * @return string Resolved field value.
+	 */
+	private static function resolve_user_field( WP_User $user, string $source ): string {
+		$value = '';
+		switch ( $source ) {
+			case 'author_name':
+				$value = $user->display_name;
+				break;
+			case 'site_name':
+				$value = get_bloginfo( 'name' );
+				break;
+			case 'site_tagline':
+				$value = get_bloginfo( 'description' );
+				break;
+		}
+		return (string) $value;
+	}
+
+	/**
+	 * Resolve field values for archive pages.
+	 *
+	 * @param string $source Field source identifier.
+	 * @return string Resolved field value.
+	 */
+	private static function resolve_archive_field( string $source ): string {
+		$value = '';
+		switch ( $source ) {
+			case 'site_name':
+				$value = get_bloginfo( 'name' );
+				break;
+			case 'site_tagline':
+				$value = get_bloginfo( 'description' );
+				break;
+		}
+		return (string) $value;
+	}
+
+	/**
+	 * Get WooCommerce product field value.
+	 *
+	 * @param WP_Post $post   Post object.
+	 * @param string  $field  Field identifier.
+	 * @return string Field value.
+	 */
+	private static function product_value( WP_Post $post, string $field ): string {
 		if ( ! function_exists( 'wc_get_product' ) ) {
 			return '';
 		}
-
 		$product = wc_get_product( $post->ID );
 		if ( ! $product ) {
 			return '';
 		}
-
 		switch ( $field ) {
 			case 'short_description':
 				return wp_strip_all_tags( $product->get_short_description() );
-			case 'gallery_image':
-				$gallery_ids = $product->get_gallery_image_ids();
-				return isset( $gallery_ids[0] ) ? (string) wp_get_attachment_image_url( (int) $gallery_ids[0], 'full' ) : '';
 			case 'price_html':
 				return wp_strip_all_tags( $product->get_price_html() );
 			case 'regular_price':
-				return (string) $product->get_regular_price();
+				return self::format_product_price( $product->get_regular_price() );
 			case 'sale_price':
-				return (string) $product->get_sale_price();
+				return self::format_product_price( $product->get_sale_price() );
 			case 'sku':
-				return (string) $product->get_sku();
+				return $product->get_sku();
 			case 'stock_status':
 				return (string) $product->get_stock_status();
 			case 'rating':
@@ -250,63 +531,97 @@ class ImageGenerator {
 			case 'review_count':
 				return (string) $product->get_review_count();
 		}
-
 		return '';
 	}
 
-	private function get_description( WP_Post $post ): string {
-		$excerpt = get_the_excerpt( $post );
-		if ( '' !== $excerpt ) {
-			return $excerpt;
+	private static function format_product_price( string $price ): string {
+		if ( '' === $price ) {
+			return '';
 		}
 
-		return wp_trim_words( wp_strip_all_tags( $post->post_content ), 24 );
-	}
+		if ( ! function_exists( 'wc_price' ) ) {
+			return $price;
+		}
 
-	private function get_override( int $post_id ): array {
-		$raw = get_post_meta( $post_id, '_ogd_override', true );
-		$raw = is_array( $raw ) ? $raw : array();
+		$charset = get_bloginfo( 'charset' );
+		if ( '' === $charset ) {
+			$charset = 'UTF-8';
+		}
 
-		return array_merge(
-			array(
-				'mode'               => 'inherit',
-				'template_id'        => '',
-				'custom_title'       => '',
-				'custom_description' => '',
-				'custom_image_url'   => '',
-				'custom_params'      => array(),
-			),
-			$raw
+		return html_entity_decode(
+			wp_strip_all_tags( wc_price( $price ) ),
+			ENT_QUOTES,
+			$charset
 		);
 	}
 
-	private function fallback_result( int $post_id, string $message ): array {
-		$settings = $this->settings->get();
-		$url      = '';
-
-		if ( 'featured_image' === $settings['defaults']['fallback_mode'] ) {
-			$url = get_the_post_thumbnail_url( $post_id, 'full' ) ?: '';
-		}
-		if ( '' === $url && '' !== $settings['defaults']['fallback_image_url'] ) {
-			$url = $settings['defaults']['fallback_image_url'];
+	private static function product_attributes( WP_Post $post ): array {
+		if ( ! function_exists( 'wc_get_product' ) ) {
+			return array();
 		}
 
-		return array(
-			'url'        => esc_url_raw( $url ),
-			'templateId' => '',
-			'params'     => array(),
-			'fallback'   => true,
-			'message'    => $message,
+		$product = wc_get_product( $post->ID );
+		if ( ! $product ) {
+			return array();
+		}
+
+		$attributes = array();
+		foreach ( $product->get_attributes() as $attribute ) {
+			$name  = $attribute->get_name();
+			$label = function_exists( 'wc_attribute_label' ) ? wc_attribute_label( $name, $product ) : $name;
+			$value = self::product_attribute_value( $product->get_id(), $attribute );
+
+			if ( '' === $value ) {
+				continue;
+			}
+
+			$attributes[] = array(
+				'label' => $label,
+				'value' => $value,
+			);
+		}
+
+		return $attributes;
+	}
+
+	private static function product_attribute_value( int $product_id, $attribute ): string {
+		if ( $attribute->is_taxonomy() && function_exists( 'wc_get_product_terms' ) ) {
+			$terms = wc_get_product_terms( $product_id, $attribute->get_name(), array( 'fields' => 'names' ) );
+			if ( is_wp_error( $terms ) || ! is_array( $terms ) ) {
+				return '';
+			}
+
+			return implode( ', ', $terms );
+		}
+
+		return implode(
+			', ',
+			array_map(
+				'wc_clean',
+				array_map( 'strval', $attribute->get_options() )
+			)
 		);
 	}
 
-	private function empty_result( string $message ): array {
-		return array(
-			'url'        => '',
-			'templateId' => '',
-			'params'     => array(),
-			'fallback'   => false,
-			'message'    => $message,
+	private static function term_names( int $post_id, string $taxonomy ): array {
+		$terms = wp_get_post_terms( $post_id, $taxonomy, array( 'fields' => 'names' ) );
+		if ( is_wp_error( $terms ) || ! is_array( $terms ) ) {
+			return array();
+		}
+
+		return array_values( array_map( 'strval', $terms ) );
+	}
+
+	private static function filter_params( array $params ): array {
+		return array_filter(
+			$params,
+			static function ( $value ): bool {
+				if ( is_array( $value ) ) {
+					return array() !== $value;
+				}
+
+				return '' !== trim( (string) $value );
+			}
 		);
 	}
 }

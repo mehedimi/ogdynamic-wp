@@ -8,6 +8,7 @@
 namespace OGD\Controllers;
 
 use OGD\Settings;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Server;
 
@@ -34,6 +35,11 @@ class ConnectionController {
 						),
 					),
 				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( self::class, 'delete' ),
+					'permission_callback' => array( self::class, 'can_manage' ),
+				),
 			)
 		);
 	}
@@ -42,8 +48,12 @@ class ConnectionController {
 		return current_user_can( 'manage_options' );
 	}
 
-	public static function validate_api_key( $value ): bool {
-		return is_string( $value ) && '' !== $value && false === strpos( $value, '•' );
+	public static function validate_api_key( $value ) {
+		if ( ! is_string( $value ) || '' === $value || false !== strpos( $value, '•' ) ) {
+			return false;
+		}
+
+		return self::verify_api_key( self::sanitize_api_key( $value ) );
 	}
 
 	public static function sanitize_api_key( $value ): string {
@@ -51,12 +61,10 @@ class ConnectionController {
 	}
 
 	public static function get() {
-		$api_key = Settings::get( 'api_key', '' );
-
 		return rest_ensure_response(
 			array(
 				'data' => array(
-					'api_key' => $api_key,
+					'api_key' => Settings::get_api_key(),
 				),
 			)
 		);
@@ -64,15 +72,50 @@ class ConnectionController {
 
 	public static function update( WP_REST_Request $request ) {
 		$api_key = $request->get_param( 'api_key' );
-
 		Settings::update( 'api_key', $api_key, false );
 
 		return rest_ensure_response(
 			array(
 				'data' => array(
-					'api_key' => $api_key,
+					'api_key' => Settings::get_api_key(),
 				),
 			)
 		);
+	}
+
+	public static function delete() {
+		Settings::update( 'api_key', '', false );
+
+		return rest_ensure_response(
+			array(
+				'data' => array(
+					'api_key' => '',
+				),
+			)
+		);
+	}
+
+	private static function verify_api_key( string $api_key ) {
+		$response = wp_remote_get(
+			trailingslashit( OGDYNAMIC_API ) . 'v1/me',
+			array(
+				'timeout' => 12,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $api_key,
+					'Accept'        => 'application/json',
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'ogd_connection_failed', $response->get_error_message(), array( 'status' => 502 ) );
+		}
+
+		$code = wp_remote_retrieve_response_code( $response );
+		if ( $code < 200 || $code >= 300 ) {
+			return new WP_Error( 'ogd_invalid_api_key', __( 'Could not verify the ogdynamic API key.', 'ogdynamic' ), array( 'status' => 401 ) );
+		}
+
+		return true;
 	}
 }

@@ -7,13 +7,12 @@
 
 namespace OGD\Controllers;
 
-use OGD\Settings;
+use OGD\Template;
 use WP_REST_Request;
 use WP_REST_Server;
 
 class TemplatesController {
-	private const TEMPLATE_KEY_PREFIX = 'mapping_';
-	private const TEMPLATE_KEY_SUFFIX = '_template';
+
 
 	public static function init(): void {
 		register_rest_route(
@@ -58,6 +57,17 @@ class TemplatesController {
 							'validate_callback' => array( self::class, 'validate_map' ),
 							'sanitize_callback' => array( self::class, 'sanitize_map' ),
 						),
+						'post_type'   => array(
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_key',
+						),
+					),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( self::class, 'delete_post_type_template' ),
+					'permission_callback' => array( self::class, 'can_manage' ),
+					'args'                => array(
 						'post_type' => array(
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_key',
@@ -73,38 +83,30 @@ class TemplatesController {
 	}
 
 	public static function get() {
-		global $wpdb;
-
-		$prefix = Settings::PREFIX . self::TEMPLATE_KEY_PREFIX;
-
-		$keys = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s ORDER BY option_name ASC",
-				$wpdb->esc_like( $prefix ) . '%'
-			)
-		);
+		$post_types           = Template::available_post_types();
+		$activated_post_types = Template::get_activated_post_types();
 
 		return rest_ensure_response(
 			array(
-				'data' => array_values( array_map( 'strval', is_array( $keys ) ? $keys : array() ) ),
+				'data'      => $post_types,
+				'templates' => $activated_post_types,
 			)
 		);
 	}
 
 	public static function get_post_type_template( WP_REST_Request $request ) {
 		$post_type = (string) $request->get_param( 'post_type' );
-		$option_name = self::option_name_for_post_type( $post_type );
 
 		return rest_ensure_response(
 			array(
-				'data' => get_option( $option_name, array() ),
+				'data'    => Template::get_mapping( $post_type ),
+				'sources' => Template::get_mapping_sources( $post_type ),
 			)
 		);
 	}
 
 	public static function update_post_type_template( WP_REST_Request $request ) {
-		$post_type = (string) $request->get_param( 'post_type' );
-		$option_name = self::option_name_for_post_type( $post_type );
+		$post_type   = (string) $request->get_param( 'post_type' );
 		$template_id = (string) $request->get_param( 'template_id' );
 		$map         = $request->get_param( 'map' );
 
@@ -113,7 +115,7 @@ class TemplatesController {
 			'map'         => is_array( $map ) ? $map : array(),
 		);
 
-		update_option( $option_name, $value, false );
+		Template::update_mapping( $post_type, $value );
 
 		return rest_ensure_response(
 			array(
@@ -122,12 +124,24 @@ class TemplatesController {
 		);
 	}
 
+	public static function delete_post_type_template( WP_REST_Request $request ) {
+		$post_type = (string) $request->get_param( 'post_type' );
+
+		Template::delete_mapping( $post_type );
+
+		return rest_ensure_response(
+			array(
+				'data' => array(),
+			)
+		);
+	}
+
 	public static function validate_template_id( $value ): bool {
-		return is_string( $value ) && (bool) preg_match( '/^[0-9A-HJKMNP-TV-Z]{26}$/i', $value );
+		return is_string( $value ) && preg_match( '/^[0-9A-HJKMNP-TV-Z]{26}$/i', $value );
 	}
 
 	public static function sanitize_template_id( $value ): string {
-		return strtoupper( sanitize_text_field( wp_unslash( (string) $value ) ) );
+		return sanitize_text_field( wp_unslash( (string) $value ) );
 	}
 
 	public static function validate_map( $value ): bool {
@@ -140,11 +154,11 @@ class TemplatesController {
 				return false;
 			}
 
-			if ( ! isset( $item['attr_key'], $item['value_key'] ) ) {
+			if ( ! isset( $item['attr_key'], $item['key'] ) ) {
 				return false;
 			}
 
-			if ( ! is_string( $item['attr_key'] ) || ! is_string( $item['value_key'] ) ) {
+			if ( ! is_string( $item['attr_key'] ) || ! is_string( $item['key'] ) ) {
 				return false;
 			}
 		}
@@ -164,23 +178,19 @@ class TemplatesController {
 				continue;
 			}
 
-			$attr_key  = isset( $item['attr_key'] ) ? sanitize_text_field( wp_unslash( (string) $item['attr_key'] ) ) : '';
-			$value_key = isset( $item['value_key'] ) ? sanitize_text_field( wp_unslash( (string) $item['value_key'] ) ) : '';
+			$attr_key = isset( $item['attr_key'] ) ? sanitize_text_field( wp_unslash( (string) $item['attr_key'] ) ) : '';
+			$key      = isset( $item['key'] ) ? sanitize_text_field( wp_unslash( (string) $item['key'] ) ) : '';
 
-			if ( '' === $attr_key && '' === $value_key ) {
+			if ( '' === $attr_key && '' === $key ) {
 				continue;
 			}
 
 			$clean[] = array(
-				'attr_key'  => $attr_key,
-				'value_key' => $value_key,
+				'attr_key' => $attr_key,
+				'key'      => $key,
 			);
 		}
 
 		return $clean;
-	}
-
-	private static function option_name_for_post_type( string $post_type ): string {
-		return Settings::PREFIX . self::TEMPLATE_KEY_PREFIX . $post_type . self::TEMPLATE_KEY_SUFFIX;
 	}
 }

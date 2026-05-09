@@ -4,8 +4,8 @@
  * Plugin URI: https://ogdynamic.com
  * Description: Connect WordPress to ogdynamic and generate dynamic Open Graph images for posts, pages, products, and archives.
  * Version: 0.1.0
- * Author: ogdynamic
- * Author URI: https://ogdynamic.com
+ * Author: mehedimi
+ * Author URI: https://mehedi.im
  * Text Domain: ogdynamic
  * Requires at least: 6.3
  * Requires PHP: 7.4
@@ -13,18 +13,24 @@
  * @package OGD
  */
 
+use OGD\OGDynamic;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OGD_VERSION', '0.1.0' );
-define( 'OGD_FILE', __FILE__ );
-define( 'OGD_PATH', plugin_dir_path( __FILE__ ) );
-define( 'OGD_URL', plugin_dir_url( __FILE__ ) );
+define( 'OGDYNAMIC_VERSION', '0.1.0' );
+define( 'OGDYNAMIC_FILE', __FILE__ );
+define( 'OGDYNAMIC_PATH', plugin_dir_path( __FILE__ ) );
+define( 'OGDYNAMIC_URL', plugin_dir_url( __FILE__ ) );
 
-$ogd_autoload = OGD_PATH . 'vendor/autoload.php';
+if ( ! defined( 'OGDYNAMIC_API' ) ) {
+	define( 'OGDYNAMIC_API', 'https://ogdynamic.com/api' );
+}
 
-if ( ! file_exists( $ogd_autoload ) ) {
+$ogdynamic_autoload = OGDYNAMIC_PATH . 'vendor/autoload.php';
+
+if ( ! file_exists( $ogdynamic_autoload ) ) {
 	add_action(
 		'admin_notices',
 		static function () {
@@ -35,11 +41,11 @@ if ( ! file_exists( $ogd_autoload ) ) {
 	return;
 }
 
-require_once $ogd_autoload;
+require_once $ogdynamic_autoload;
 
 add_action(
 	'plugins_loaded',
 	static function () {
-		\OGD\Plugin::instance()->boot();
+		OGDynamic::instance()->boot();
 	}
 );

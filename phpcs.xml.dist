@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<ruleset name="ogdynamic">
+	<description>PHP_CodeSniffer rules for the ogdynamic WordPress plugin.</description>
+
+	<file>ogdynamic.php</file>
+	<file>uninstall.php</file>
+	<file>includes</file>
+
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg name="extensions" value="php"/>
+	<arg name="parallel" value="8"/>
+
+	<config name="testVersion" value="7.4-"/>
+	<config name="minimum_supported_wp_version" value="6.3"/>
+
+	<rule ref="WordPress">
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedNamespaceFound"/>
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.ShortPrefixPassed"/>
+		<exclude name="Squiz.Commenting.ClassComment.Missing"/>
+		<exclude name="Squiz.Commenting.VariableComment.Missing"/>
+		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+	</rule>
+	<rule ref="WordPress-Extra">
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedNamespaceFound"/>
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.ShortPrefixPassed"/>
+		<exclude name="Squiz.Commenting.ClassComment.Missing"/>
+		<exclude name="Squiz.Commenting.VariableComment.Missing"/>
+		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+	</rule>
+	<rule ref="WordPress-Docs">
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedNamespaceFound"/>
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.ShortPrefixPassed"/>
+		<exclude name="Squiz.Commenting.ClassComment.Missing"/>
+		<exclude name="Squiz.Commenting.VariableComment.Missing"/>
+		<exclude name="Squiz.Commenting.FunctionComment.Missing"/>
+	</rule>
+	<rule ref="PHPCompatibilityWP"/>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="OGD"/>
+				<element value="ogd"/>
+				<element value="ogdynamic"/>
+			</property>
+		</properties>
+	</rule>
+
+	<exclude-pattern>vendor/*</exclude-pattern>
+	<exclude-pattern>node_modules/*</exclude-pattern>
+	<exclude-pattern>dist/*</exclude-pattern>
+	<exclude-pattern>assets/*</exclude-pattern>
+</ruleset>

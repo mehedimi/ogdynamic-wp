@@ -8,63 +8,332 @@
 namespace OGD;
 
 class MetaTags {
-	private Settings $settings;
-	private ImageGenerator $generator;
 
-	public function __construct( Settings $settings, ImageGenerator $generator ) {
-		$this->settings  = $settings;
-		$this->generator = $generator;
+	private static bool $output_via_plugins = false;
+
+
+	public static function register(): void {
+		if ( self::is_rank_math_active() ) {
+			self::handle_rank_math_og();
+		}
+
+		if ( self::is_yoast_seo_active() ) {
+			self::handle_yoast_seo_filters();
+		}
+
+		if ( self::is_aioseo_active() ) {
+			self::handle_aioseo_filters();
+		}
+
+		if ( self::is_seopress_active() ) {
+			self::register_seopress_filters();
+		}
+
+		if ( self::is_the_seo_framework_active() ) {
+			self::register_the_seo_framework_filters();
+		}
+
+		if ( self::is_squirrly_seo_active() ) {
+			self::register_squirrly_seo_filters();
+		}
+
+		if ( self::is_slim_seo_active() ) {
+			self::register_slim_seo_filters();
+		}
+
+		add_action( 'wp_head', array( self::class, 'output' ) );
 	}
 
-	public function register(): void {
-		add_action( 'wp_head', array( $this, 'output' ), 5 );
+	public static function handle_rank_math_og(): void {
+
+		self::$output_via_plugins = true;
+
+		add_filter(
+			'rank_math/opengraph/twitter/image',
+			function ( $attachment_url ) {
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_twitter_image_url() : $attachment_url;
+			}
+		);
+
+		add_filter(
+			'rank_math/opengraph/facebook/image',
+			function ( $attachment_url ) {
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_image_url() : $attachment_url;
+			}
+		);
+
+		add_filter(
+			'rank_math/opengraph/facebook/image_array',
+			function ( $urls ) {
+				if ( ! ImageGenerator::has_generated_image() ) {
+					return $urls;
+				}
+
+				return array(
+					'width'  => 1200,
+					'height' => 630,
+					'url'    => ImageGenerator::get_image_url(),
+				);
+			}
+		);
 	}
 
-	public function output(): void {
-		if ( is_admin() ) {
+	public static function output(): void {
+		if ( self::$output_via_plugins || ! ImageGenerator::has_generated_image() ) {
 			return;
 		}
 
-		$settings = $this->settings->get();
-		if ( 'disabled' === $settings['defaults']['seo_mode'] ) {
-			return;
+		printf(
+			'<!-- ogdynamic -->
+<meta property="og:image" content="%s" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="%s" />
+<!-- /ogdynamic -->
+',
+			esc_url( ImageGenerator::get_image_url() ),
+			esc_url( ImageGenerator::get_twitter_image_url() )
+		);
+	}
+
+	private static function handle_yoast_seo_filters(): void {
+		self::$output_via_plugins = true;
+
+		add_filter(
+			'wpseo_opengraph_image',
+			static function ( $image ) {
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_image_url() : $image;
+			}
+		);
+
+		add_filter(
+			'wpseo_twitter_image',
+			static function ( $image ) {
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_twitter_image_url() : $image;
+			}
+		);
+
+		add_filter(
+			'wpseo_opengraph_image_type',
+			static function ( $type ) {
+				return ImageGenerator::has_generated_image() ? false : $type;
+			}
+		);
+
+		add_filter(
+			'wpseo_opengraph_image_width',
+			static function ( $width ) {
+				return ImageGenerator::has_generated_image() ? 1200 : $width;
+			}
+		);
+
+		add_filter(
+			'wpseo_opengraph_image_height',
+			static function ( $height ) {
+				return ImageGenerator::has_generated_image() ? 630 : $height;
+			}
+		);
+	}
+
+	private static function handle_aioseo_filters(): void {
+		self::$output_via_plugins = true;
+
+		add_filter(
+			'aioseo_facebook_tags',
+			static function ( $tags ) {
+				if ( ! ImageGenerator::has_generated_image() || ! is_array( $tags ) ) {
+					return $tags;
+				}
+
+				$tags['og:image']        = ImageGenerator::get_image_url();
+				$tags['og:image:width']  = 1200;
+				$tags['og:image:height'] = 630;
+
+				return $tags;
+			}
+		);
+
+		add_filter(
+			'aioseo_twitter_tags',
+			static function ( $tags ) {
+				if ( ! ImageGenerator::has_generated_image() || ! is_array( $tags ) ) {
+					return $tags;
+				}
+
+				$tags['twitter:image'] = ImageGenerator::get_twitter_image_url();
+
+				return $tags;
+			}
+		);
+	}
+
+	private static function register_seopress_filters(): void {
+		add_filter(
+			'seopress_social_og_thumb',
+			static function ( $image ) {
+				return ImageGenerator::has_generated_image() ? '' : $image;
+			}
+		);
+		add_filter(
+			'seopress_social_twitter_card_thumb',
+			static function ( $image ) {
+				return ImageGenerator::has_generated_image() ? '' : $image;
+			}
+		);
+
+		add_filter(
+			'seopress_social_twitter_card_summary',
+			static function ( $card ) {
+				return ImageGenerator::has_generated_image() ? '' : $card;
+			}
+		);
+	}
+
+	private static function register_the_seo_framework_filters(): void {
+		add_filter(
+			'the_seo_framework_meta_render_data',
+			static function ( $tags ) {
+				if ( ! ImageGenerator::has_generated_image() || ! is_array( $tags ) ) {
+					return $tags;
+				}
+
+				$removed_tags = array(
+					'og:image',
+					'og:image:height',
+					'og:image:secure_url',
+					'og:image:type',
+					'og:image:width',
+					'twitter:card',
+					'twitter:image',
+					'twitter:image:alt',
+				);
+
+				foreach ( $tags as $key => $tag ) {
+					$attributes = is_array( $tag ) && isset( $tag['attributes'] ) && is_array( $tag['attributes'] )
+						? $tag['attributes']
+						: array();
+					$name       = $attributes['property'] ?? $attributes['name'] ?? '';
+
+					if ( in_array( $name, $removed_tags, true ) ) {
+						unset( $tags[ $key ] );
+					}
+				}
+
+				return $tags;
+			}
+		);
+	}
+
+	private static function register_squirrly_seo_filters(): void {
+		add_filter(
+			'sq_open_graph',
+			static function ( $tags ) {
+				if ( ! ImageGenerator::has_generated_image() || ! is_array( $tags ) ) {
+					return $tags;
+				}
+
+				unset(
+					$tags['og:image'],
+					$tags['og:image:secure_url'],
+					$tags['og:image:width'],
+					$tags['og:image:height'],
+					$tags['og:image:type']
+				);
+
+				return $tags;
+			},
+			11
+		);
+
+		add_filter(
+			'sq_twitter_card',
+			static function ( $tags ) {
+				if ( ! ImageGenerator::has_generated_image() || ! is_array( $tags ) ) {
+					return $tags;
+				}
+
+				unset(
+					$tags['twitter:card'],
+					$tags['twitter:image']
+				);
+
+				return $tags;
+			},
+			11
+		);
+	}
+
+	private static function register_slim_seo_filters(): void {
+		self::$output_via_plugins = true;
+
+		add_filter(
+			'slim_seo_open_graph_image',
+			static function ( $image ) {
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_image_url() : $image;
+			}
+		);
+
+		add_filter(
+			'slim_seo_open_graph_image_width',
+			static function ( $width ) {
+				return ImageGenerator::has_generated_image() ? 1200 : $width;
+			}
+		);
+
+		add_filter(
+			'slim_seo_open_graph_image_height',
+			static function ( $height ) {
+				return ImageGenerator::has_generated_image() ? 630 : $height;
+			}
+		);
+
+		add_filter(
+			'slim_seo_twitter_card_image',
+			static function ( $image ) {
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_twitter_image_url() : $image;
+			}
+		);
+	}
+
+	private static function is_rank_math_active(): bool {
+		return defined( 'RANK_MATH_VERSION' ) || class_exists( 'RankMath' );
+	}
+
+	private static function is_yoast_seo_active(): bool {
+		return defined( 'WPSEO_VERSION' ) || function_exists( 'YoastSEO' );
+	}
+
+	private static function is_aioseo_active(): bool {
+		return defined( 'AIOSEO_VERSION' )
+			|| function_exists( 'aioseo' );
+	}
+
+	private static function is_seopress_active(): bool {
+		return defined( 'SEOPRESS_VERSION' )
+			|| self::is_plugin_active( 'wp-seopress/seopress.php' );
+	}
+
+	private static function is_the_seo_framework_active(): bool {
+		return function_exists( 'the_seo_framework' )
+			|| self::is_plugin_active( 'autodescription/autodescription.php' );
+	}
+
+	private static function is_squirrly_seo_active(): bool {
+		return defined( 'SQ_VERSION' )
+			|| self::is_plugin_active( 'squirrly-seo/squirrly.php' );
+	}
+
+	private static function is_slim_seo_active(): bool {
+		return defined( 'SLIM_SEO_VER' )
+			|| self::is_plugin_active( 'slim-seo/slim-seo.php' );
+	}
+
+	private static function is_plugin_active( string $plugin ): bool {
+		if ( ! function_exists( 'is_plugin_active' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 
-		$result = null;
-		if ( is_singular() ) {
-			$result = $this->generator->generate_for_post( get_queried_object_id() );
-		}
-
-		if ( ! is_array( $result ) || empty( $result['url'] ) ) {
-			return;
-		}
-
-		$url   = esc_url( $result['url'] );
-		$title = esc_attr( wp_strip_all_tags( single_post_title( '', false ) ?: get_bloginfo( 'name' ) ) );
-		$alt   = $title;
-
-		echo "\n<!-- ogdynamic -->\n";
-		echo '<meta property="og:image" content="' . $url . "\" />\n";
-		echo '<meta property="og:image:secure_url" content="' . $url . "\" />\n";
-		echo '<meta property="og:image:width" content="1200" />' . "\n";
-		echo '<meta property="og:image:height" content="630" />' . "\n";
-		echo '<meta property="og:image:alt" content="' . $alt . "\" />\n";
-		echo '<meta name="twitter:card" content="summary_large_image" />' . "\n";
-		echo '<meta name="twitter:image" content="' . $url . "\" />\n";
-		echo '<meta name="twitter:image:alt" content="' . $alt . "\" />\n";
-
-		if ( 'full' === $settings['defaults']['meta_mode'] ) {
-			$description = esc_attr( get_the_excerpt() ?: get_bloginfo( 'description' ) );
-			$permalink   = esc_url( get_permalink() );
-			echo '<meta property="og:title" content="' . $title . "\" />\n";
-			echo '<meta property="og:description" content="' . $description . "\" />\n";
-			echo '<meta property="og:url" content="' . $permalink . "\" />\n";
-			echo '<meta property="og:type" content="article" />' . "\n";
-			echo '<meta property="og:site_name" content="' . esc_attr( get_bloginfo( 'name' ) ) . "\" />\n";
-			echo '<meta name="twitter:title" content="' . $title . "\" />\n";
-			echo '<meta name="twitter:description" content="' . $description . "\" />\n";
-		}
-
-		echo "<!-- /ogdynamic -->\n";
+		return is_plugin_active( $plugin ) || is_plugin_active_for_network( $plugin );
 	}
 }
