@@ -74,6 +74,9 @@ echo "Preparing release directory..."
 rm -rf "${PACKAGE_DIR}" "${ZIP_FILE}"
 mkdir -p "${PACKAGE_DIR}"
 
+echo "Generating production Composer autoload files in release directory..."
+composer install --no-dev --no-interaction
+
 rsync -a \
 	--exclude='.git/' \
 	--exclude='.github/' \
@@ -81,7 +84,6 @@ rsync -a \
 	--exclude='Thumbs.db' \
 	--exclude='src/' \
 	--exclude='node_modules/' \
-	--exclude='vendor/' \
 	--exclude='build/' \
 	--exclude='ogdynamic.zip' \
 	--exclude='composer.lock' \
@@ -89,17 +91,11 @@ rsync -a \
 	--exclude='pnpm-lock.yaml' \
 	--exclude='tsconfig.json' \
 	--exclude='vite.config.ts' \
-	--exclude='WP_ORG_SUBMISSION_CHECKLIST.md' \
 	--exclude='phpcs.xml.dist' \
 	--exclude='build-plugin-zip.sh' \
 	"${ROOT_DIR}/" "${PACKAGE_DIR}/"
 
-echo "Generating production Composer autoload files in release directory..."
-composer dump-autoload \
-	--working-dir="${PACKAGE_DIR}" \
-	--no-dev \
-	--optimize \
-	--no-interaction
+
 
 echo "Creating ${PLUGIN_SLUG}.zip..."
 (

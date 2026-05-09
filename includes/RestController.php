@@ -10,7 +10,7 @@ namespace OGD;
 use OGD\Controllers\ConnectionController;
 use OGD\Controllers\TemplatesController;
 
-class RESTController {
+class RestController {
 	public static function init(): void {
 		add_action( 'rest_api_init', array( self::class, 'register_routes' ) );
 	}

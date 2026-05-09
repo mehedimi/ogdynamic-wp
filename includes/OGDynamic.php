@@ -15,7 +15,7 @@ final class OGDynamic {
 	public function boot(): void {
 		load_plugin_textdomain( 'ogdynamic', false, dirname( plugin_basename( OGDYNAMIC_FILE ) ) . '/languages' );
 
-		RESTController::init();
+		RestController::init();
 
 		if ( is_admin() ) {
 			Admin::register();
