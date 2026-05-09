@@ -198,15 +198,27 @@ class MetaTags {
 					return $tags;
 				}
 
-				unset(
-					$tags['og:image'],
-					$tags['og:image:secure_url'],
-					$tags['og:image:width'],
-					$tags['og:image:height'],
-					$tags['og:image:type'],
-					$tags['twitter:card'],
-					$tags['twitter:image']
+				$removed_tags = array(
+					'og:image',
+					'og:image:height',
+					'og:image:secure_url',
+					'og:image:type',
+					'og:image:width',
+					'twitter:card',
+					'twitter:image',
+					'twitter:image:alt',
 				);
+
+				foreach ( $tags as $key => $tag ) {
+					$attributes = is_array( $tag ) && isset( $tag['attributes'] ) && is_array( $tag['attributes'] )
+						? $tag['attributes']
+						: array();
+					$name       = $attributes['property'] ?? $attributes['name'] ?? '';
+
+					if ( in_array( $name, $removed_tags, true ) ) {
+						unset( $tags[ $key ] );
+					}
+				}
 
 				return $tags;
 			}
@@ -226,8 +238,7 @@ class MetaTags {
 					$tags['og:image:secure_url'],
 					$tags['og:image:width'],
 					$tags['og:image:height'],
-					$tags['og:image:type'],
-					$tags['twitter:card']
+					$tags['og:image:type']
 				);
 
 				return $tags;
@@ -243,6 +254,7 @@ class MetaTags {
 				}
 
 				unset(
+					$tags['twitter:card'],
 					$tags['twitter:image']
 				);
 

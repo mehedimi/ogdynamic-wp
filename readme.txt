@@ -56,13 +56,33 @@ Connect WordPress to ogdynamic and generate dynamic Open Graph images for posts,
 
 = Do I need an ogdynamic.com account? =
 
-Yes, you need to create an account at [ogdynamic.com](https://ogdynamic.com) to get an API key.
+Yes. ogdynamic images are generated on ogdynamic's servers because rendering social images is a heavier computational task than WordPress should handle during normal page loads. Your API key connects your WordPress site to that image generation service. You can create an API key from [ogdynamic.com/settings/tokens](https://ogdynamic.com/settings/tokens).
+
+= What does the plugin generate? =
+
+ogdynamic generates dynamic Open Graph image URLs and adds the required social image meta tags for configured content. The generated image uses the ogdynamic design you activate for a post type or archive type.
+
+= Does image generation slow down my website? =
+
+No. The plugin only generates the image URL and adds it to the page's social meta tags. Normal visitors do not load the OG image during a regular page view. The image is fetched by social platforms when someone shares your link. Images are generated and served from ogdynamic's infrastructure, with a Rust-powered image generation service designed for fast rendering.
+
+= How do template mappings work? =
+
+Choose one of your ogdynamic designs, then map its overridable fields to WordPress sources such as post title, excerpt, featured image, site name, product price, SKU, stock status, categories, tags, or attributes. Static text should be set directly in the design on ogdynamic.com.
+
+= What happens if a post type has no template? =
+
+If a specific post type does not have an active template, ogdynamic can fall back to the Default template when you configure one. If no matching template exists, ogdynamic does not output an OG image for that page.
+
+= Does it support archive pages? =
+
+Yes. You can configure templates for supported archive targets such as the homepage, blog listing, category, tag, author, date, and search pages.
 
 = Which SEO plugins are supported? =
 
 ogdynamic works completely independently and doesn't require any SEO plugin to function.
 
-However, if you have one of these SEO plugins installed, ogdynamic will automatically prevent conflicts by disabling their og:image output when ogdynamic has generated an image for the page:
+However, if you have one of these SEO plugins installed, ogdynamic will automatically prevent duplicate social image tags when ogdynamic has generated an image for the page:
 
 * Rank Math
 * Yoast SEO
@@ -70,16 +90,17 @@ However, if you have one of these SEO plugins installed, ogdynamic will automati
 * SEOPress
 * The SEO Framework
 * Squirrly SEO
+* Slim SEO
 
 If a page doesn't have an ogdynamic image configured, the SEO plugin's og:image tags will be used normally.
 
 = Does it support WooCommerce? =
 
-Yes, ogdynamic fully supports WooCommerce products. You can include product title, price, SKU, stock status, categories, tags, and attributes in your OG images.
+Yes. When WooCommerce is active, ogdynamic adds a Product template target. You can map product title, featured image, formatted prices with currency symbols, SKU, stock status, categories, tags, and product attributes.
 
 = Can I use custom post types? =
 
-Yes, you can create templates for custom post types. Use the "Default" template for any post type without a specific template.
+Yes, when the post type is available to the plugin. You can also configure the Default template as a fallback for post types without a specific template.
 
 == Changelog ==
 
