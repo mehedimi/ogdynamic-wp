@@ -37,6 +37,10 @@ class MetaTags {
 			self::register_squirrly_seo_filters();
 		}
 
+		if ( self::is_slim_seo_active() ) {
+			self::register_slim_seo_filters();
+		}
+
 		add_action( 'wp_head', array( self::class, 'output' ) );
 	}
 
@@ -248,6 +252,38 @@ class MetaTags {
 		);
 	}
 
+	private static function register_slim_seo_filters(): void {
+		self::$output_via_plugins = true;
+
+		add_filter(
+			'slim_seo_open_graph_image',
+			static function ( $image ) {
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_image_url() : $image;
+			}
+		);
+
+		add_filter(
+			'slim_seo_open_graph_image_width',
+			static function ( $width ) {
+				return ImageGenerator::has_generated_image() ? 1200 : $width;
+			}
+		);
+
+		add_filter(
+			'slim_seo_open_graph_image_height',
+			static function ( $height ) {
+				return ImageGenerator::has_generated_image() ? 630 : $height;
+			}
+		);
+
+		add_filter(
+			'slim_seo_twitter_card_image',
+			static function ( $image ) {
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_twitter_image_url() : $image;
+			}
+		);
+	}
+
 	private static function is_rank_math_active(): bool {
 		return defined( 'RANK_MATH_VERSION' ) || class_exists( 'RankMath' );
 	}
@@ -274,6 +310,11 @@ class MetaTags {
 	private static function is_squirrly_seo_active(): bool {
 		return defined( 'SQ_VERSION' )
 			|| self::is_plugin_active( 'squirrly-seo/squirrly.php' );
+	}
+
+	private static function is_slim_seo_active(): bool {
+		return defined( 'SLIM_SEO_VER' )
+			|| self::is_plugin_active( 'slim-seo/slim-seo.php' );
 	}
 
 	private static function is_plugin_active( string $plugin ): bool {
