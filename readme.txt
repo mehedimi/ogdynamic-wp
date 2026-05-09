@@ -2,7 +2,7 @@
 Contributors: mehedimi
 Tags: open graph, social images, dynamic images, woocommerce, seo
 Requires at least: 6.3
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.4
 Stable tag: 0.1.0
 License: GPLv2 or later

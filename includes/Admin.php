@@ -5,7 +5,7 @@
  * @package OGD
  */
 
-namespace OGD;
+namespace OGDynamic;
 
 class Admin {
 	public static function register(): void {

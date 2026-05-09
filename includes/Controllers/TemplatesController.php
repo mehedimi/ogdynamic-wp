@@ -5,9 +5,9 @@
  * @package OGD
  */
 
-namespace OGD\Controllers;
+namespace OGDynamic\Controllers;
 
-use OGD\Template;
+use OGDynamic\Template;
 use WP_REST_Request;
 use WP_REST_Server;
 

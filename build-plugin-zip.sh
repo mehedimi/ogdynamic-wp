@@ -4,8 +4,6 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_SLUG="ogdynamic"
-BUILD_DIR="${ROOT_DIR}/build"
-PACKAGE_DIR="${BUILD_DIR}/${PLUGIN_SLUG}"
 ZIP_FILE="${ROOT_DIR}/${PLUGIN_SLUG}.zip"
 
 cd "${ROOT_DIR}"
@@ -70,37 +68,40 @@ pnpm install --frozen-lockfile
 echo "Building admin assets..."
 pnpm build
 
-echo "Preparing release directory..."
-rm -rf "${PACKAGE_DIR}" "${ZIP_FILE}"
-mkdir -p "${PACKAGE_DIR}"
+echo "Installing production Composer dependencies..."
+composer install \
+	--no-dev \
+	--optimize-autoloader \
+	--no-interaction
 
-echo "Generating production Composer autoload files in release directory..."
-composer install --no-dev --no-interaction
+if [[ ! -f "${ROOT_DIR}/vendor/autoload.php" ]]; then
+	echo "Release package is missing vendor/autoload.php." >&2
+	exit 1
+fi
 
-rsync -a \
-	--exclude='.git/' \
-	--exclude='.github/' \
-	--exclude='.DS_Store' \
-	--exclude='Thumbs.db' \
-	--exclude='src/' \
-	--exclude='node_modules/' \
-	--exclude='build/' \
-	--exclude='ogdynamic.zip' \
-	--exclude='composer.lock' \
-	--exclude='package.json' \
-	--exclude='pnpm-lock.yaml' \
-	--exclude='tsconfig.json' \
-	--exclude='vite.config.ts' \
-	--exclude='phpcs.xml.dist' \
-	--exclude='build-plugin-zip.sh' \
-	"${ROOT_DIR}/" "${PACKAGE_DIR}/"
+if [[ -e "${ROOT_DIR}/vendor/bin/phpcs" || -e "${ROOT_DIR}/vendor/squizlabs/php_codesniffer" ]]; then
+	echo "Release package contains PHPCS development files." >&2
+	exit 1
+fi
 
-
+rm -f vendor/composer/tmp-*.zip~
 
 echo "Creating ${PLUGIN_SLUG}.zip..."
-(
-	cd "${BUILD_DIR}"
-	zip -qr "${ZIP_FILE}" "${PLUGIN_SLUG}"
-)
+rm -f "${ZIP_FILE}"
+zip -qr "${ZIP_FILE}" \
+	CHANGELOG.md \
+	composer.json \
+	dist \
+	includes \
+	languages \
+	ogdynamic.php \
+	readme.txt \
+	uninstall.php \
+	vendor \
+	-x '*/.DS_Store' \
+	-x '*/.gitkeep' \
+	-x '*/Thumbs.db' \
+	-x 'vendor/bin/*' \
+	-x 'vendor/squizlabs/php_codesniffer/*'
 
 echo "Created ${ZIP_FILE}"

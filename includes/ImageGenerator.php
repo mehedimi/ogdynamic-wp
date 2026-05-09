@@ -5,7 +5,7 @@
  * @package OGD
  */
 
-namespace OGD;
+namespace OGDynamic;
 
 use WP_Post;
 use WP_Term;

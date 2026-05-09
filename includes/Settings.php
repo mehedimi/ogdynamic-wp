@@ -5,7 +5,7 @@
  * @package OGD
  */
 
-namespace OGD;
+namespace OGDynamic;
 
 class Settings {
 	public const PREFIX = 'ogdy_';

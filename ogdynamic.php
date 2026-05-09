@@ -7,20 +7,21 @@
  * Author: mehedimi
  * Author URI: https://mehedi.im
  * Text Domain: ogdynamic
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Requires at least: 6.3
  * Requires PHP: 7.4
  *
  * @package OGD
  */
 
-use OGD\OGDynamic;
+use OGDynamic\OGDynamic;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 define( 'OGDYNAMIC_VERSION', '0.1.0' );
-define( 'OGDYNAMIC_FILE', __FILE__ );
 define( 'OGDYNAMIC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'OGDYNAMIC_URL', plugin_dir_url( __FILE__ ) );
 

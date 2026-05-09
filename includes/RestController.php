@@ -5,10 +5,10 @@
  * @package OGD
  */
 
-namespace OGD;
+namespace OGDynamic;
 
-use OGD\Controllers\ConnectionController;
-use OGD\Controllers\TemplatesController;
+use OGDynamic\Controllers\ConnectionController;
+use OGDynamic\Controllers\TemplatesController;
 
 class RestController {
 	public static function init(): void {

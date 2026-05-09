@@ -5,16 +5,14 @@
  * @package OGD
  */
 
-namespace OGD;
+namespace OGDynamic;
 
-use OGD\Traits\Singleton;
+use OGDynamic\Traits\Singleton;
 
 final class OGDynamic {
 	use Singleton;
 
 	public function boot(): void {
-		load_plugin_textdomain( 'ogdynamic', false, dirname( plugin_basename( OGDYNAMIC_FILE ) ) . '/languages' );
-
 		RestController::init();
 
 		if ( is_admin() ) {

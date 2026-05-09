@@ -5,7 +5,7 @@
  * @package OGD
  */
 
-namespace OGD\Traits;
+namespace OGDynamic\Traits;
 
 use LogicException;
 

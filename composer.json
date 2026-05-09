@@ -10,7 +10,7 @@
   "type": "wordpress-plugin",
   "autoload": {
     "psr-4": {
-      "OGD\\": "includes/"
+      "OGDynamic\\": "includes/"
     }
   },
   "require": {},
