@@ -29,6 +29,10 @@ if ( ! defined( 'OGDYNAMIC_API' ) ) {
 	define( 'OGDYNAMIC_API', 'https://ogdynamic.com/api' );
 }
 
+if ( ! defined( 'OGDYNAMIC_CDN' ) ) {
+    define( 'OGDYNAMIC_CDN', 'https://cdn.ogdynamic.com/' );
+}
+
 $ogdynamic_autoload = OGDYNAMIC_PATH . 'vendor/autoload.php';
 
 if ( ! file_exists( $ogdynamic_autoload ) ) {

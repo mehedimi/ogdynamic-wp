@@ -12,7 +12,6 @@ use WP_Term;
 use WP_User;
 
 class ImageGenerator {
-	private const CDN_BASE_URL = 'https://cdn.ogdynamic.com/d/';
 
 	protected static ?array $query              = null;
 	protected static ?bool $has_generated_image = null;
@@ -67,7 +66,7 @@ class ImageGenerator {
 	}
 
 	protected static function get_template_url(): string {
-		return self::CDN_BASE_URL . self::$template_id;
+		return OGDYNAMIC_CDN . 'd/' . self::$template_id;
 	}
 
 	public static function get_image_url(): string {
@@ -101,14 +100,6 @@ class ImageGenerator {
 		}
 
 		return self::get_mapping_attrs( $mapping['key'], $mapping['mapping'] );
-	}
-
-	public static function build_image_url( string $template_id, array $params ): string {
-		$base_url = (string) apply_filters( 'ogdynamic_image_base_url', self::CDN_BASE_URL );
-		$base     = trailingslashit( $base_url ) . rawurlencode( $template_id );
-		$query    = http_build_query( self::filter_params( $params ), '', '&', PHP_QUERY_RFC3986 );
-
-		return $query ? $base . '?' . $query : $base;
 	}
 
 	private static function get_current_mapping(): ?array {
@@ -396,7 +387,7 @@ class ImageGenerator {
 				$value = self::product_value( $post, 'short_description' );
 				break;
 			case 'product_price':
-				$value = self::product_value( $post, 'price_html' );
+				$value = self::product_value( $post, 'price' );
 				break;
 			case 'regular_price':
 				$value = self::product_value( $post, 'regular_price' );
@@ -516,8 +507,8 @@ class ImageGenerator {
 		switch ( $field ) {
 			case 'short_description':
 				return wp_strip_all_tags( $product->get_short_description() );
-			case 'price_html':
-				return wp_strip_all_tags( $product->get_price_html() );
+			case 'price':
+				return self::format_product_price( $product->get_price() );
 			case 'regular_price':
 				return self::format_product_price( $product->get_regular_price() );
 			case 'sale_price':
@@ -525,7 +516,7 @@ class ImageGenerator {
 			case 'sku':
 				return $product->get_sku();
 			case 'stock_status':
-				return (string) $product->get_stock_status();
+				return $product->get_stock_status();
 			case 'rating':
 				return (string) $product->get_average_rating();
 			case 'review_count':
