@@ -7,15 +7,36 @@
 
 namespace OGDynamic;
 
+/**
+ * Class Template
+ *
+ * Manages template mappings for different post types and archive pages.
+ * Handles source configuration for dynamic content replacement in OG image generation.
+ */
 class Template {
 
+	/**
+	 * Post type key prefix for option names.
+	 *
+	 * @var string
+	 */
 	public const POST_TYPE_KEY_PREFIX = 'mapping_';
 
+	/**
+	 * Cached sources configuration.
+	 *
+	 * @var array|null
+	 */
 	private static ?array $sources_config = null;
 
+	/**
+	 * Gets all available mapping sources.
+	 *
+	 * @return array Associative array of post types to source arrays.
+	 */
 	private static function get_sources(): array {
 		if ( null === self::$sources_config ) {
-			$site_sources         = array(
+			$site_sources = array(
 				array(
 					'key'   => 'site_name',
 					'label' => __( 'Site name', 'ogdynamic' ),
@@ -25,7 +46,8 @@ class Template {
 					'label' => __( 'Site tagline', 'ogdynamic' ),
 				),
 			);
-			$post_sources         = array(
+
+			$post_sources = array(
 				array(
 					'key'   => 'post_title',
 					'label' => __( 'Post title', 'ogdynamic' ),
@@ -64,7 +86,8 @@ class Template {
 				),
 				...$site_sources,
 			);
-			$page_sources         = array(
+
+			$page_sources = array(
 				array(
 					'key'   => 'post_title',
 					'label' => __( 'Page title', 'ogdynamic' ),
@@ -95,7 +118,8 @@ class Template {
 				),
 				...$site_sources,
 			);
-			$product_sources      = array(
+
+			$product_sources = array(
 				array(
 					'key'   => 'post_title',
 					'label' => __( 'Product title', 'ogdynamic' ),
@@ -174,6 +198,7 @@ class Template {
 				),
 				...$site_sources,
 			);
+
 			self::$sources_config = array(
 				'default'  => $site_sources,
 				'post'     => $post_sources,
@@ -210,6 +235,15 @@ class Template {
 		return self::$sources_config;
 	}
 
+	/**
+	 * Gets mapping sources for a specific post type.
+	 *
+	 * @param string $post_type The post type slug.
+	 * @return array{
+	 *   key: string,
+	 *   label: string
+	 * }[] Array of available sources for the post type.
+	 */
 	public static function get_mapping_sources( string $post_type ): array {
 		$sources = self::get_sources();
 
@@ -217,9 +251,16 @@ class Template {
 			return $sources[ $post_type ];
 		}
 
-		return (array) apply_filters( 'ogdynamic_mapping_sources', $sources )[ $post_type ] ?? array();
+		$filtered_sources = (array) apply_filters( 'ogdynamic_mapping_sources', $sources );
+
+		return $filtered_sources[ $post_type ] ?? array();
 	}
 
+	/**
+	 * Gets available post types with their labels and descriptions.
+	 *
+	 * @return array Array of post type configurations.
+	 */
 	public static function available_post_types(): array {
 		$post_types = array(
 			array(
@@ -247,74 +288,114 @@ class Template {
 			);
 		}
 
-		$post_types = array_merge(
-			$post_types,
+		$archive_post_types = array(
 			array(
-				array(
-					'name'        => 'home',
-					'label'       => __( 'Homepage', 'ogdynamic' ),
-					'description' => __( 'OG image template for the site homepage.', 'ogdynamic' ),
-				),
-				array(
-					'name'        => 'blog',
-					'label'       => __( 'Blog Page', 'ogdynamic' ),
-					'description' => __( 'OG image template for the blog listing page.', 'ogdynamic' ),
-				),
-				array(
-					'name'        => 'category',
-					'label'       => __( 'Category Archive', 'ogdynamic' ),
-					'description' => __( 'OG image template for category archive pages.', 'ogdynamic' ),
-				),
-				array(
-					'name'        => 'tag',
-					'label'       => __( 'Tag Archive', 'ogdynamic' ),
-					'description' => __( 'OG image template for tag archive pages.', 'ogdynamic' ),
-				),
-				array(
-					'name'        => 'author',
-					'label'       => __( 'Author Archive', 'ogdynamic' ),
-					'description' => __( 'OG image template for author archive pages.', 'ogdynamic' ),
-				),
-				array(
-					'name'        => 'date',
-					'label'       => __( 'Date Archive', 'ogdynamic' ),
-					'description' => __( 'OG image template for date-based archive pages.', 'ogdynamic' ),
-				),
-				array(
-					'name'        => 'search',
-					'label'       => __( 'Search Results', 'ogdynamic' ),
-					'description' => __( 'OG image template for search results pages.', 'ogdynamic' ),
-				),
-			)
+				'name'        => 'home',
+				'label'       => __( 'Homepage', 'ogdynamic' ),
+				'description' => __( 'OG image template for the site homepage.', 'ogdynamic' ),
+			),
+			array(
+				'name'        => 'blog',
+				'label'       => __( 'Blog Page', 'ogdynamic' ),
+				'description' => __( 'OG image template for the blog listing page.', 'ogdynamic' ),
+			),
+			array(
+				'name'        => 'category',
+				'label'       => __( 'Category Archive', 'ogdynamic' ),
+				'description' => __( 'OG image template for category archive pages.', 'ogdynamic' ),
+			),
+			array(
+				'name'        => 'tag',
+				'label'       => __( 'Tag Archive', 'ogdynamic' ),
+				'description' => __( 'OG image template for tag archive pages.', 'ogdynamic' ),
+			),
+			array(
+				'name'        => 'author',
+				'label'       => __( 'Author Archive', 'ogdynamic' ),
+				'description' => __( 'OG image template for author archive pages.', 'ogdynamic' ),
+			),
+			array(
+				'name'        => 'date',
+				'label'       => __( 'Date Archive', 'ogdynamic' ),
+				'description' => __( 'OG image template for date-based archive pages.', 'ogdynamic' ),
+			),
+			array(
+				'name'        => 'search',
+				'label'       => __( 'Search Results', 'ogdynamic' ),
+				'description' => __( 'OG image template for search results pages.', 'ogdynamic' ),
+			),
 		);
+
+		$post_types = array_merge( $post_types, $archive_post_types );
 
 		return (array) apply_filters( 'ogdynamic_available_post_types', $post_types );
 	}
 
+	/**
+	 * Checks if WooCommerce is active.
+	 *
+	 * @return bool True if WooCommerce is active, false otherwise.
+	 */
 	private static function is_woocommerce_active(): bool {
 		return class_exists( 'WooCommerce' ) || function_exists( 'WC' );
 	}
 
+	/**
+	 * Gets the option name for a post type mapping.
+	 *
+	 * @param string $post_type The post type slug.
+	 * @return string The full option name.
+	 */
 	public static function option_name( string $post_type ): string {
 		return Settings::PREFIX . self::POST_TYPE_KEY_PREFIX . sanitize_key( $post_type );
 	}
 
+	/**
+	 * Extracts post type from option name.
+	 *
+	 * @param string $option_name The full option name.
+	 * @return string The post type slug.
+	 */
 	public static function unwrap_post_type( string $option_name ): string {
 		return substr( $option_name, strlen( Settings::PREFIX . self::POST_TYPE_KEY_PREFIX ) );
 	}
 
+	/**
+	 * Gets the mapping configuration for a post type.
+	 *
+	 * @param string $post_type The post type slug.
+	 * @return array The mapping configuration array.
+	 */
 	public static function get_mapping( string $post_type ): array {
 		return (array) get_option( self::option_name( $post_type ), array() );
 	}
 
+	/**
+	 * Updates the mapping configuration for a post type.
+	 *
+	 * @param string $post_type The post type slug.
+	 * @param array  $value     The new mapping configuration.
+	 * @return bool True if updated successfully, false otherwise.
+	 */
 	public static function update_mapping( string $post_type, array $value ): bool {
 		return update_option( self::option_name( $post_type ), $value, false );
 	}
 
+	/**
+	 * Deletes the mapping configuration for a post type.
+	 *
+	 * @param string $post_type The post type slug.
+	 * @return bool True if deleted successfully, false otherwise.
+	 */
 	public static function delete_mapping( string $post_type ): bool {
 		return delete_option( self::option_name( $post_type ) );
 	}
 
+	/**
+	 * Gets all activated post types with mappings.
+	 *
+	 * @return array Array of post type slugs.
+	 */
 	public static function get_activated_post_types(): array {
 		global $wpdb;
 

@@ -9,9 +9,22 @@ namespace OGDynamic\Controllers;
 
 use OGDynamic\Settings;
 use OGDynamic\OAuth;
+use WP_REST_Response;
 use WP_REST_Server;
+use WP_Error;
 
+/**
+ * Class ConnectionController
+ *
+ * REST API controller for managing OAuth connections.
+ */
 class ConnectionController {
+
+	/**
+	 * Initializes REST API routes.
+	 *
+	 * @return void
+	 */
 	public static function init(): void {
 		register_rest_route(
 			'ogdynamic/v1',
@@ -41,24 +54,38 @@ class ConnectionController {
 		);
 	}
 
+	/**
+	 * Checks if user can manage connections.
+	 *
+	 * @return bool True if user has permission, false otherwise.
+	 */
 	public static function can_manage(): bool {
 		return current_user_can( 'manage_options' );
 	}
 
-	public static function get() {
+	/**
+	 * Gets connection status.
+	 *
+	 * @return WP_REST_Response REST response with connection status.
+	 */
+	public static function get(): WP_REST_Response {
 		$token     = OAuth::get_access_token();
 		$connected = '' !== $token;
 
 		return rest_ensure_response(
 			array(
 				'data' => array(
-					'api_key'   => $token,
 					'connected' => $connected,
 				),
 			)
 		);
 	}
 
+	/**
+	 * Starts OAuth flow.
+	 *
+	 * @return mixed REST response or error.
+	 */
 	public static function start_oauth() {
 		$result = OAuth::start();
 
@@ -73,19 +100,28 @@ class ConnectionController {
 		);
 	}
 
-	public static function delete() {
+	/**
+	 * Deletes connection.
+	 *
+	 * @return WP_REST_Response REST response with empty data.
+	 */
+	public static function delete(): WP_REST_Response {
 		OAuth::delete();
 
 		return rest_ensure_response(
 			array(
 				'data' => array(
-					'api_key'   => '',
 					'connected' => false,
 				),
 			)
 		);
 	}
 
+	/**
+	 * Handles OAuth callback.
+	 *
+	 * @return void
+	 */
 	public static function handle_oauth_callback(): void {
 		if ( ! self::can_manage() ) {
 			wp_die( esc_html__( 'You do not have permission to connect ogdynamic.', 'ogdynamic' ) );
