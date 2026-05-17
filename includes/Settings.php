@@ -86,14 +86,6 @@ class Settings {
 		return (string) self::get( 'oauth_refresh_token', '' );
 	}
 
-	/**
-	 * Gets the OAuth client ID.
-	 *
-	 * @return string The client ID or empty string.
-	 */
-	public static function get_oauth_client_id(): string {
-		return (string) self::get( 'oauth_client_id', '' );
-	}
 
 	/**
 	 * Prepends the prefix to the option key.

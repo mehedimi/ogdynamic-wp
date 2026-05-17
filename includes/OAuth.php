@@ -148,17 +148,26 @@ class OAuth {
 		Settings::delete_transient( self::TRANSIENT_ACCESS_TOKEN );
 	}
 
+
 	/**
-	 * Exchanges token with OAuth endpoint.
+	 * Exchanges authorization code for access token.
 	 *
-	 * @param string $grant_type The grant type (authorization_code or refresh_token).
-	 * @param array  $body Additional request body parameters.
+	 * @param string $code The authorization code.
 	 * @return array|\WP_Error Returns response body or \WP_Error on failure.
 	 */
-	protected static function exchange_token( string $grant_type, array $body = array() ) {
-		$request_body = array(
-			'grant_type' => $grant_type,
-			'client_id'  => OGDYNAMIC_CLIENT_ID,
+	protected static function exchange_code_for_token( string $code ) {
+		$code_verifier = (string) Settings::get_transient( 'oauth_code_verifier', '' );
+
+		if ( '' === $code_verifier ) {
+			return new \WP_Error( 'ogd_oauth_missing_state', __( 'Missing ogdynamic OAuth session data.', 'ogdynamic' ) );
+		}
+
+		$body = array(
+			'grant_type'    => 'authorization_code',
+			'client_id'     => OGDYNAMIC_CLIENT_ID,
+			'redirect_uri'  => self::redirect_uri(),
+			'code'          => $code,
+			'code_verifier' => $code_verifier,
 		);
 
 		$response = wp_remote_post(
@@ -166,7 +175,7 @@ class OAuth {
 			array_merge(
 				self::TOKEN_ENDPOINT_ARGS,
 				array(
-					'body' => array_merge( $request_body, $body ),
+					'body' => $body,
 				)
 			)
 		);
@@ -186,41 +195,40 @@ class OAuth {
 	}
 
 	/**
-	 * Exchanges authorization code for access token.
-	 *
-	 * @param string $code The authorization code.
-	 * @return array|\WP_Error Returns response body or \WP_Error on failure.
-	 */
-	protected static function exchange_code_for_token( string $code ) {
-		$code_verifier = (string) Settings::get_transient( 'oauth_code_verifier', '' );
-
-		if ( '' === $code_verifier ) {
-			return new \WP_Error( 'ogd_oauth_missing_state', __( 'Missing ogdynamic OAuth session data.', 'ogdynamic' ) );
-		}
-
-		return self::exchange_token(
-			'authorization_code',
-			array(
-				'redirect_uri'  => self::redirect_uri(),
-				'code'          => $code,
-				'code_verifier' => $code_verifier,
-			)
-		);
-	}
-
-	/**
 	 * Refreshes access token using refresh token.
 	 *
 	 * @param string $refresh_token The refresh token.
 	 * @return array|\WP_Error Returns response body or \WP_Error on failure.
 	 */
 	protected static function refresh_access_token( string $refresh_token ) {
-		return self::exchange_token(
-			'refresh_token',
-			array(
-				'refresh_token' => $refresh_token,
+		$body = array(
+			'grant_type'    => 'refresh_token',
+			'client_id'     => OGDYNAMIC_CLIENT_ID,
+			'refresh_token' => $refresh_token,
+		);
+
+		$response = wp_remote_post(
+			self::app_endpoint( 'oauth/token' ),
+			array_merge(
+				self::TOKEN_ENDPOINT_ARGS,
+				array(
+					'body' => $body,
+				)
 			)
 		);
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		$status        = wp_remote_retrieve_response_code( $response );
+		$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( $status < 200 || $status >= 300 || ! is_array( $response_body ) || empty( $response_body['access_token'] ) ) {
+			return new \WP_Error( 'ogd_oauth_token_refresh_failed', __( 'Could not refresh ogdynamic OAuth token.', 'ogdynamic' ) );
+		}
+
+		return $response_body;
 	}
 
 	/**
