@@ -13,7 +13,9 @@
       "OGDynamic\\": "includes/"
     }
   },
-  "require": {},
+  "require": {
+    "php": ">=7.4"
+  },
   "require-dev": {
     "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
     "phpcompatibility/phpcompatibility-wp": "^2.1",

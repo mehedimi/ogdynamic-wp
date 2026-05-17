@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
+import { watch } from "vue";
 import { RouterView, useRoute, useRouter } from "vue-router";
 import Layout from "./components/Layout.vue";
-import { apiKey, setApiKey } from "./state/connection";
+import { isConnected } from "./state/connection";
 
 const route = useRoute();
 const router = useRouter();
-const isConnected = computed(() => Boolean(apiKey.value));
 
 watch(
   () => [isConnected.value, route.path] as const,

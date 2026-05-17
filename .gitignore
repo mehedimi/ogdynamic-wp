@@ -6,6 +6,7 @@ vendor/
 dist/
 build/
 ogdynamic.zip
+.pnpm-store
 
 # Lock files
 pnpm-lock.yaml

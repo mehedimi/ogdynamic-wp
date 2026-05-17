@@ -8,8 +8,7 @@
 namespace OGDynamic\Controllers;
 
 use OGDynamic\Settings;
-use WP_Error;
-use WP_REST_Request;
+use OGDynamic\OAuth;
 use WP_REST_Server;
 
 class ConnectionController {
@@ -24,22 +23,20 @@ class ConnectionController {
 					'permission_callback' => array( self::class, 'can_manage' ),
 				),
 				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( self::class, 'update' ),
-					'permission_callback' => array( self::class, 'can_manage' ),
-					'args'                => array(
-						'api_key' => array(
-							'required'          => true,
-							'validate_callback' => array( self::class, 'validate_api_key' ),
-							'sanitize_callback' => array( self::class, 'sanitize_api_key' ),
-						),
-					),
-				),
-				array(
 					'methods'             => WP_REST_Server::DELETABLE,
 					'callback'            => array( self::class, 'delete' ),
 					'permission_callback' => array( self::class, 'can_manage' ),
 				),
+			)
+		);
+
+		register_rest_route(
+			'ogdynamic/v1',
+			'/connection/oauth/start',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( self::class, 'start_oauth' ),
+				'permission_callback' => array( self::class, 'can_manage' ),
 			)
 		);
 	}
@@ -48,74 +45,52 @@ class ConnectionController {
 		return current_user_can( 'manage_options' );
 	}
 
-	public static function validate_api_key( $value ) {
-		if ( ! is_string( $value ) || '' === $value || false !== strpos( $value, '•' ) ) {
-			return false;
-		}
-
-		return self::verify_api_key( self::sanitize_api_key( $value ) );
-	}
-
-	public static function sanitize_api_key( $value ): string {
-		return sanitize_text_field( wp_unslash( (string) $value ) );
-	}
-
 	public static function get() {
+		$token     = OAuth::get_access_token();
+		$connected = '' !== $token;
+
 		return rest_ensure_response(
 			array(
 				'data' => array(
-					'api_key' => Settings::get_api_key(),
+					'api_key'   => $token,
+					'connected' => $connected,
 				),
 			)
 		);
 	}
 
-	public static function update( WP_REST_Request $request ) {
-		$api_key = $request->get_param( 'api_key' );
-		Settings::update( 'api_key', $api_key, false );
+	public static function start_oauth() {
+		$result = OAuth::start();
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		return rest_ensure_response(
 			array(
-				'data' => array(
-					'api_key' => Settings::get_api_key(),
-				),
+				'data' => $result,
 			)
 		);
 	}
 
 	public static function delete() {
-		Settings::update( 'api_key', '', false );
+		OAuth::delete();
 
 		return rest_ensure_response(
 			array(
 				'data' => array(
-					'api_key' => '',
+					'api_key'   => '',
+					'connected' => false,
 				),
 			)
 		);
 	}
 
-	private static function verify_api_key( string $api_key ) {
-		$response = wp_remote_get(
-			trailingslashit( OGDYNAMIC_API ) . 'v1/me',
-			array(
-				'timeout' => 12,
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $api_key,
-					'Accept'        => 'application/json',
-				),
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			return new WP_Error( 'ogd_connection_failed', $response->get_error_message(), array( 'status' => 502 ) );
+	public static function handle_oauth_callback(): void {
+		if ( ! self::can_manage() ) {
+			wp_die( esc_html__( 'You do not have permission to connect ogdynamic.', 'ogdynamic' ) );
 		}
 
-		$code = wp_remote_retrieve_response_code( $response );
-		if ( $code < 200 || $code >= 300 ) {
-			return new WP_Error( 'ogd_invalid_api_key', __( 'Could not verify the ogdynamic API key.', 'ogdynamic' ), array( 'status' => 401 ) );
-		}
-
-		return true;
+		OAuth::handle_callback();
 	}
 }

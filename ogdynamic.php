@@ -30,8 +30,10 @@ if ( ! defined( 'OGDYNAMIC_API' ) ) {
 }
 
 if ( ! defined( 'OGDYNAMIC_CDN' ) ) {
-    define( 'OGDYNAMIC_CDN', 'https://cdn.ogdynamic.com/' );
+	define( 'OGDYNAMIC_CDN', 'https://cdn.ogdynamic.com/' );
 }
+
+define( 'OGDYNAMIC_CLIENT_ID', '019e30d1-5efc-723d-9408-00e500df45a0' );
 
 $ogdynamic_autoload = OGDYNAMIC_PATH . 'vendor/autoload.php';
 

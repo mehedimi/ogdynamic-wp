@@ -1,35 +1,10 @@
 <script setup lang="ts">
-import { reactive, shallowRef } from "vue";
-import { useOgdApi } from "../composables/useOgdApi";
-import { setApiKey } from "../state/connection";
-import FormField from "../components/forms/FormField.vue";
-import TextInput from "../components/forms/TextInput.vue";
+import { useOgdConnection } from "../composables/useOgdConnection";
 
-const api = useOgdApi();
-const form = reactive({ api_key: "" });
-const success = shallowRef("");
-
-type ConnectionResponse = {
-  data: {
-    api_key: string;
-  };
-};
+const connection = useOgdConnection();
 
 async function connect() {
-  success.value = "";
-
-  try {
-    const payload = await api.request<ConnectionResponse>("connection", {
-      method: "PUT",
-      body: { api_key: form.api_key },
-    });
-
-    setApiKey(payload.data.api_key);
-    success.value = "Connection verified. Loading your dashboard…";
-    form.api_key = "";
-  } catch {
-    // Error state is handled by useOgdApi.
-  }
+  await connection.startOAuth();
 }
 </script>
 
@@ -55,54 +30,38 @@ async function connect() {
       <p
         class="ogd:mt-0 ogd:mb-7 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
       >
-        Add your ogdynamic API key to start generating social preview images
-        from WordPress content.
+        Connect with ogdynamic to access your saved template designs, map them
+        to WordPress content, and use them to generate dynamic OG images for
+        this site.
       </p>
 
-      <form class="ogd:grid ogd:gap-4" @submit.prevent="connect">
-        <FormField label="API key" for-id="ogd-onboarding-api-key">
-          <TextInput
-            id="ogd-onboarding-api-key"
-            v-model="form.api_key"
-            type="password"
-            autocomplete="off"
-            placeholder="Paste your ogdynamic API key"
-          />
-          <p class="ogd:m-0 ogd:text-xs ogd:leading-relaxed ogd:text-gray-500">
-            To get your API key, visit
-            <a
-              class="ogd:font-semibold! ogd:text-rose-500! ogd:no-underline! ogd:hover:text-rose-600!"
-              href="https://ogdynamic.com/settings/tokens"
-              target="_blank"
-              rel="noreferrer"
-            >
-              API Key Page
-            </a>
-            and create or copy a token.
-          </p>
-        </FormField>
-
-        <button
-          class="ogd:inline-flex ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:rounded-full ogd:border ogd:border-transparent ogd:bg-gray-900 ogd:px-5 ogd:py-3 ogd:text-sm ogd:font-semibold ogd:text-white ogd:transition ogd:hover:bg-rose-500 ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
-          type="submit"
-          :disabled="api.loading.value || form.api_key === ''"
+      <button
+        class="ogd:inline-flex ogd:w-full ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-2xl ogd:border ogd:border-transparent ogd:bg-gray-900 ogd:px-5 ogd:py-4 ogd:text-sm ogd:font-semibold ogd:text-white ogd:transition ogd:hover:bg-rose-500 ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
+        type="button"
+        :disabled="connection.loading.value"
+        @click="connect"
+      >
+        <svg
+          class="ogd:size-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
         >
-          {{ api.loading.value ? "Checking connection…" : "Connect account" }}
-        </button>
-      </form>
+          <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11 4.93" />
+          <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L13 19.07" />
+        </svg>
+        {{ connection.loading.value ? "Starting connection..." : "Connect ogdynamic" }}
+      </button>
 
       <div
-        v-if="api.error.value"
+        v-if="connection.error.value"
         class="ogd:mt-5 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700"
       >
-        {{ api.error.value }}
-      </div>
-
-      <div
-        v-if="success"
-        class="ogd:mt-5 ogd:rounded-[14px] ogd:border ogd:border-green-200 ogd:bg-green-50 ogd:px-3.5 ogd:py-3 ogd:text-green-800"
-      >
-        {{ success }}
+        {{ connection.error.value }}
       </div>
     </div>
   </section>

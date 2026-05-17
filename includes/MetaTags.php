@@ -2,6 +2,8 @@
 /**
  * Frontend Open Graph/Twitter meta output.
  *
+ * Outputs OG image meta tags and integrates with SEO plugins.
+ *
  * @package OGD
  */
 
@@ -9,7 +11,12 @@ namespace OGDynamic;
 
 class MetaTags {
 
-	private static bool $output_via_plugins = false;
+	/**
+	 * Whether meta tags are being output via another plugin.
+	 *
+	 * @var bool
+	 */
+	private static $output_via_plugins = false;
 
 
 	public static function register(): void {
