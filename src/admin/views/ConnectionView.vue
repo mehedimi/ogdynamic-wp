@@ -112,5 +112,153 @@ async function disconnect() {
         {{ success }}
       </div>
     </article>
+
+    <div
+      v-if="isConnected"
+      class="ogd:mt-8"
+    >
+      <h2
+        class="ogd:font-display ogd:text-xl ogd:font-bold ogd:text-gray-900"
+      >
+        What you can do with ogdynamic
+      </h2>
+      <p
+        class="ogd:mt-2 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
+      >
+        Once connected, you can create and manage dynamic OG image templates for your store and content.
+      </p>
+
+      <div
+        class="ogd:mt-6 ogd:grid ogd:grid-cols-1 ogd:gap-4 ogd:sm:grid-cols-2"
+      >
+        <div
+          class="ogd:rounded-[14px] ogd:border ogd:border-gray-200 ogd:bg-white ogd:p-5"
+        >
+          <div
+            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-rose-50 ogd:text-rose-600"
+          >
+            <svg
+              class="ogd:size-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <line x1="21" y1="15" x2="8" y2="8" />
+            </svg>
+          </div>
+          <h3
+            class="ogd:font-display ogd:text-base ogd:font-semibold ogd:text-gray-900"
+          >
+            Product Templates
+          </h3>
+          <p
+            class="ogd:mt-2 ogd:text-[13px] ogd:leading-relaxed ogd:text-gray-500"
+          >
+            Create branded social previews for products with price, image, discount, and key specs.
+          </p>
+        </div>
+
+        <div
+          class="ogd:rounded-[14px] ogd:border ogd:border-gray-200 ogd:bg-white ogd:p-5"
+        >
+          <div
+            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-rose-50 ogd:text-rose-600"
+          >
+            <svg
+              class="ogd:size-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+              <line x1="4" y1="22" x2="4" y2="15" />
+            </svg>
+          </div>
+          <h3
+            class="ogd:font-display ogd:text-base ogd:font-semibold ogd:text-gray-900"
+          >
+            Blog & Articles
+          </h3>
+          <p
+            class="ogd:mt-2 ogd:text-[13px] ogd:leading-relaxed ogd:text-gray-500"
+          >
+            Generate dynamic OG images for blog posts with title, author, and metadata.
+          </p>
+        </div>
+
+        <div
+          class="ogd:rounded-[14px] ogd:border ogd:border-gray-200 ogd:bg-white ogd:p-5"
+        >
+          <div
+            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-rose-50 ogd:text-rose-600"
+          >
+            <svg
+              class="ogd:size-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+              <line x1="9" y1="9" x2="9.01" y2="9" />
+              <line x1="15" y1="9" x2="15.01" y2="9" />
+            </svg>
+          </div>
+          <h3
+            class="ogd:font-display ogd:text-base ogd:font-semibold ogd:text-gray-900"
+          >
+            Reusable Templates
+          </h3>
+          <p
+            class="ogd:mt-2 ogd:text-[13px] ogd:leading-relaxed ogd:text-gray-500"
+          >
+            Design once and reuse across your entire catalog for consistent branding.
+          </p>
+        </div>
+
+        <div
+          class="ogd:rounded-[14px] ogd:border ogd:border-gray-200 ogd:bg-white ogd:p-5"
+        >
+          <div
+            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-rose-50 ogd:text-rose-600"
+          >
+            <svg
+              class="ogd:size-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              <path d="M2 12h20" />
+            </svg>
+          </div>
+          <h3
+            class="ogd:font-display ogd:text-base ogd:font-semibold ogd:text-gray-900"
+          >
+            Cross-Platform
+          </h3>
+          <p
+            class="ogd:mt-2 ogd:text-[13px] ogd:leading-relaxed ogd:text-gray-500"
+          >
+            Automatically optimize previews for X, LinkedIn, Facebook, Slack, and iMessage.
+          </p>
+        </div>
+      </div>
+    </div>
   </section>
 </template>

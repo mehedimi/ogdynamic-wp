@@ -14,7 +14,7 @@ async function connect() {
     class="ogd:grid ogd:min-h-[calc(100vh-190px)] ogd:place-items-center"
   >
     <div
-      class="ogd:w-full ogd:max-w-140 ogd:rounded-[28px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-8 ogd:shadow-[0_24px_80px_rgba(17,24,39,0.08)]"
+      class="ogd:w-full ogd:max-w-140 ogd:rounded-[28px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-8 ogd:shadow-[0_24px_80px_rgba(17,24,39,0.08)] ogd:mt-8"
     >
      <div class="ogd:flex ogd:flex-col ogd:items-center">
         <Logo />
@@ -33,8 +33,8 @@ async function connect() {
       </p>
 
       <div
-        class="ogd:mt-8 ogd:w-full ogd:rounded-2xl ogd:border ogd:border-gray-100 ogd:bg-gray-50 ogd:p-5"
-      >
+         class="ogd:mt-10 ogd:w-full ogd:rounded-2xl ogd:border ogd:border-gray-100 ogd:bg-gray-50 ogd:p-5"
+       >
         <h3
           class="ogd:mb-3 ogd:font-display ogd:text-sm ogd:font-semibold ogd:text-gray-900"
         >

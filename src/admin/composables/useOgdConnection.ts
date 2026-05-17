@@ -26,11 +26,11 @@ export function useOgdConnection() {
   }
 
   async function disconnect() {
-    const payload = await api.request<ConnectionResponse>("connection", {
+    await api.request<ConnectionResponse>("connection", {
       method: "DELETE",
     });
 
-    setApiKey(payload.data.api_key);
+    setApiKey("");
   }
 
   return {

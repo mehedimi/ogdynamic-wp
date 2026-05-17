@@ -122,10 +122,9 @@ export type PostTypeOption = {
 export type RuntimeConfig = {
   restUrl: string;
   apiUrl: string;
+  cdnUrl: string;
   nonce: string;
   apiKey: string;
-  seoPlugin: string;
-  ecoPlugins: string[];
 };
 
 export type ApiData<T> = {
