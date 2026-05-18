@@ -59,14 +59,13 @@ class OAuth {
 	 * @return array{authorize_url: string} Returns array with authorize_url.
 	 */
 	public static function start(): array {
-		$state         = self::random_url_token( 32 );
+		$wpnonce       = self::random_url_token( 16 );
 		$code_verifier = self::random_url_token( 64 );
 
-		Settings::set_transient( 'oauth_state', $state, 5 * MINUTE_IN_SECONDS );
-		Settings::set_transient( 'oauth_code_verifier', $code_verifier, 5 * MINUTE_IN_SECONDS );
+		Settings::set_transient( self::code_verifier_key( $wpnonce ), $code_verifier, 5 * MINUTE_IN_SECONDS );
 
 		return array(
-			'authorize_url' => self::authorize_url( OGDYNAMIC_CLIENT_ID, $state, $code_verifier ),
+			'authorize_url' => self::authorize_url( OGDYNAMIC_CLIENT_ID, $wpnonce, $code_verifier ),
 		);
 	}
 
@@ -115,16 +114,21 @@ class OAuth {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$code = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$state = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '';
+		$wpnonce = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
 
-		if ( '' === $code || '' === $state || ! hash_equals( (string) Settings::get_transient( 'oauth_state', '' ), $state ) ) {
-			wp_die( esc_html__( 'Invalid ogdynamic OAuth callback state.', 'ogdynamic' ) );
+		if ( '' === $code ) {
+			wp_die( esc_html__( 'Missing ogdynamic OAuth authorization code.', 'ogdynamic' ) );
 		}
 
-		$token = self::exchange_code_for_token( $code );
+		$code_verifier = '' === $wpnonce ? '' : (string) Settings::get_transient( self::code_verifier_key( $wpnonce ), '' );
 
-		Settings::delete_transient( 'oauth_state' );
-		Settings::delete_transient( 'oauth_code_verifier' );
+		if ( '' === $code_verifier ) {
+			wp_die( esc_html__( 'Invalid ogdynamic OAuth callback nonce.', 'ogdynamic' ) );
+		}
+
+		$token = self::exchange_code_for_token( $code, $code_verifier );
+
+		Settings::delete_transient( self::code_verifier_key( $wpnonce ) );
 
 		if ( is_wp_error( $token ) ) {
 			wp_die( esc_html( $token->get_error_message() ) );
@@ -132,7 +136,7 @@ class OAuth {
 
 		self::store_token_response( $token );
 
-		wp_safe_redirect( admin_url( 'admin.php?page=ogdynamic#/connection' ) );
+		wp_safe_redirect( admin_url( 'admin.php?page=ogdynamic' ) );
 		exit;
 	}
 
@@ -152,20 +156,15 @@ class OAuth {
 	/**
 	 * Exchanges authorization code for access token.
 	 *
-	 * @param string $code The authorization code.
+	 * @param string $code          The authorization code.
+	 * @param string $code_verifier The PKCE code verifier.
 	 * @return array|\WP_Error Returns response body or \WP_Error on failure.
 	 */
-	protected static function exchange_code_for_token( string $code ) {
-		$code_verifier = (string) Settings::get_transient( 'oauth_code_verifier', '' );
-
-		if ( '' === $code_verifier ) {
-			return new \WP_Error( 'ogd_oauth_missing_state', __( 'Missing ogdynamic OAuth session data.', 'ogdynamic' ) );
-		}
-
+	protected static function exchange_code_for_token( string $code, string $code_verifier ) {
 		$body = array(
 			'grant_type'    => 'authorization_code',
 			'client_id'     => OGDYNAMIC_CLIENT_ID,
-			'redirect_uri'  => self::redirect_uri(),
+			'redirect_uri'  => self::oauth_redirect_uri(),
 			'code'          => $code,
 			'code_verifier' => $code_verifier,
 		);
@@ -239,9 +238,14 @@ class OAuth {
 	 */
 	protected static function store_token_response( array $token ): void {
 		$expires_in = isset( $token['expires_in'] ) ? absint( $token['expires_in'] ) : 0;
+		$refresh_token = isset( $token['refresh_token'] ) ? sanitize_text_field( (string) $token['refresh_token'] ) : '';
 
-		Settings::set_transient( self::TRANSIENT_ACCESS_TOKEN, sanitize_text_field( (string) $token['access_token'] ), max( $expires_in, 0 ) );
-		Settings::update( 'oauth_refresh_token', sanitize_text_field( (string) ( $token['refresh_token'] ?? '' ) ), false );
+		Settings::set_transient( self::TRANSIENT_ACCESS_TOKEN, sanitize_text_field( (string) $token['access_token'] ), $expires_in > 60 ? $expires_in - 60 : 60 );
+
+		if ( '' !== $refresh_token ) {
+			Settings::update( 'oauth_refresh_token', $refresh_token, false );
+		}
+
 		Settings::update( 'oauth_expires_at', $expires_in > 0 ? time() + $expires_in : 0, false );
 		Settings::delete( 'api_key' );
 	}
@@ -250,18 +254,18 @@ class OAuth {
 	 * Generates the OAuth authorize URL.
 	 *
 	 * @param string $client_id     The OAuth client ID.
-	 * @param string $state         The state parameter for CSRF protection.
+	 * @param string $wpnonce       The WordPress OAuth callback nonce.
 	 * @param string $code_verifier The PKCE code verifier.
 	 * @return string The authorize URL.
 	 */
-	protected static function authorize_url( string $client_id, string $state, string $code_verifier ): string {
+	protected static function authorize_url( string $client_id, string $wpnonce, string $code_verifier ): string {
 		return add_query_arg(
 			array(
 				'client_id'             => $client_id,
-				'redirect_uri'          => self::redirect_uri(),
+				'redirect_uri'          => self::oauth_redirect_uri(),
 				'response_type'         => 'code',
 				'scope'                 => self::SCOPE,
-				'state'                 => $state,
+				'state'                 => 'wp:' . self::redirect_uri() . '|' . $wpnonce,
 				'code_challenge'        => self::code_challenge( $code_verifier ),
 				'code_challenge_method' => 'S256',
 			),
@@ -301,12 +305,31 @@ class OAuth {
 	}
 
 	/**
+	 * Gets the transient key for a PKCE verifier.
+	 *
+	 * @param string $wpnonce The WordPress OAuth callback nonce.
+	 * @return string The transient key.
+	 */
+	protected static function code_verifier_key( string $wpnonce ): string {
+		return 'oauth_code_verifier_' . $wpnonce;
+	}
+
+	/**
 	 * Gets the OAuth redirect URI.
 	 *
 	 * @return string The redirect URI.
 	 */
 	protected static function redirect_uri(): string {
 		return admin_url( 'admin.php?page=ogdynamic-oauth-callback' );
+	}
+
+	/**
+	 * Gets the SaaS OAuth redirect URI.
+	 *
+	 * @return string The OAuth redirect URI.
+	 */
+	protected static function oauth_redirect_uri(): string {
+		return self::app_endpoint( 'oauth/wordpress/redirect' );
 	}
 
 	/**
