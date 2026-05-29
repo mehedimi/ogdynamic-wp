@@ -74,6 +74,14 @@ Service links:
 
 This plugin's source code is available at [https://github.com/mehedimi/ogdynamic-wp](https://github.com/mehedimi/ogdynamic-wp).
 
+== Screenshots ==
+
+1. **Onboarding screen** — Connect your WordPress site to ogdynamic via OAuth with a single click. See the benefits of dynamic OG images at a glance.
+2. **Dashboard** — View your connection status and account details at a glance, with quick access to manage templates.
+3. **Templates overview** — Browse all available post types and archive pages. Activated templates show a green badge so you can see which content types have OG images configured.
+4. **Template mapping** — Select a design from your ogdynamic account, then map each template field to a WordPress data source with the live preview panel.
+5. **Connection management** — Connect or disconnect your ogdynamic account. While connected, explore feature highlights for products, blog posts, reusable templates, and cross-platform previews.
+
 == Installation ==
 
 = Automatic Installation =
