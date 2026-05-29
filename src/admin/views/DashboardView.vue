@@ -1,29 +1,28 @@
 <script setup lang="ts">
-import { computed, shallowRef } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { RouterLink } from "vue-router";
 import { useOgdCloudApi } from "../composables/useOgdCloudApi";
 import type { ApiData, User } from "../types";
 
 const cloudApi = useOgdCloudApi();
+const account = ref<User | undefined>();
 
-const account = shallowRef<User>();
+const isLoading = ref(true);
 
-function loadAccount() {
-  cloudApi
-    .request<ApiData<User>>("/v1/me")
-    .then(({ data }) => {
-      account.value = data;
-    })
-    .catch(() => {
-      //
-    });
+async function loadAccount() {
+  try {
+    const { data } = await cloudApi.request<ApiData<User>>("/v1/me");
+    account.value = data;
+  } catch {
+    account.value = undefined;
+  } finally {
+    isLoading.value = false;
+  }
 }
 
-void loadAccount();
+const isConnected = computed(() => Boolean(account.value) && !cloudApi.error.value);
 
-const isConnected = computed(() => {
-  return Boolean(account.value) && !cloudApi.error.value;
-});
+onMounted(loadAccount);
 </script>
 
 <template>
@@ -40,10 +39,10 @@ const isConnected = computed(() => {
     </p>
 
     <div class="ogd:grid ogd:grid-cols-1 ogd:gap-4.5">
-      <article
-        v-if="!cloudApi.loading.value"
-        class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
-      >
+       <article
+         v-if="!isLoading"
+         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
+       >
         <div
           class="ogd:flex ogd:items-start ogd:justify-between ogd:gap-4 max-[720px]:ogd:flex-col"
         >
@@ -143,56 +142,56 @@ const isConnected = computed(() => {
         </div>
       </article>
       <article
-        v-else
-        class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
-      >
-        <div class="ogd:animate-pulse">
-          <div
-            class="ogd:flex ogd:items-start ogd:justify-between ogd:gap-4 max-[720px]:ogd:flex-col"
-          >
-            <div class="ogd:w-full">
-              <div
-                class="ogd:h-6 ogd:w-24 ogd:rounded-full ogd:bg-gray-100"
-              ></div>
-              <div
-                class="ogd:mt-4 ogd:h-6 ogd:w-36 ogd:rounded-md ogd:bg-gray-100"
-              ></div>
-              <div class="ogd:mt-3 ogd:grid ogd:gap-2">
-                <div
-                  class="ogd:h-4 ogd:w-full ogd:max-w-150 ogd:rounded-md ogd:bg-gray-100"
-                ></div>
-                <div
-                  class="ogd:h-4 ogd:w-full ogd:max-w-96 ogd:rounded-md ogd:bg-gray-100"
-                ></div>
-              </div>
-            </div>
+         v-else
+         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
+       >
+         <div class="ogd:animate-pulse" aria-hidden="true">
+           <div
+             class="ogd:flex ogd:items-start ogd:justify-between ogd:gap-4 max-[720px]:ogd:flex-col"
+           >
+             <div class="ogd:w-full">
+               <div
+                 class="ogd:h-6 ogd:w-24 ogd:rounded-full ogd:bg-gray-100"
+               ></div>
+               <div
+                 class="ogd:mt-4 ogd:h-6 ogd:w-36 ogd:rounded-md ogd:bg-gray-100"
+               ></div>
+               <div class="ogd:mt-3 ogd:grid ogd:gap-2">
+                 <div
+                   class="ogd:h-4 ogd:w-full ogd:max-w-150 ogd:rounded-md ogd:bg-gray-100"
+                 ></div>
+                 <div
+                   class="ogd:h-4 ogd:w-full ogd:max-w-96 ogd:rounded-md ogd:bg-gray-100"
+                 ></div>
+               </div>
+             </div>
 
-            <div
-              class="ogd:flex ogd:shrink-0 ogd:flex-wrap ogd:justify-end ogd:gap-2.5 max-[720px]:ogd:w-full max-[720px]:ogd:justify-start"
-            >
-              <div
-                class="ogd:h-10 ogd:w-40 ogd:rounded-full ogd:bg-gray-100"
-              ></div>
-              <div
-                class="ogd:h-10 ogd:w-36 ogd:rounded-full ogd:bg-gray-100"
-              ></div>
-            </div>
-          </div>
-          <div
-            class="ogd:mt-5 ogd:rounded-2xl ogd:bg-gray-50 ogd:px-4 ogd:py-3"
-          >
-            <div
-              class="ogd:h-3 ogd:w-20 ogd:rounded-md ogd:bg-gray-100"
-            ></div>
-            <div
-              class="ogd:mt-2 ogd:h-4 ogd:w-38 ogd:rounded-md ogd:bg-gray-100"
-            ></div>
-            <div
-              class="ogd:mt-2 ogd:h-4 ogd:w-56 ogd:rounded-md ogd:bg-gray-100"
-            ></div>
-          </div>
-        </div>
-      </article>
-    </div>
-  </section>
-</template>
+             <div
+               class="ogd:flex ogd:shrink-0 ogd:flex-wrap ogd:justify-end ogd:gap-2.5 max-[720px]:ogd:w-full max-[720px]:ogd:justify-start"
+             >
+               <div
+                 class="ogd:h-10 ogd:w-40 ogd:rounded-full ogd:bg-gray-100"
+               ></div>
+               <div
+                 class="ogd:h-10 ogd:w-36 ogd:rounded-full ogd:bg-gray-100"
+               ></div>
+             </div>
+           </div>
+           <div
+             class="ogd:mt-5 ogd:rounded-2xl ogd:bg-gray-50 ogd:px-4 ogd:py-3"
+           >
+             <div
+               class="ogd:h-3 ogd:w-20 ogd:rounded-md ogd:bg-gray-100"
+             ></div>
+             <div
+               class="ogd:mt-2 ogd:h-4 ogd:w-38 ogd:rounded-md ogd:bg-gray-100"
+             ></div>
+             <div
+               class="ogd:mt-2 ogd:h-4 ogd:w-56 ogd:rounded-md ogd:bg-gray-100"
+             ></div>
+           </div>
+         </div>
+       </article>
+     </div>
+   </section>
+ </template>

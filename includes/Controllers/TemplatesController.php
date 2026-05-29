@@ -11,9 +11,19 @@ use OGDynamic\Template;
 use WP_REST_Request;
 use WP_REST_Server;
 
+/**
+ * Class TemplatesController
+ *
+ * REST API controller for managing OG image templates.
+ * Handles CRUD operations for template mappings per post type.
+ */
 class TemplatesController {
 
-
+	/**
+	 * Initializes REST API routes.
+	 *
+	 * @return void
+	 */
 	public static function init(): void {
 		register_rest_route(
 			'ogdynamic/v1',
@@ -78,11 +88,21 @@ class TemplatesController {
 		);
 	}
 
+	/**
+	 * Checks if user can manage templates.
+	 *
+	 * @return bool True if user has permission, false otherwise.
+	 */
 	public static function can_manage(): bool {
 		return current_user_can( 'manage_options' );
 	}
 
-	public static function get() {
+	/**
+	 * Gets all available templates.
+	 *
+	 * @return \WP_REST_Response REST response with post types and activated templates.
+	 */
+	public static function get(): \WP_REST_Response {
 		$post_types           = Template::available_post_types();
 		$activated_post_types = Template::get_activated_post_types();
 
@@ -94,7 +114,13 @@ class TemplatesController {
 		);
 	}
 
-	public static function get_post_type_template( WP_REST_Request $request ) {
+	/**
+	 * Gets template for a specific post type.
+	 *
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response REST response with template data and sources.
+	 */
+	public static function get_post_type_template( WP_REST_Request $request ): \WP_REST_Response {
 		$post_type = (string) $request->get_param( 'post_type' );
 
 		return rest_ensure_response(
@@ -105,7 +131,13 @@ class TemplatesController {
 		);
 	}
 
-	public static function update_post_type_template( WP_REST_Request $request ) {
+	/**
+	 * Updates template mapping for a post type.
+	 *
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response REST response with updated template data.
+	 */
+	public static function update_post_type_template( WP_REST_Request $request ): \WP_REST_Response {
 		$post_type   = (string) $request->get_param( 'post_type' );
 		$template_id = (string) $request->get_param( 'template_id' );
 		$map         = $request->get_param( 'map' );
@@ -124,7 +156,13 @@ class TemplatesController {
 		);
 	}
 
-	public static function delete_post_type_template( WP_REST_Request $request ) {
+	/**
+	 * Deletes template mapping for a post type.
+	 *
+	 * @param WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response REST response with empty data.
+	 */
+	public static function delete_post_type_template( WP_REST_Request $request ): \WP_REST_Response {
 		$post_type = (string) $request->get_param( 'post_type' );
 
 		Template::delete_mapping( $post_type );
@@ -136,14 +174,32 @@ class TemplatesController {
 		);
 	}
 
+	/**
+	 * Validates template ID format.
+	 *
+	 * @param mixed $value The template ID to validate.
+	 * @return bool True if valid, false otherwise.
+	 */
 	public static function validate_template_id( $value ): bool {
 		return is_string( $value ) && preg_match( '/^[0-9A-HJKMNP-TV-Z]{26}$/i', $value );
 	}
 
+	/**
+	 * Sanitizes template ID.
+	 *
+	 * @param mixed $value The template ID to sanitize.
+	 * @return string Sanitized template ID.
+	 */
 	public static function sanitize_template_id( $value ): string {
 		return sanitize_text_field( wp_unslash( (string) $value ) );
 	}
 
+	/**
+	 * Validates map array structure.
+	 *
+	 * @param mixed $value The map to validate.
+	 * @return bool True if valid, false otherwise.
+	 */
 	public static function validate_map( $value ): bool {
 		if ( ! is_array( $value ) ) {
 			return false;
@@ -166,6 +222,12 @@ class TemplatesController {
 		return true;
 	}
 
+	/**
+	 * Sanitizes map array.
+	 *
+	 * @param mixed $value The map to sanitize.
+	 * @return array Sanitized map array.
+	 */
 	public static function sanitize_map( $value ): array {
 		if ( ! is_array( $value ) ) {
 			return array();

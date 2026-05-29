@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, shallowRef, watch } from "vue";
+import { computed, reactive, ref, shallowRef, watch, onMounted } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import type { ApiData, OGDDesign, OGDDesignListItem } from "../types";
 import { useOgdApi } from "../composables/useOgdApi";
@@ -29,11 +29,11 @@ type TemplateMapping = {
 const route = useRoute();
 const router = useRouter();
 
+const isLoading = ref(true);
 const templateExists = ref(false);
 
 const wordpressApi = useOgdApi();
 const cloudApi = useOgdCloudApi();
-
 const wpDeleteApi = useOgdApi();
 
 const designs = shallowRef<OGDDesignListItem[]>([]);
@@ -44,32 +44,11 @@ const formPayload = reactive<TemplateMapping>({
   map: [],
 });
 
-const fieldMap = computed(() => {
-  return (key: string): string => {
-    return formPayload.map.find((map) => map.attr_key === key)?.key || "";
-  };
-});
-
 const mappingSources = shallowRef<MappingSourceOption[]>([]);
 
-const fields = computed<FieldOption[]>(() => {
-  return (
-    design.value?.template.schema.flatMap((section) => {
-      return section.fields
-        .filter((field) => field.allowOverride)
-        .flatMap((field) => {
-          return {
-            key: field.key,
-            label: field.label,
-          };
-        });
-    }) || []
-  );
-});
+const success = ref("");
 
-const success = shallowRef("");
 const postType = computed(() => String(route.params.postType || ""));
-
 const postTypeLabel = computed(
   () => postType.value.charAt(0).toUpperCase() + postType.value.slice(1),
 );
@@ -77,12 +56,29 @@ const createDesignUrl = computed(
   () =>
     `${window.ogdynamicAdmin.apiUrl.replace(/\/?api\/?$/, "")}/designs/create`,
 );
-
 const selectedDesignPreviewUrl = computed(() =>
   formPayload.template_id
-    ? `https://cdn.ogdynamic.com/d/${formPayload.template_id}`
+    ? `${window.ogdynamicAdmin.cdnUrl}d/${formPayload.template_id}`
     : "",
 );
+
+const fieldMap = computed(() => {
+  return (key: string): string =>
+    formPayload.map.find((map) => map.attr_key === key)?.key || "";
+});
+
+const fields = computed<FieldOption[]>(() => {
+  return (
+    design.value?.template.schema.flatMap((section) =>
+      section.fields
+        .filter((field) => field.allowOverride)
+        .flatMap((field) => ({
+          key: field.key,
+          label: field.label,
+        })),
+    ) || []
+  );
+});
 
 const designOptions = computed(() =>
   [{ label: "Select your design", value: "" }].concat(
@@ -90,11 +86,10 @@ const designOptions = computed(() =>
   ),
 );
 
-const sourceOptions = computed(() => {
-  return [{ value: "", label: "Do not override" }].concat(
-    mappingSources.value.map((d) => ({ value: d.key, label: d.label })),
-  );
-});
+const sourceOptions = computed(() => [
+  { value: "", label: "Do not override" },
+  ...mappingSources.value.map((d) => ({ value: d.key, label: d.label })),
+]);
 
 watch(
   () => formPayload.template_id,
@@ -104,33 +99,33 @@ watch(
   },
 );
 
-async function load() {
-  return Promise.all([loadDesigns(), loadSavedMapping()]);
-}
-
 async function loadSavedMapping() {
-  const payload = await wordpressApi.request<{
-    data: Partial<TemplateMapping>;
-    sources: MappingSourceOption[];
-  }>(`templates/${postType.value}`);
+  isLoading.value = true;
+  try {
+    const payload = await wordpressApi.request<{
+      data: Partial<TemplateMapping>;
+      sources: MappingSourceOption[];
+    }>(`templates/${postType.value}`);
 
-  mappingSources.value = payload.sources;
+    mappingSources.value = payload.sources;
 
-  if (!Array.isArray(payload.data)) {
-    formPayload.map = payload.data.map || [];
-    formPayload.template_id = payload.data.template_id || "";
-    templateExists.value = true;
+    if (!Array.isArray(payload.data)) {
+      formPayload.map = payload.data.map || [];
+      formPayload.template_id = payload.data.template_id || "";
+      templateExists.value = true;
+    }
+  } finally {
+    isLoading.value = false;
   }
 }
 
 async function loadDesigns() {
   const { data } = await cloudApi.request<ApiData<OGDDesign[]>>("v1/designs");
-
   designs.value = data;
 }
 
 async function loadDesign(designId: string) {
-  if ("" === designId) {
+  if (!designId) {
     design.value = undefined;
     return;
   }
@@ -144,23 +139,30 @@ async function loadDesign(designId: string) {
 }
 
 async function save() {
-  await wpDeleteApi.request<{ data: TemplateMapping }>(
-    `templates/${postType.value}`,
-    {
-      method: "PUT",
-      body: formPayload,
-    },
-  );
-  success.value = "OG image template updated.";
-  templateExists.value = true;
+  try {
+    await wpDeleteApi.request<{ data: TemplateMapping }>(
+      `templates/${postType.value}`,
+      {
+        method: "PUT",
+        body: formPayload,
+      },
+    );
+    success.value = "OG image template updated.";
+    templateExists.value = true;
+  } catch {
+    success.value = "";
+  }
 }
 
 async function deactivate() {
-  await wpDeleteApi.request<{ data: [] }>(`templates/${postType.value}`, {
-    method: "DELETE",
-  });
-
-  await router.push("/templates");
+  try {
+    await wpDeleteApi.request<{ data: [] }>(`templates/${postType.value}`, {
+      method: "DELETE",
+    });
+    await router.push("/templates");
+  } catch {
+    // Error handled by API error state
+  }
 }
 
 function fieldInputId(key: string): string {
@@ -168,33 +170,22 @@ function fieldInputId(key: string): string {
 }
 
 function setFieldMapValue(attr_key: string, key: string) {
-  let map = formPayload.map.find((map) => map.attr_key === attr_key);
+  const map = formPayload.map.find((map) => map.attr_key === attr_key);
 
   if (map) {
     map.key = key;
   } else {
-    formPayload.map.push({
-      key,
-      attr_key,
-    });
+    formPayload.map.push({ key, attr_key });
   }
 }
 
 function autoMapEmptyFields() {
   for (const field of fields.value) {
-    const mapped = formPayload.map.find((map) => map.attr_key === field.key);
-
-    if (mapped) {
-      continue;
-    }
+    if (formPayload.map.some((map) => map.attr_key === field.key)) continue;
 
     const source = findMatchingSource(field);
-
     if (source) {
-      formPayload.map.push({
-        attr_key: field.key,
-        key: source.key,
-      });
+      formPayload.map.push({ attr_key: field.key, key: source.key });
     }
   }
 }
@@ -209,7 +200,6 @@ function findMatchingSource(field: FieldOption): MappingSourceOption | undefined
       normalizeMappingKey(source.key),
       normalizeMappingKey(source.label),
     ];
-
     return fieldKeys.some((fieldKey) =>
       sourceKeys.some(
         (sourceKey) =>
@@ -225,7 +215,13 @@ function normalizeMappingKey(key: string): string {
   return key.replace(/url$/i, "").replace(/[^a-z0-9]/gi, "").toLowerCase();
 }
 
-load();
+onMounted(async () => {
+  try {
+    await Promise.all([loadDesigns(), loadSavedMapping()]);
+  } catch {
+    // Errors handled individually
+  }
+});
 </script>
 
 <template>

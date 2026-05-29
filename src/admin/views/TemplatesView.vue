@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, shallowRef } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { useOgdApi } from "../composables/useOgdApi";
 import type { PostTypeOption } from "../types";
@@ -10,34 +10,30 @@ type TemplatesResponse = {
 };
 
 const wordpressApi = useOgdApi();
-const activatedTemplates = shallowRef<string[]>([]);
-const postTypes = shallowRef<PostTypeOption[]>([]);
-
-const displayPostTypes = computed(() =>
-  postTypes.value.filter((postType) => "attachment" !== postType.name),
-);
-
-const activatedPostTypes = computed(() => {
-  return new Set(activatedTemplates.value);
-});
+const activatedTemplates = ref<string[]>([]);
+const postTypes = ref<PostTypeOption[]>([]);
+const isLoading = ref(true);
+const activatedPostTypes = computed(() => new Set(activatedTemplates.value));
+const isLoadingState = computed(() => wordpressApi.loading.value || isLoading.value);
 
 function isActivated(postType: string): boolean {
   return activatedPostTypes.value.has(postType);
 }
 
-function loadData() {
-  return wordpressApi
-    .request<TemplatesResponse>("templates")
-    .then((payload) => {
-      postTypes.value = Array.isArray(payload.data) ? payload.data : [];
-      activatedTemplates.value = Array.isArray(payload.templates)
-        ? payload.templates
-        : [];
-    })
-    .catch(() => {
-      postTypes.value = [];
-      activatedTemplates.value = [];
-    });
+async function loadData() {
+  isLoading.value = true;
+  try {
+    const payload = await wordpressApi.request<TemplatesResponse>("templates");
+    postTypes.value = Array.isArray(payload.data) ? payload.data : [];
+    activatedTemplates.value = Array.isArray(payload.templates)
+      ? payload.templates
+      : [];
+  } catch {
+    postTypes.value = [];
+    activatedTemplates.value = [];
+  } finally {
+    isLoading.value = false;
+  }
 }
 
 onMounted(loadData);
@@ -58,13 +54,14 @@ onMounted(loadData);
     </p>
 
     <div
-      v-if="wordpressApi.loading.value"
+      v-if="isLoadingState"
       class="ogd:grid ogd:grid-cols-3 ogd:gap-4.5 max-[1100px]:ogd:grid-cols-2 max-[720px]:ogd:grid-cols-1"
     >
       <article
         v-for="item in 6"
         :key="item"
         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
+        aria-hidden="true"
       >
         <div class="ogd:animate-pulse">
           <div class="ogd:flex ogd:items-start ogd:justify-between ogd:gap-3">
@@ -88,12 +85,12 @@ onMounted(loadData);
       </article>
     </div>
 
-    <div
-      v-else
-      class="ogd:grid ogd:grid-cols-3 ogd:gap-4.5 max-[1100px]:ogd:grid-cols-2 max-[720px]:ogd:grid-cols-1"
-    >
-      <RouterLink
-        v-for="postType in displayPostTypes"
+     <div
+       v-else-if="postTypes.length > 0"
+       class="ogd:grid ogd:grid-cols-3 ogd:gap-4.5 max-[1100px]:ogd:grid-cols-2 max-[720px]:ogd:grid-cols-1"
+     >
+       <RouterLink
+         v-for="postType in postTypes"
         :key="postType.name"
         :to="`/templates/${postType.name}`"
         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6 ogd:no-underline ogd:transition-all! ogd:hover:border-rose-100 ogd:hover:shadow-[0_18px_48px_rgba(17,24,39,0.08)]"
@@ -126,6 +123,15 @@ onMounted(loadData);
           {{ postType.description }}
         </p>
       </RouterLink>
+    </div>
+
+    <div
+      v-else
+      class="ogd:flex ogd:items-center ogd:justify-center ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-12"
+    >
+      <p class="ogd:text-sm ogd:text-gray-500">
+        No post types found
+      </p>
     </div>
   </section>
 </template>

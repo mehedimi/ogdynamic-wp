@@ -1,10 +1,13 @@
 import { readonly, ref } from "vue";
 import axios, { AxiosError } from "axios";
+import { setApiKey } from "../state/connection";
+import { useOgdApi } from "./useOgdApi";
 
 type ApiErrorResponse = {
   message?: string;
 };
 
+const ogdApi = useOgdApi();
 const client = axios.create({
   baseURL: `${window.ogdynamicAdmin.apiUrl.replace(/\/$/, "")}/`,
   headers: {
@@ -12,6 +15,20 @@ const client = axios.create({
     Authorization: `Bearer ${window.ogdynamicAdmin.apiKey}`,
   },
 });
+
+client.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      setApiKey("");
+      try {
+        await ogdApi.request<never>("connection", { method: "DELETE" });
+      } catch {
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export function useOgdCloudApi() {
   const loading = ref(false);
