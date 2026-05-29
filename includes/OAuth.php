@@ -237,7 +237,7 @@ class OAuth {
 	 * @return void
 	 */
 	protected static function store_token_response( array $token ): void {
-		$expires_in = isset( $token['expires_in'] ) ? absint( $token['expires_in'] ) : 0;
+		$expires_in    = isset( $token['expires_in'] ) ? absint( $token['expires_in'] ) : 0;
 		$refresh_token = isset( $token['refresh_token'] ) ? sanitize_text_field( (string) $token['refresh_token'] ) : '';
 
 		Settings::set_transient( self::TRANSIENT_ACCESS_TOKEN, sanitize_text_field( (string) $token['access_token'] ), $expires_in > 60 ? $expires_in - 60 : 60 );

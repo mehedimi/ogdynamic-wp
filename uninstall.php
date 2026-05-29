@@ -15,6 +15,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 function ogdynamic_uninstall_delete_options(): void {
 	global $wpdb;
 
+	// Must match OGDynamic\Settings::PREFIX.
 	$ogdynamic_option_prefix = 'ogdy_';
 
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

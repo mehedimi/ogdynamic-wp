@@ -86,16 +86,10 @@ class ConnectionController {
 	 *
 	 * @return mixed REST response or error.
 	 */
-	public static function start_oauth() {
-		$result = OAuth::start();
-
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
+	public static function start_oauth(): \WP_REST_Response {
 		return rest_ensure_response(
 			array(
-				'data' => $result,
+				'data' => OAuth::start(),
 			)
 		);
 	}

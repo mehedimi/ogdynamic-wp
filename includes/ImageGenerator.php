@@ -140,10 +140,6 @@ class ImageGenerator {
 		return self::$method( $mapping );
 	}
 
-	private static function get_mapping_attrs_for_object( WP_Post $post, array $mapping ): array {
-		return self::filter_params( self::resolve_mapping( $post, $mapping ) );
-	}
-
 	/**
 	 * Default template data.
 	 * Only supports site-wide values like site_name and site_tagline.
