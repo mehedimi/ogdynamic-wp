@@ -68,6 +68,8 @@ const mappingSources = shallowRef<MappingSourceOption[]>([]);
 
 const success = ref("");
 
+let templateRequestSeq = 0;
+
 const postType = computed(() => String(route.params.postType || ""));
 const postTypeLabel = computed(
   () => postType.value.charAt(0).toUpperCase() + postType.value.slice(1),
@@ -139,7 +141,7 @@ const sourceOptions = computed(() => [
   ...mappingSources.value
     // Canvas render URLs take flat string params only, so multi-value
     // sources (e.g. tags) cannot be passed and are not offered.
-    .filter((source) => formPayload.type !== "canvas" || !source.multi)
+    .filter((source) => !isCanvasMultiSource(source.key))
     .map((d) => ({ value: d.key, label: d.label })),
 ]);
 
@@ -197,6 +199,8 @@ async function refreshTemplates() {
 }
 
 async function loadSelectedTemplate(templateId: string) {
+  const seq = ++templateRequestSeq;
+
   if (!templateId) {
     design.value = undefined;
     canvas.value = undefined;
@@ -207,32 +211,40 @@ async function loadSelectedTemplate(templateId: string) {
   const inDesigns = designs.value.some((d) => d.id === templateId);
 
   if (inCanvases || (!inDesigns && formPayload.type === "canvas")) {
-    await loadCanvas(templateId);
+    await loadCanvas(templateId, seq);
   } else {
-    await loadDesign(templateId);
+    await loadDesign(templateId, seq);
   }
 }
 
-async function loadDesign(designId: string) {
-  formPayload.type = "design";
-  canvas.value = undefined;
-
+async function loadDesign(designId: string, seq: number) {
   const { data } = await cloudApi.request<ApiData<OGDDesign>>(
     `v1/designs/${designId}?include=template`,
   );
 
+  // Discard stale responses so a slow earlier selection cannot
+  // overwrite the state of the currently selected template.
+  if (seq !== templateRequestSeq) {
+    return;
+  }
+
+  formPayload.type = "design";
+  canvas.value = undefined;
   design.value = data;
   syncFieldMap();
 }
 
-async function loadCanvas(canvasId: string) {
-  formPayload.type = "canvas";
-  design.value = undefined;
-
+async function loadCanvas(canvasId: string, seq: number) {
   const { data } = await canvasApi.request<ApiData<OGDCanvas>>(
     `v1/canvases/${canvasId}`,
   );
 
+  if (seq !== templateRequestSeq) {
+    return;
+  }
+
+  formPayload.type = "canvas";
+  design.value = undefined;
   canvas.value = data;
   syncFieldMap();
 }
@@ -280,10 +292,11 @@ function setFieldMapValue(attr_key: string, key: string) {
 
 function syncFieldMap() {
   // Drop entries for fields the selected template no longer has
-  // (e.g. after switching to a canvas with different override fields).
+  // (e.g. after switching to a canvas with different override fields)
+  // and multi-value sources a canvas cannot take.
   const fieldKeys = new Set(fields.value.map((field) => field.key));
-  formPayload.map = formPayload.map.filter((map) =>
-    fieldKeys.has(map.attr_key),
+  formPayload.map = formPayload.map.filter(
+    (map) => fieldKeys.has(map.attr_key) && !isCanvasMultiSource(map.key),
   );
 
   for (const field of fields.value) {
@@ -294,6 +307,16 @@ function syncFieldMap() {
       formPayload.map.push({ attr_key: field.key, key: source.key });
     }
   }
+}
+
+function isCanvasMultiSource(key: string): boolean {
+  if (formPayload.type !== "canvas") {
+    return false;
+  }
+
+  return mappingSources.value.some(
+    (source) => source.key === key && source.multi,
+  );
 }
 
 function findMatchingSource(field: FieldOption): MappingSourceOption | undefined {
@@ -470,7 +493,9 @@ onMounted(async () => {
         </div>
       </div>
       <div
-        v-if="cloudApi.error.value || canvasApi.error.value"
+        v-if="
+          (cloudApi.error.value || canvasApi.error.value) && !canvasListFailed
+        "
         class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700"
       >
         {{ cloudApi.error.value || canvasApi.error.value }}
@@ -483,11 +508,11 @@ onMounted(async () => {
         mapping keeps working for now — migrate it to a canvas when possible.
       </div>
       <div
-        v-if="canvas?.status === 'private'"
+        v-if="canvas && canvas.status !== 'public'"
         class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-amber-200 ogd:bg-amber-50 ogd:px-3.5 ogd:py-3 ogd:text-[13px] ogd:text-amber-800"
       >
-        “{{ canvas.name }}” is private. ogdynamic renders OG images only for
-        public canvases — make it public in the
+        “{{ canvas.name }}” is {{ canvas.status || "not public" }}. ogdynamic
+        renders OG images only for public canvases — set it to public in the
         <a
           class="ogd:font-semibold ogd:text-amber-900 ogd:underline"
           :href="editCanvasUrl || createCanvasUrl"

@@ -66,7 +66,7 @@ Supported sources by post type (see `Template::get_sources()`):
 - **Posts/Pages**: `post_title`, `excerpt`, `trimmed_content`, `featured_image`, `author_name`, `published_date`, `modified_date`, `category`, `tags`
 - **Products**: All post fields + `product_short_description`, `product_price`, `regular_price`, `sale_price`, `sku`, `product_category`, `product_tags`, `product_attributes`, `stock_status`, `rating`, `review_count`
 
-**ACF**: When Advanced Custom Fields is active, fields from field groups whose location rules target the post type are appended as mappable sources — key `acf_{acf_field_key}`, label `"{Group title}: {Field label}"` (see `Template::get_acf_sources()`). At render time (`ImageGenerator::acf_field_value()`): image/file/gallery fields resolve to an attachment URL (galleries use the first image), link fields to their URL, multi-value fields join scalar members with `, `, and everything else is cast to a tag-free string. Repeater/flexible-content/group fields are excluded (no single scalar value). Sources vanish gracefully (value `''`) if ACF is deactivated after mappings are saved.
+**ACF**: When Advanced Custom Fields is active, fields from field groups whose location rules target the post type are appended as mappable sources — key `acf_{acf_field_key}`, label `"{Group title}: {Field label}"` (see `Template::get_acf_sources()`). At render time (`ImageGenerator::acf_field_value()`): image/file/gallery fields resolve to an attachment URL in any return format (galleries use the first image), link fields to their URL, multi-value fields join scalar members, post titles, and term names with `, `, and everything else is cast to a tag-free string. Repeater/flexible-content/group fields are excluded (no single scalar value). Sources vanish gracefully (value `''`) if ACF is deactivated after mappings are saved.
 
 ## Conventions
 
@@ -105,7 +105,7 @@ Supported sources by post type (see `Template::get_sources()`):
 5. **Transient keys**: All prefixed with `ogdy_` (via `Settings::option_name()`)
 6. **Dev mode bypasses build**: Loads `main.ts` directly via Vite client, no manifest needed
 7. **OAuth scope includes `canvases:read`**: tokens issued before this scope was added lack canvas access — sites must disconnect/reconnect; the template editor shows a reconnect notice when the canvas list fails
-8. **Canvas query params are flat strings**: the render service ignores array-style params (`tags[]=`), unlike designs. Multi-value sources (`tags`, `product_tags`, `product_attributes`) are flagged `multi` in `Template::get_sources()` and hidden from the mapping UI when a canvas is selected
+8. **Canvas query params are flat strings**: the render service ignores array-style params (`tags[]=`), unlike designs. Multi-value sources (`tags`, `product_tags`, `product_attributes`) are flagged `multi` in `Template::get_sources()` and excluded from canvas mappings in the mapping UI (dropdown, auto-map, and saved-entry pruning in `syncFieldMap()`). The twitter image variant uses flat `intent=twitter` for canvases; designs use `config[intent]=twitter`
 
 ## Testing
 

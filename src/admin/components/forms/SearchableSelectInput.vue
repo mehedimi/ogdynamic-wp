@@ -58,12 +58,19 @@ const comboboxOptions = computed(() => {
 });
 
 const groupedOptions = computed(() => {
+  const term = searchTerm.value.trim().toLowerCase();
+  const matches = term
+    ? comboboxOptions.value.filter((option) =>
+        option.label.toLowerCase().includes(term),
+      )
+    : comboboxOptions.value;
+
   const groups: Array<{
     name: string | null;
     options: typeof comboboxOptions.value;
   }> = [];
 
-  for (const option of comboboxOptions.value) {
+  for (const option of matches) {
     const name = option.group ?? null;
     const last = groups[groups.length - 1];
 

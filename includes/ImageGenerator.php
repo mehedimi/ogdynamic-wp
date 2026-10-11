@@ -89,16 +89,17 @@ class ImageGenerator {
 	}
 
 	public static function get_twitter_image_url(): string {
-		return self::get_template_url() . '?' . http_build_query(
-			array_merge(
-				self::$query,
-				array(
-					'config' => array(
-						'intent' => 'twitter',
-					),
-				)
-			)
-		);
+		$query = is_array( self::$query ) ? self::$query : array();
+
+		if ( 'canvas' === self::$template_type ) {
+			// Canvas render URLs take flat string params only; array-style
+			// config params are ignored by the render service.
+			$query['intent'] = 'twitter';
+		} else {
+			$query['config'] = array( 'intent' => 'twitter' );
+		}
+
+		return self::get_template_url() . '?' . http_build_query( $query );
 	}
 
 	public static function get_attrs(): ?array {
@@ -460,8 +461,8 @@ class ImageGenerator {
 	 *
 	 * Image, file, and gallery fields resolve to an attachment URL (galleries
 	 * use the first image); link fields resolve to their URL; multi-value
-	 * fields join their scalar members with commas; everything else is cast
-	 * to a tag-free string.
+	 * fields join their scalar members, post titles, and term names with
+	 * commas; everything else is cast to a tag-free string.
 	 *
 	 * @param string $type  ACF field type.
 	 * @param mixed  $value Formatted ACF value.
@@ -478,6 +479,11 @@ class ImageGenerator {
 			}
 
 			return trim( wp_strip_all_tags( (string) $value ) );
+		}
+
+		if ( 'image' === $type || 'file' === $type ) {
+			// 'Image Array' / 'File Array' return formats.
+			return self::acf_attachment_url( $value );
 		}
 
 		if ( 'gallery' === $type ) {
@@ -499,6 +505,8 @@ class ImageGenerator {
 		foreach ( $value as $item ) {
 			if ( $item instanceof WP_Post ) {
 				$parts[] = get_the_title( $item );
+			} elseif ( $item instanceof WP_Term ) {
+				$parts[] = $item->name;
 			} elseif ( is_scalar( $item ) ) {
 				$parts[] = (string) $item;
 			}

@@ -44,7 +44,7 @@ This is a **WordPress plugin** that connects to the ogdynamic SaaS for dynamic O
 3. `ImageGenerator` determines the current template key from the queried object (post → `post`, product → `product`, category → `category`, etc.), with fallback to `default`
 4. `Template::get_mapping()` retrieves the stored field mappings
 5. `ImageGenerator` resolves WordPress data (post title, excerpt, prices, etc.) against the mapping
-6. A CDN URL is constructed: `https://cdn.ogdynamic.com/d/{template_id}?{resolved_params}`
+6. A CDN URL is constructed by mapping `type`: canvas → `https://cdn.ogdynamic.com/c/{template_id}?{resolved_params}`, design → `https://cdn.ogdynamic.com/d/{template_id}?{resolved_params}` (mapping `type` is absent = design, for backward compatibility)
 
 ### REST API (`ogdynamic/v1`)
 
@@ -54,7 +54,7 @@ All endpoints require `manage_options` capability.
 - `DELETE /connection` — disconnect
 - `GET /templates` — list available templates
 - `GET /templates/{post_type}` — get mapping
-- `PUT /templates/{post_type}` — update mapping
+- `PUT /templates/{post_type}` — update mapping (optional `type`: `design`|`canvas`, default `design`)
 - `DELETE /templates/{post_type}` — remove mapping
 
 ### Frontend Stack
@@ -82,4 +82,7 @@ All endpoints require `manage_options` capability.
 - **OAuth callback**: handled by hidden admin page `ogdynamic-oauth-callback` (no menu item)
 - **Dev mode**: bypasses `dist/` entirely, loads `main.ts` via Vite client — manifest is not used
 - **Token storage**: access tokens cached in transients (prefix `ogdy_`), refresh token in options
+- **Canvas query params are flat strings**: the render service ignores array-style params (`tags[]=`); multi-value sources are excluded from canvas mappings in the mapping UI, and the twitter variant uses flat `intent=twitter` (designs use `config[intent]=twitter`)
+- **Canvas index filters**: the mapping page fetches `v1/canvases?status=public&width=1200&height=630` — only public OG-size canvases are selectable; saved mappings pointing elsewhere load by id and warn
+- **ACF sources**: when ACF is active, `acf_{field_key}` sources are appended per post type and resolved at render time (see `Template::get_acf_sources()` / `ImageGenerator::acf_field_value()`)
 - **No test suite**: manual testing only
