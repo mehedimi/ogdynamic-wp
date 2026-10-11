@@ -4,7 +4,7 @@ Tags: open graph images, social media images, og image generator, woocommerce, s
 Requires at least: 6.3
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,8 @@ When you share a link on Facebook, Twitter, LinkedIn, or Slack, the first thing 
 * **WooCommerce Integration** — Product OG images can include title, price, regular price, sale price, SKU, currency, stock status, rating, review count, categories, tags, and attributes
 * **Archive Page Support** — Generate social images for homepage, blog page, category archives, tag archives, author pages, date archives, and search results
 * **Field Mapping** — Choose exactly which WordPress data appears in each template field using an intuitive admin interface
+* **Canvas Editor** — Design your own OG image templates in the ogdynamic canvas editor; the plugin lists your public 1200x630 canvases, ready to map
+* **Custom Fields (ACF)** — Map Advanced Custom Fields data (text, image, gallery, link, taxonomy, relationship, and more) into your OG images
 * **SEO Plugin Friendly** — Automatically works alongside Yoast SEO, Rank Math, AIOSEO, SEOPress, The SEO Framework, Squirrly SEO, and Slim SEO without duplicate tags
 * **CDN Delivered** — Images are generated and served from ogdynamic's fast CDN — zero impact on your WordPress server performance
 * **Fallback Support** — Set a default template for any post type without a specific template configured
@@ -51,6 +53,7 @@ Available WordPress fields by content type:
 - **Posts & Pages**: Post title, excerpt, trimmed content, featured image, author name, published date, modified date, category, tags
 - **Products (WooCommerce)**: All post fields plus product short description, product price, regular price, sale price, SKU, product category, product tags, product attributes, stock status, rating, review count
 - **Archive pages**: Site name, site tagline, plus category or tag names for their respective archives
+- **Custom fields (ACF)**: When Advanced Custom Fields is active, fields from groups assigned to the content type are listed as mapping sources
 
 = External Service =
 
@@ -79,7 +82,7 @@ This plugin's source code is available at [https://github.com/mehedimi/ogdynamic
 1. **Onboarding screen** — Connect your WordPress site to ogdynamic via OAuth with a single click. See the benefits of dynamic OG images at a glance.
 2. **Dashboard** — View your connection status and account details at a glance, with quick access to manage templates.
 3. **Templates overview** — Browse all available post types and archive pages. Activated templates show a green badge so you can see which content types have OG images configured.
-4. **Template mapping** — Select a design from your ogdynamic account, then map each template field to a WordPress data source with the live preview panel.
+4. **Template mapping** — Select a canvas from your ogdynamic account, then map each template field to a WordPress data source with the live preview panel.
 5. **Connection management** — Connect or disconnect your ogdynamic account. While connected, explore feature highlights for products, blog posts, reusable templates, and cross-platform previews.
 
 == Installation ==
@@ -128,7 +131,7 @@ Yes. ogdynamic works alongside Yoast SEO, Rank Math, All in One SEO Pack (AIOSEO
 
 = How do template mappings work? =
 
-Each ogdynamic design has overridable fields like title, subtitle, and image. In the WordPress admin, you map these to WordPress data — for example, mapping the template's title field to your post title, or the image field to your featured image. The plugin then sends those values to ogdynamic, which renders them into your OG image. Empty fields are automatically skipped.
+Each ogdynamic canvas has overridable fields like title, subtitle, and image. In the WordPress admin, you map these to WordPress data — for example, mapping the template's title field to your post title, or the image field to your featured image. The plugin then sends those values to ogdynamic, which renders them into your OG image. Empty fields are automatically skipped.
 
 = What happens if I haven't set a template for a post type? =
 
@@ -152,6 +155,13 @@ OG images are generated at 1200x630 pixels, which is the recommended Open Graph 
 
 == Changelog ==
 
+= 0.2.0 =
+* Canvas templates: design OG image templates in the ogdynamic canvas editor and map them to your content types (existing design mappings keep working but designs are deprecated)
+* Template selector lists your public 1200x630 canvases and warns when a saved mapping points to a private or resized canvas
+* Advanced Custom Fields (ACF) support: map ACF fields (text, image, gallery, link, taxonomy, relationship, and more) to template fields
+* Orphaned field mappings are cleaned up automatically when switching templates
+* Twitter/X image variant support for canvas templates
+
 = 0.1.0 =
 * MVP release with Vue 3 admin interface
 * Template configuration per post type
@@ -162,6 +172,9 @@ OG images are generated at 1200x630 pixels, which is the recommended Open Graph 
 * Multisite support
 
 == Upgrade Notice ==
+
+= 0.2.0 =
+Canvas templates are here. If you connected before canvases were introduced, reconnect your ogdynamic account once to refresh access, then map your content types to canvases.
 
 = 0.1.0 =
 Initial MVP release. Update ogdynamic settings after upgrading from any pre-1.0 version.

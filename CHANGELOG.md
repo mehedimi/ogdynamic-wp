@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-10-11
+
+### Added
+- Canvas template support: map post types to ogdynamic canvases (mapping `type: canvas|design`, absent = design) rendered via the `/c/` CDN segment
+- Canvas-aware mapping UI: grouped canvas/design selector fetching only public 1200x630 canvases (`v1/canvases?status=public&width=1200&height=630`)
+- Warnings for saved mappings pointing to private or non-1200x630 canvases, plus a reconnect notice for tokens lacking the `canvases:read` scope
+- Advanced Custom Fields (ACF) integration: location-matched fields become mappable sources (`acf_{field_key}`), resolved at render time in any ACF return format
+- Twitter/X image variant for canvases via flat `intent=twitter` param
+
+### Changed
+- Designs are deprecated in favor of canvases; existing design mappings keep working
+- Multi-value sources (tags, product tags, product attributes) are excluded from canvas mappings (flat string params only)
+- OAuth scope now includes `canvases:read`
+
+### Fixed
+- Out-of-order template detail responses can no longer desync the mapping form (sequence-token guard)
+- Orphaned field mapping entries are pruned when switching templates
+- ACF image/file fields using the array return format resolve to the attachment URL instead of a comma-joined string
+- ACF taxonomy fields render term names
+- Combobox search input now filters options
+- Duplicate error notices on canvas-list failure
+
 ## [0.1.0] - 2025-05-08
 
 ### Added
