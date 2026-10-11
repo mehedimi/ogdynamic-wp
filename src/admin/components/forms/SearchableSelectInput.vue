@@ -4,9 +4,11 @@ import {
   ComboboxAnchor,
   ComboboxContent,
   ComboboxEmpty,
+  ComboboxGroup,
   ComboboxInput,
   ComboboxItem,
   ComboboxItemIndicator,
+  ComboboxLabel,
   ComboboxPortal,
   ComboboxRoot,
   ComboboxTrigger,
@@ -16,6 +18,7 @@ import {
 type SelectOption = {
   label: string;
   value: string;
+  group?: string;
 };
 
 const EMPTY_VALUE = "__ogdynamic_empty_value__";
@@ -50,7 +53,28 @@ const comboboxOptions = computed(() => {
   return props.options.map((option) => ({
     label: option.label,
     value: "" === option.value ? EMPTY_VALUE : option.value,
+    group: option.group,
   }));
+});
+
+const groupedOptions = computed(() => {
+  const groups: Array<{
+    name: string | null;
+    options: typeof comboboxOptions.value;
+  }> = [];
+
+  for (const option of comboboxOptions.value) {
+    const name = option.group ?? null;
+    const last = groups[groups.length - 1];
+
+    if (!last || last.name !== name) {
+      groups.push({ name, options: [option] });
+    } else {
+      last.options.push(option);
+    }
+  }
+
+  return groups;
 });
 
 function displayValue(value: unknown): string {
@@ -116,29 +140,40 @@ function clearSearchTerm(): void {
             No sources found.
           </ComboboxEmpty>
 
-          <ComboboxItem
-            v-for="option in comboboxOptions"
-            :key="option.value"
-            :value="option.value"
-            :text-value="option.label"
-            class="ogd:flex ogd:cursor-pointer ogd:items-center ogd:justify-between ogd:gap-3 ogd:rounded-xl ogd:px-3 ogd:py-2 ogd:text-sm ogd:text-gray-700 ogd:outline-none ogd:transition ogd:data-highlighted:bg-rose-50 ogd:data-highlighted:text-gray-900 ogd:data-[state=checked]:text-gray-900"
+          <ComboboxGroup
+            v-for="group in groupedOptions"
+            :key="group.name ?? '__ungrouped__'"
           >
-            <span class="ogd:truncate">{{ option.label }}</span>
-            <ComboboxItemIndicator class="ogd:shrink-0 ogd:text-rose-500">
-              <svg
-                class="ogd:size-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="m20 6-11 11-5-5" />
-              </svg>
-            </ComboboxItemIndicator>
-          </ComboboxItem>
+            <ComboboxLabel
+              v-if="group.name"
+              class="ogd:px-3 ogd:pt-2 ogd:pb-1 ogd:text-[11px] ogd:font-semibold ogd:tracking-wide ogd:text-gray-400 ogd:uppercase"
+            >
+              {{ group.name }}
+            </ComboboxLabel>
+            <ComboboxItem
+              v-for="option in group.options"
+              :key="option.value"
+              :value="option.value"
+              :text-value="option.label"
+              class="ogd:flex ogd:cursor-pointer ogd:items-center ogd:justify-between ogd:gap-3 ogd:rounded-xl ogd:px-3 ogd:py-2 ogd:text-sm ogd:text-gray-700 ogd:outline-none ogd:transition ogd:data-highlighted:bg-rose-50 ogd:data-highlighted:text-gray-900 ogd:data-[state=checked]:text-gray-900"
+            >
+              <span class="ogd:truncate">{{ option.label }}</span>
+              <ComboboxItemIndicator class="ogd:shrink-0 ogd:text-rose-500">
+                <svg
+                  class="ogd:size-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m20 6-11 11-5-5" />
+                </svg>
+              </ComboboxItemIndicator>
+            </ComboboxItem>
+          </ComboboxGroup>
         </ComboboxViewport>
       </ComboboxContent>
     </ComboboxPortal>

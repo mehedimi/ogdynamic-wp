@@ -19,7 +19,7 @@ class OAuth {
 	 *
 	 * @var string
 	 */
-	private const SCOPE = 'user:read designs:read';
+	private const SCOPE = 'user:read designs:read canvases:read';
 
 	/**
 	 * Token option keys to delete on disconnect.

@@ -83,6 +83,7 @@ class Template {
 				array(
 					'key'   => 'tags',
 					'label' => __( 'Tags', 'ogdynamic' ),
+					'multi' => true,
 				),
 				...$site_sources,
 			);
@@ -179,10 +180,12 @@ class Template {
 				array(
 					'key'   => 'product_tags',
 					'label' => __( 'Product tags', 'ogdynamic' ),
+					'multi' => true,
 				),
 				array(
 					'key'   => 'product_attributes',
 					'label' => __( 'Product attributes', 'ogdynamic' ),
+					'multi' => true,
 				),
 				array(
 					'key'   => 'stock_status',
@@ -241,19 +244,60 @@ class Template {
 	 * @param string $post_type The post type slug.
 	 * @return array{
 	 *   key: string,
-	 *   label: string
+	 *   label: string,
+	 *   multi?: bool
 	 * }[] Array of available sources for the post type.
 	 */
 	public static function get_mapping_sources( string $post_type ): array {
 		$sources = self::get_sources();
 
 		if ( isset( $sources[ $post_type ] ) ) {
-			return $sources[ $post_type ];
+			$post_sources = $sources[ $post_type ];
+		} else {
+			$filtered_sources = (array) apply_filters( 'ogdynamic_mapping_sources', $sources );
+			$post_sources     = $filtered_sources[ $post_type ] ?? array();
 		}
 
-		$filtered_sources = (array) apply_filters( 'ogdynamic_mapping_sources', $sources );
+		return array_merge( $post_sources, self::get_acf_sources( $post_type ) );
+	}
 
-		return $filtered_sources[ $post_type ] ?? array();
+	/**
+	 * Gets ACF field sources for a post type.
+	 *
+	 * Fields from field groups whose location rules target the post type are
+	 * listed as `acf_{field_key}` sources. Complex nested field types
+	 * (repeater, flexible content, group) are excluded because they have no
+	 * single scalar value to render.
+	 *
+	 * @param string $post_type The post type slug.
+	 * @return array{
+	 *   key: string,
+	 *   label: string,
+	 *   multi?: bool
+	 * }[] Array of ACF sources.
+	 */
+	private static function get_acf_sources( string $post_type ): array {
+		if ( ! function_exists( 'acf_get_field_groups' ) || ! post_type_exists( $post_type ) ) {
+			return array();
+		}
+
+		$field_groups = acf_get_field_groups( array( 'post_type' => $post_type ) );
+		$sources      = array();
+
+		foreach ( $field_groups as $field_group ) {
+			foreach ( acf_get_fields( $field_group ) as $field ) {
+				if ( in_array( $field['type'], array( 'repeater', 'flexible_content', 'group' ), true ) ) {
+					continue;
+				}
+
+				$sources[] = array(
+					'key'   => 'acf_' . $field['key'],
+					'label' => $field_group['title'] . ': ' . $field['label'],
+				);
+			}
+		}
+
+		return $sources;
 	}
 
 	/**

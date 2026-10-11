@@ -31,7 +31,7 @@ async function disconnect() {
     <p
       class="ogd:mt-2 ogd:mb-7 ogd:max-w-155 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
     >
-      Connect this WordPress site to ogdynamic to fetch your designs and
+      Connect this WordPress site to ogdynamic to fetch your canvases and
       generate dynamic OG image URLs.
     </p>
 
@@ -59,7 +59,7 @@ async function disconnect() {
           <p class="ogd:m-0 ogd:max-w-130 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500">
             {{
               isConnected
-                ? "This site can access your ogdynamic designs with the approved account."
+                ? "This site can access your ogdynamic canvases with the approved account."
                 : "You will be redirected to ogdynamic to approve access for this WordPress site."
             }}
           </p>

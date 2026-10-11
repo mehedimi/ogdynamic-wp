@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { computed, reactive, ref, shallowRef, watch, onMounted } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
-import type { ApiData, OGDDesign, OGDDesignListItem } from "../types";
+import type {
+  ApiData,
+  OGDCanvas,
+  OGDCanvasSummary,
+  OGDDesign,
+  OGDDesignListItem,
+} from "../types";
 import { useOgdApi } from "../composables/useOgdApi";
 import { useOgdCloudApi } from "../composables/useOgdCloudApi";
 import FormField from "../components/forms/FormField.vue";
 import SearchableSelectInput from "../components/forms/SearchableSelectInput.vue";
+
+type TemplateKind = "design" | "canvas";
 
 type FieldOption = {
   key: string;
@@ -16,15 +24,22 @@ type FieldOption = {
 type MappingSourceOption = {
   key: string;
   label: string;
+  multi?: boolean;
 };
 
 type TemplateMapping = {
   template_id: string;
+  type: TemplateKind;
   map: Array<{
     attr_key: string;
     key: string;
   }>;
 };
+
+const CANVAS_GROUP = "Canvases";
+const DESIGN_GROUP = "Designs (deprecated)";
+const OG_IMAGE_WIDTH = 1200;
+const OG_IMAGE_HEIGHT = 630;
 
 const route = useRoute();
 const router = useRouter();
@@ -34,13 +49,18 @@ const templateExists = ref(false);
 
 const wordpressApi = useOgdApi();
 const cloudApi = useOgdCloudApi();
+const canvasApi = useOgdCloudApi();
 const wpDeleteApi = useOgdApi();
 
 const designs = shallowRef<OGDDesignListItem[]>([]);
 const design = shallowRef<OGDDesign>();
+const canvases = shallowRef<OGDCanvasSummary[]>([]);
+const canvas = shallowRef<OGDCanvas>();
+const canvasListFailed = ref(false);
 
 const formPayload = reactive<TemplateMapping>({
   template_id: "",
+  type: "canvas",
   map: [],
 });
 
@@ -52,14 +72,24 @@ const postType = computed(() => String(route.params.postType || ""));
 const postTypeLabel = computed(
   () => postType.value.charAt(0).toUpperCase() + postType.value.slice(1),
 );
-const createDesignUrl = computed(
-  () =>
-    `${window.ogdynamicAdmin.apiUrl.replace(/\/?api\/?$/, "")}/designs/create`,
+const appUrl = computed(() =>
+  window.ogdynamicAdmin.apiUrl.replace(/\/?api\/?$/, ""),
 );
-const selectedDesignPreviewUrl = computed(() =>
-  formPayload.template_id
-    ? `${window.ogdynamicAdmin.cdnUrl}d/${formPayload.template_id}`
+const createCanvasUrl = computed(() => `${appUrl.value}/canvases/create`);
+const editCanvasUrl = computed(() =>
+  formPayload.type === "canvas" && formPayload.template_id
+    ? `${appUrl.value}/canvases/${formPayload.template_id}/edit`
     : "",
+);
+const selectedPreviewUrl = computed(() =>
+  formPayload.template_id
+    ? `${window.ogdynamicAdmin.cdnUrl}${
+        formPayload.type === "canvas" ? "c/" : "d/"
+      }${formPayload.template_id}`
+    : "",
+);
+const activeTemplateName = computed(() =>
+  formPayload.type === "canvas" ? canvas.value?.name : design.value?.name,
 );
 
 const fieldMap = computed(() => {
@@ -68,6 +98,16 @@ const fieldMap = computed(() => {
 });
 
 const fields = computed<FieldOption[]>(() => {
+  if (formPayload.type === "canvas") {
+    return (
+      canvas.value?.override_fields.map((field) => ({
+        key: field.field,
+        label: field.name,
+        type: field.type,
+      })) || []
+    );
+  }
+
   return (
     design.value?.template.schema.flatMap((section) =>
       section.fields
@@ -80,22 +120,34 @@ const fields = computed<FieldOption[]>(() => {
   );
 });
 
-const designOptions = computed(() =>
-  [{ label: "Select your design", value: "" }].concat(
-    designs.value.map((d) => ({ label: d.name, value: d.id })),
-  ),
-);
+const selectorOptions = computed(() => [
+  { label: "Select your canvas", value: "" },
+  ...canvases.value.map((c) => ({
+    label: c.name,
+    value: c.id,
+    group: CANVAS_GROUP,
+  })),
+  ...designs.value.map((d) => ({
+    label: d.name,
+    value: d.id,
+    group: DESIGN_GROUP,
+  })),
+]);
 
 const sourceOptions = computed(() => [
   { value: "", label: "Do not override" },
-  ...mappingSources.value.map((d) => ({ value: d.key, label: d.label })),
+  ...mappingSources.value
+    // Canvas render URLs take flat string params only, so multi-value
+    // sources (e.g. tags) cannot be passed and are not offered.
+    .filter((source) => formPayload.type !== "canvas" || !source.multi)
+    .map((d) => ({ value: d.key, label: d.label })),
 ]);
 
 watch(
   () => formPayload.template_id,
-  async (designId) => {
+  async (templateId) => {
     success.value = "";
-    await loadDesign(designId);
+    await loadSelectedTemplate(templateId);
   },
 );
 
@@ -111,31 +163,78 @@ async function loadSavedMapping() {
 
     if (!Array.isArray(payload.data)) {
       formPayload.map = payload.data.map || [];
-      formPayload.template_id = payload.data.template_id || "";
+      formPayload.type = payload.data.type === "canvas" ? "canvas" : "design";
       templateExists.value = true;
+      formPayload.template_id = payload.data.template_id || "";
     }
   } finally {
     isLoading.value = false;
   }
 }
 
+async function loadCanvases() {
+  canvasListFailed.value = false;
+
+  try {
+    const { data } = await canvasApi.request<ApiData<OGDCanvasSummary[]>>(
+      `v1/canvases?status=public&width=${OG_IMAGE_WIDTH}&height=${OG_IMAGE_HEIGHT}`,
+    );
+    canvases.value = data;
+  } catch {
+    canvasListFailed.value = true;
+  }
+}
+
 async function loadDesigns() {
-  const { data } = await cloudApi.request<ApiData<OGDDesign[]>>("v1/designs");
+  const { data } = await cloudApi.request<ApiData<OGDDesignListItem[]>>(
+    "v1/designs",
+  );
   designs.value = data;
 }
 
-async function loadDesign(designId: string) {
-  if (!designId) {
+async function refreshTemplates() {
+  await Promise.all([loadCanvases(), loadDesigns()]);
+}
+
+async function loadSelectedTemplate(templateId: string) {
+  if (!templateId) {
     design.value = undefined;
+    canvas.value = undefined;
     return;
   }
+
+  const inCanvases = canvases.value.some((c) => c.id === templateId);
+  const inDesigns = designs.value.some((d) => d.id === templateId);
+
+  if (inCanvases || (!inDesigns && formPayload.type === "canvas")) {
+    await loadCanvas(templateId);
+  } else {
+    await loadDesign(templateId);
+  }
+}
+
+async function loadDesign(designId: string) {
+  formPayload.type = "design";
+  canvas.value = undefined;
 
   const { data } = await cloudApi.request<ApiData<OGDDesign>>(
     `v1/designs/${designId}?include=template`,
   );
 
   design.value = data;
-  autoMapEmptyFields();
+  syncFieldMap();
+}
+
+async function loadCanvas(canvasId: string) {
+  formPayload.type = "canvas";
+  design.value = undefined;
+
+  const { data } = await canvasApi.request<ApiData<OGDCanvas>>(
+    `v1/canvases/${canvasId}`,
+  );
+
+  canvas.value = data;
+  syncFieldMap();
 }
 
 async function save() {
@@ -179,7 +278,14 @@ function setFieldMapValue(attr_key: string, key: string) {
   }
 }
 
-function autoMapEmptyFields() {
+function syncFieldMap() {
+  // Drop entries for fields the selected template no longer has
+  // (e.g. after switching to a canvas with different override fields).
+  const fieldKeys = new Set(fields.value.map((field) => field.key));
+  formPayload.map = formPayload.map.filter((map) =>
+    fieldKeys.has(map.attr_key),
+  );
+
   for (const field of fields.value) {
     if (formPayload.map.some((map) => map.attr_key === field.key)) continue;
 
@@ -217,7 +323,7 @@ function normalizeMappingKey(key: string): string {
 
 onMounted(async () => {
   try {
-    await Promise.all([loadDesigns(), loadSavedMapping()]);
+    await Promise.all([loadCanvases(), loadDesigns(), loadSavedMapping()]);
   } catch {
     // Errors handled individually
   }
@@ -242,10 +348,10 @@ onMounted(async () => {
     <p
       class="ogd:mt-2! ogd:mb-6 ogd:max-w-140 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
     >
-      Map an ogdynamic design to WordPress sources for this post type.
+      Map an ogdynamic canvas to WordPress sources for this post type.
     </p>
 
-    <!-- Design selector skeleton while the WordPress mapping data loads. -->
+    <!-- Template selector skeleton while the WordPress mapping data loads. -->
     <div
       v-if="wordpressApi.loading.value"
       class="ogd:mb-4.5 ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
@@ -263,18 +369,14 @@ onMounted(async () => {
           <div
             class="ogd:flex ogd:flex-wrap ogd:justify-end ogd:gap-2.5 max-[720px]:ogd:justify-start"
           >
-            <div
-              class="ogd:h-10 ogd:w-32 ogd:rounded-full ogd:bg-gray-100"
-            ></div>
-            <div
-              class="ogd:h-10 ogd:w-34 ogd:rounded-full ogd:bg-gray-100"
-            ></div>
+            <div class="ogd:h-10 ogd:w-32 ogd:rounded-full ogd:bg-gray-100"></div>
+            <div class="ogd:h-10 ogd:w-34 ogd:rounded-full ogd:bg-gray-100"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Design selector and helper actions. -->
+    <!-- Template selector and helper actions. -->
     <div
       v-else
       class="ogd:mb-4.5 ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
@@ -284,11 +386,11 @@ onMounted(async () => {
       >
         <div class="ogd:flex-1">
           <SearchableSelectInput
-            id="design-id"
+            id="template-id"
             v-model="formPayload.template_id"
-            :options="designOptions"
-            :disabled="cloudApi.loading.value"
-            placeholder="Search designs"
+            :options="selectorOptions"
+            :disabled="cloudApi.loading.value || canvasApi.loading.value"
+            placeholder="Search canvases"
           />
         </div>
         <div
@@ -297,10 +399,10 @@ onMounted(async () => {
           <button
             class="ogd:inline-flex ogd:size-10 ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:rounded-full ogd:border ogd:border-gray-200 ogd:bg-white ogd:text-gray-700 ogd:transition ogd:hover:border-rose-200 ogd:hover:bg-rose-50 ogd:hover:text-gray-900 ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
             type="button"
-            title="Refresh designs"
-            aria-label="Refresh designs"
-            :disabled="cloudApi.loading.value"
-            @click="loadDesigns"
+            title="Refresh canvases"
+            aria-label="Refresh canvases"
+            :disabled="cloudApi.loading.value || canvasApi.loading.value"
+            @click="refreshTemplates"
           >
             <svg
               class="ogd:size-4"
@@ -319,10 +421,35 @@ onMounted(async () => {
             </svg>
           </button>
           <a
+            v-if="editCanvasUrl"
             class="ogd:inline-flex ogd:size-10 ogd:items-center ogd:justify-center ogd:rounded-full ogd:border ogd:border-gray-200 ogd:bg-white ogd:text-gray-700 ogd:no-underline ogd:transition ogd:hover:border-rose-200 ogd:hover:bg-rose-50 ogd:hover:text-gray-900"
-            :href="createDesignUrl"
-            title="Create design"
-            aria-label="Create design"
+            :href="editCanvasUrl"
+            title="Edit canvas"
+            aria-label="Edit canvas"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <svg
+              class="ogd:size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"
+              />
+              <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" />
+            </svg>
+          </a>
+          <a
+            class="ogd:inline-flex ogd:size-10 ogd:items-center ogd:justify-center ogd:rounded-full ogd:border ogd:border-gray-200 ogd:bg-white ogd:text-gray-700 ogd:no-underline ogd:transition ogd:hover:border-rose-200 ogd:hover:bg-rose-50 ogd:hover:text-gray-900"
+            :href="createCanvasUrl"
+            title="Create canvas"
+            aria-label="Create canvas"
             target="_blank"
             rel="noreferrer"
           >
@@ -343,19 +470,77 @@ onMounted(async () => {
         </div>
       </div>
       <div
-        v-if="cloudApi.error.value"
+        v-if="cloudApi.error.value || canvasApi.error.value"
         class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700"
       >
-        {{ cloudApi.error.value }}
+        {{ cloudApi.error.value || canvasApi.error.value }}
+      </div>
+      <div
+        v-if="formPayload.type === 'design' && formPayload.template_id"
+        class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-amber-200 ogd:bg-amber-50 ogd:px-3.5 ogd:py-3 ogd:text-[13px] ogd:text-amber-800"
+      >
+        Designs are deprecated and will be removed in a future release. This
+        mapping keeps working for now — migrate it to a canvas when possible.
+      </div>
+      <div
+        v-if="canvas?.status === 'private'"
+        class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-amber-200 ogd:bg-amber-50 ogd:px-3.5 ogd:py-3 ogd:text-[13px] ogd:text-amber-800"
+      >
+        “{{ canvas.name }}” is private. ogdynamic renders OG images only for
+        public canvases — make it public in the
+        <a
+          class="ogd:font-semibold ogd:text-amber-900 ogd:underline"
+          :href="editCanvasUrl || createCanvasUrl"
+          target="_blank"
+          rel="noreferrer"
+        >
+          canvas editor
+        </a>
+        or pick a different canvas.
+      </div>
+      <div
+        v-if="
+          canvas &&
+          (canvas.width !== OG_IMAGE_WIDTH ||
+            canvas.height !== OG_IMAGE_HEIGHT)
+        "
+        class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-amber-200 ogd:bg-amber-50 ogd:px-3.5 ogd:py-3 ogd:text-[13px] ogd:text-amber-800"
+      >
+        “{{ canvas.name }}” is {{ canvas.width }}×{{ canvas.height }}px. OG
+        images render at {{ OG_IMAGE_WIDTH }}×{{ OG_IMAGE_HEIGHT }} — resize
+        the canvas in the
+        <a
+          class="ogd:font-semibold ogd:text-amber-900 ogd:underline"
+          :href="editCanvasUrl || createCanvasUrl"
+          target="_blank"
+          rel="noreferrer"
+        >
+          canvas editor
+        </a>
+        or pick a different canvas.
+      </div>
+      <div
+        v-if="canvasListFailed"
+        class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-amber-200 ogd:bg-amber-50 ogd:px-3.5 ogd:py-3 ogd:text-[13px] ogd:text-amber-800"
+      >
+        Your canvases could not be loaded. If you connected this site before
+        canvases were introduced,
+        <RouterLink
+          class="ogd:font-semibold ogd:text-amber-900 ogd:underline"
+          to="/connection"
+        >
+          reconnect your account
+        </RouterLink>
+        to refresh access. Designs remain available in the selector.
       </div>
     </div>
 
     <div
       class="ogd:grid ogd:grid-cols-[minmax(0,1.1fr)_minmax(420px,1.6fr)] ogd:gap-6 max-[1024px]:ogd:grid-cols-1"
     >
-      <!-- Mapping form skeleton while the selected design detail loads. -->
+      <!-- Mapping form skeleton while the selected template detail loads. -->
       <div
-        v-if="formPayload.template_id && cloudApi.loading.value"
+        v-if="formPayload.template_id && (cloudApi.loading.value || canvasApi.loading.value)"
         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
       >
         <div class="ogd:animate-pulse">
@@ -387,7 +572,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Field mapping form for the selected OG image design. -->
+      <!-- Field mapping form for the selected OG image template. -->
       <div
         v-else-if="formPayload.template_id && fields.length"
         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
@@ -400,7 +585,7 @@ onMounted(async () => {
         <p
           class="ogd:mt-2! ogd:mb-5 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500"
         >
-          Link each overridable template field to a WordPress source used in the
+          Link each overridable field to a WordPress source used in the
           generated OG image.
         </p>
 
@@ -492,10 +677,10 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Selected design preview. -->
+      <!-- Selected template preview. -->
       <div class="ogd:grid ogd:gap-4 ogd:self-start">
         <div
-          v-if="formPayload.template_id && cloudApi.loading.value"
+          v-if="formPayload.template_id && (cloudApi.loading.value || canvasApi.loading.value)"
           class="ogd:overflow-hidden ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white"
         >
           <div class="ogd:animate-pulse">
@@ -525,13 +710,13 @@ onMounted(async () => {
               Preview
             </h2>
             <p class="ogd:mt-1! ogd:mb-0! ogd:text-sm ogd:text-gray-500">
-              {{ design?.name }}
+              {{ activeTemplateName }}
             </p>
           </div>
           <div class="ogd:bg-w ogd:p-3">
             <img
-              :src="selectedDesignPreviewUrl"
-              :alt="`${postTypeLabel} design preview`"
+              :src="selectedPreviewUrl"
+              :alt="`${postTypeLabel} template preview`"
               class="ogd:block ogd:w-full ogd:rounded-[14px] ogd:border! ogd:border-gray-100!"
             />
           </div>

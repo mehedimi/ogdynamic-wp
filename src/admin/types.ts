@@ -113,6 +113,31 @@ export type OGDDesignDetail = {
 
 export type OGDDesign = OGDDesignDetail;
 
+export type OGDCanvasOverrideField = {
+  field: string;
+  name: string;
+  type: string;
+  default: string | null;
+};
+
+export type OGDCanvasSummary = {
+  id: string;
+  user_id: number;
+  name: string;
+  width: number;
+  height: number;
+  status: string | null;
+  image_url: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type OGDCanvas = OGDCanvasSummary & {
+  background: unknown;
+  items: unknown;
+  override_fields: OGDCanvasOverrideField[];
+};
+
 export type PostTypeOption = {
   name: string;
   label: string;
