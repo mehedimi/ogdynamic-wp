@@ -62,6 +62,11 @@ class TemplatesController {
 							'validate_callback' => array( self::class, 'validate_template_id' ),
 							'sanitize_callback' => array( self::class, 'sanitize_template_id' ),
 						),
+						'type'        => array(
+							'required'          => false,
+							'validate_callback' => array( self::class, 'validate_template_type' ),
+							'sanitize_callback' => 'sanitize_key',
+						),
 						'map'         => array(
 							'required'          => true,
 							'validate_callback' => array( self::class, 'validate_map' ),
@@ -140,10 +145,16 @@ class TemplatesController {
 	public static function update_post_type_template( WP_REST_Request $request ): \WP_REST_Response {
 		$post_type   = (string) $request->get_param( 'post_type' );
 		$template_id = (string) $request->get_param( 'template_id' );
+		$type        = (string) $request->get_param( 'type' );
 		$map         = $request->get_param( 'map' );
+
+		if ( '' === $type ) {
+			$type = 'design';
+		}
 
 		$value = array(
 			'template_id' => $template_id,
+			'type'        => $type,
 			'map'         => is_array( $map ) ? $map : array(),
 		);
 
@@ -182,6 +193,16 @@ class TemplatesController {
 	 */
 	public static function validate_template_id( $value ): bool {
 		return is_string( $value ) && preg_match( '/^[0-9A-HJKMNP-TV-Z]{26}$/i', $value );
+	}
+
+	/**
+	 * Validates template type.
+	 *
+	 * @param mixed $value The template type to validate.
+	 * @return bool True if valid, false otherwise.
+	 */
+	public static function validate_template_type( $value ): bool {
+		return in_array( $value, array( 'design', 'canvas' ), true );
 	}
 
 	/**

@@ -18,6 +18,13 @@ class ImageGenerator {
 
 	protected static ?string $template_id = null;
 
+	/**
+	 * Whether the mapped template is a canvas or a (deprecated) design.
+	 *
+	 * @var string
+	 */
+	protected static string $template_type = 'design';
+
 	public static function get_template_key(): ?string {
 		if ( is_category() ) {
 			$key = 'category';
@@ -66,7 +73,9 @@ class ImageGenerator {
 	}
 
 	protected static function get_template_url(): string {
-		return OGDYNAMIC_CDN . 'd/' . self::$template_id;
+		$segment = 'canvas' === self::$template_type ? 'c' : 'd';
+
+		return OGDYNAMIC_CDN . $segment . '/' . self::$template_id;
 	}
 
 	public static function get_image_url(): string {
@@ -80,16 +89,17 @@ class ImageGenerator {
 	}
 
 	public static function get_twitter_image_url(): string {
-		return self::get_template_url() . '?' . http_build_query(
-			array_merge(
-				self::$query,
-				array(
-					'config' => array(
-						'intent' => 'twitter',
-					),
-				)
-			)
-		);
+		$query = is_array( self::$query ) ? self::$query : array();
+
+		if ( 'canvas' === self::$template_type ) {
+			// Canvas render URLs take flat string params only; array-style
+			// config params are ignored by the render service.
+			$query['intent'] = 'twitter';
+		} else {
+			$query['config'] = array( 'intent' => 'twitter' );
+		}
+
+		return self::get_template_url() . '?' . http_build_query( $query );
 	}
 
 	public static function get_attrs(): ?array {
@@ -123,7 +133,8 @@ class ImageGenerator {
 			return null;
 		}
 
-		self::$template_id = $mapping['template_id'];
+		self::$template_id   = (string) $mapping['template_id'];
+		self::$template_type = isset( $mapping['type'] ) && 'canvas' === $mapping['type'] ? 'canvas' : 'design';
 
 		return array(
 			'key'     => $key,
@@ -415,8 +426,116 @@ class ImageGenerator {
 			case 'review_count':
 				$value = self::product_value( $post, 'review_count' );
 				break;
+			default:
+				$value = self::acf_field_value( $post, $source );
 		}
 		return $value;
+	}
+
+	/**
+	 * Get an ACF field value for a post.
+	 *
+	 * Source keys registered by Template::get_acf_sources() carry an `acf_`
+	 * prefix followed by the ACF field key (`field_…`).
+	 *
+	 * @param WP_Post $post   Post object.
+	 * @param string  $source Field source identifier.
+	 * @return string Formatted field value, empty string when unavailable.
+	 */
+	private static function acf_field_value( WP_Post $post, string $source ): string {
+		if ( 0 !== strpos( $source, 'acf_' ) || ! function_exists( 'get_field_object' ) ) {
+			return '';
+		}
+
+		$field = get_field_object( substr( $source, 4 ), $post->ID );
+
+		if ( ! is_array( $field ) ) {
+			return '';
+		}
+
+		return self::format_acf_value( (string) ( $field['type'] ?? '' ), $field['value'] ?? null );
+	}
+
+	/**
+	 * Format an ACF value for use as an image URL query param.
+	 *
+	 * Image, file, and gallery fields resolve to an attachment URL (galleries
+	 * use the first image); link fields resolve to their URL; multi-value
+	 * fields join their scalar members, post titles, and term names with
+	 * commas; everything else is cast to a tag-free string.
+	 *
+	 * @param string $type  ACF field type.
+	 * @param mixed  $value Formatted ACF value.
+	 * @return string Formatted value, empty string when there is nothing to render.
+	 */
+	private static function format_acf_value( string $type, $value ): string {
+		if ( null === $value || '' === $value || false === $value || array() === $value ) {
+			return '';
+		}
+
+		if ( ! is_array( $value ) ) {
+			if ( 'image' === $type || 'file' === $type ) {
+				return self::acf_attachment_url( $value );
+			}
+
+			return trim( wp_strip_all_tags( (string) $value ) );
+		}
+
+		if ( 'image' === $type || 'file' === $type ) {
+			// 'Image Array' / 'File Array' return formats.
+			return self::acf_attachment_url( $value );
+		}
+
+		if ( 'gallery' === $type ) {
+			foreach ( $value as $item ) {
+				$url = self::acf_attachment_url( $item );
+				if ( '' !== $url ) {
+					return $url;
+				}
+			}
+			return '';
+		}
+
+		if ( 'link' === $type ) {
+			$url = $value['url'] ?? '';
+			return is_string( $url ) ? $url : '';
+		}
+
+		$parts = array();
+		foreach ( $value as $item ) {
+			if ( $item instanceof WP_Post ) {
+				$parts[] = get_the_title( $item );
+			} elseif ( $item instanceof WP_Term ) {
+				$parts[] = $item->name;
+			} elseif ( is_scalar( $item ) ) {
+				$parts[] = (string) $item;
+			}
+		}
+
+		return implode( ', ', $parts );
+	}
+
+	/**
+	 * Resolve an ACF attachment reference to a URL.
+	 *
+	 * Accepts the three ACF return formats: attachment ID, URL string, or
+	 * attachment array with a `url` key.
+	 *
+	 * @param mixed $item Attachment ID, URL, or attachment array.
+	 * @return string Attachment URL or empty string.
+	 */
+	private static function acf_attachment_url( $item ): string {
+		if ( is_numeric( $item ) ) {
+			$url = wp_get_attachment_url( (int) $item );
+
+			return is_string( $url ) ? $url : '';
+		}
+
+		if ( is_array( $item ) && isset( $item['url'] ) && is_string( $item['url'] ) ) {
+			return $item['url'];
+		}
+
+		return is_string( $item ) ? $item : '';
 	}
 
 	/**

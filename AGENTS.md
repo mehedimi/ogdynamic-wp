@@ -40,7 +40,14 @@
 1. Admin sets template mappings per post type (stored as options)
 2. On frontend: `MetaTags` → `ImageGenerator` → `Template::get_mapping()`
 3. `ImageGenerator` resolves field values from post/term objects
-4. Constructs URL: `https://cdn.ogdynamic.com/d/{template_id}?{resolved_params}`
+4. Constructs URL by mapping `type`: canvas → `https://cdn.ogdynamic.com/c/{template_id}?{resolved_params}`, design → `https://cdn.ogdynamic.com/d/{template_id}?{resolved_params}`
+
+### Template Sources (SaaS)
+
+Templates come from the ogdynamic SaaS in two flavors; the mapping option stores which one (`type: 'canvas' | 'design'`, absent = design for backward compatibility):
+
+- **Canvas** (primary): user-designed in the SaaS canvas editor. List/detail via `GET v1/canvases`, `GET v1/canvases/{id}` (scope `canvases:read`). The index supports filters: `status` (lowercase enum, e.g. `public`), `width`/`height` (exact-match integers, 1–10000). The mapping page fetches `v1/canvases?status=public&width=1200&height=630` — only public OG-size canvases are selectable. Overridable fields come from `override_fields[]` — `{field, name, type, default}` where `field` is the layer's `fieldId` (the query-param name) and image-type layers take a URL value. Only **public** canvases render OG images; the mapping page warns when a saved mapping points to a private or non-1200×630 canvas (such canvases fall out of the filtered list but still load by id).
+- **Design** (deprecated, to be removed): list/detail via `GET v1/designs`, `GET v1/designs/{id}?include=template` (scope `designs:read`). Fields come from `template.schema[].fields[]` with `allowOverride`. The selector lists designs under a deprecated group (only when the account owns any) and shows a deprecation notice while one is selected.
 
 ### API Endpoints
 
@@ -49,7 +56,7 @@
 - `DELETE /ogdynamic/v1/connection` - Disconnect
 - `GET /ogdynamic/v1/templates` - List available templates
 - `GET /ogdynamic/v1/templates/{post_type}` - Get template for post type
-- `PUT /ogdynamic/v1/templates/{post_type}` - Update template mapping
+- `PUT /ogdynamic/v1/templates/{post_type}` - Update template mapping (optional `type`: `design`|`canvas`, default `design`)
 - `DELETE /ogdynamic/v1/templates/{post_type}` - Remove template mapping
 
 ### Template Fields
@@ -58,6 +65,8 @@ Supported sources by post type (see `Template::get_sources()`):
 - **All**: `site_name`, `site_tagline`
 - **Posts/Pages**: `post_title`, `excerpt`, `trimmed_content`, `featured_image`, `author_name`, `published_date`, `modified_date`, `category`, `tags`
 - **Products**: All post fields + `product_short_description`, `product_price`, `regular_price`, `sale_price`, `sku`, `product_category`, `product_tags`, `product_attributes`, `stock_status`, `rating`, `review_count`
+
+**ACF**: When Advanced Custom Fields is active, fields from field groups whose location rules target the post type are appended as mappable sources — key `acf_{acf_field_key}`, label `"{Group title}: {Field label}"` (see `Template::get_acf_sources()`). At render time (`ImageGenerator::acf_field_value()`): image/file/gallery fields resolve to an attachment URL in any return format (galleries use the first image), link fields to their URL, multi-value fields join scalar members, post titles, and term names with `, `, and everything else is cast to a tag-free string. Repeater/flexible-content/group fields are excluded (no single scalar value). Sources vanish gracefully (value `''`) if ACF is deactivated after mappings are saved.
 
 ## Conventions
 
@@ -92,9 +101,11 @@ Supported sources by post type (see `Template::get_sources()`):
 1. **Composer required**: Plugin checks for `vendor/autoload.php` and shows admin notice if missing
 2. **SEO plugin conflicts**: `MetaTags` hooks into Rank Math, Yoast, AIOSEO, SEOPress, The SEO Framework, Squirrly, and Slim SEO to avoid duplicate meta output
 3. **OAuth callback**: Handled via `ogdynamic-oauth-callback` admin page (no menu)
-4. **Template ID format**: 26-char base36 string (regex: `/^[0-9A-HJKMNP-TV-Z]{26}$/i`)
+4. **Template ID format**: 26-char ULID string (regex: `/^[0-9A-HJKMNP-TV-Z]{26}$/i`) — same format for canvases and designs
 5. **Transient keys**: All prefixed with `ogdy_` (via `Settings::option_name()`)
 6. **Dev mode bypasses build**: Loads `main.ts` directly via Vite client, no manifest needed
+7. **OAuth scope includes `canvases:read`**: tokens issued before this scope was added lack canvas access — sites must disconnect/reconnect; the template editor shows a reconnect notice when the canvas list fails
+8. **Canvas query params are flat strings**: the render service ignores array-style params (`tags[]=`), unlike designs. Multi-value sources (`tags`, `product_tags`, `product_attributes`) are flagged `multi` in `Template::get_sources()` and excluded from canvas mappings in the mapping UI (dropdown, auto-map, and saved-entry pruning in `syncFieldMap()`). The twitter image variant uses flat `intent=twitter` for canvases; designs use `config[intent]=twitter`
 
 ## Testing
 
@@ -110,7 +121,8 @@ No test suite configured. Manual testing required:
 
 ## External Services
 
-- **API**: `https://ogdynamic.com/api`
-- **CDN**: `https://cdn.ogdynamic.com/`
+- **API**: `https://ogdynamic.com/api` (`v1/canvases`, `v1/designs`, `v1/me`)
+- **CDN**: `https://cdn.ogdynamic.com/` (`c/{canvas_id}` for canvases, `d/{design_id}` for designs)
+- **SaaS editor**: `https://ogdynamic.com/canvases/create`, `/canvases/{id}/edit`
 - **OAuth endpoint**: `/oauth/token`, `/oauth/authorize`
 - **Redirect URI**: `admin.php?page=ogdynamic-oauth-callback`

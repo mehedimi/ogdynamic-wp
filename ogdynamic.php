@@ -3,7 +3,7 @@
  * Plugin Name: ogdynamic - Dynamic Open Graph & Social Image Generator for WordPress
  * Plugin URI: https://ogdynamic.com
  * Description: Automatically generate beautiful Open Graph images for your WordPress posts, pages, WooCommerce products, and archive pages. Boost your social media link previews on Facebook, Twitter, LinkedIn, and more.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: mehedimi
  * Author URI: https://mehedi.im
  * Text Domain: ogdynamic
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'OGDYNAMIC_VERSION', '0.1.0' );
+define( 'OGDYNAMIC_VERSION', '0.2.0' );
 define( 'OGDYNAMIC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'OGDYNAMIC_URL', plugin_dir_url( __FILE__ ) );
 
