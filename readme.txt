@@ -155,6 +155,10 @@ OG images are generated at 1200x630 pixels, which is the recommended Open Graph 
 
 == Changelog ==
 
+= Unreleased =
+* Design templates removed: the selector lists canvases only and existing design mappings keep rendering until you replace them with a canvas
+* Admin interface refreshed with the new ogdynamic branding and color scheme
+
 = 0.2.0 =
 * Canvas templates: design OG image templates in the ogdynamic canvas editor and map them to your content types (existing design mappings keep working but designs are deprecated)
 * Template selector lists your public 1200x630 canvases and warns when a saved mapping points to a private or resized canvas

@@ -19,7 +19,11 @@ class ImageGenerator {
 	protected static ?string $template_id = null;
 
 	/**
-	 * Whether the mapped template is a canvas or a (deprecated) design.
+	 * Whether the mapped template is a canvas or a legacy design.
+	 *
+	 * Designs are removed from the plugin UI; mappings saved with
+	 * `type: design` (or without a type) keep rendering through the
+	 * `/d/` CDN segment until they are replaced with a canvas.
 	 *
 	 * @var string
 	 */
@@ -96,6 +100,7 @@ class ImageGenerator {
 			// config params are ignored by the render service.
 			$query['intent'] = 'twitter';
 		} else {
+			// Legacy design mappings use array-style config params.
 			$query['config'] = array( 'intent' => 'twitter' );
 		}
 

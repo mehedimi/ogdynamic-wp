@@ -149,7 +149,7 @@ class TemplatesController {
 		$map         = $request->get_param( 'map' );
 
 		if ( '' === $type ) {
-			$type = 'design';
+			$type = 'canvas';
 		}
 
 		$value = array(
@@ -198,11 +198,14 @@ class TemplatesController {
 	/**
 	 * Validates template type.
 	 *
+	 * Only canvases are accepted; designs have been removed and existing
+	 * design mappings keep rendering via ImageGenerator until replaced.
+	 *
 	 * @param mixed $value The template type to validate.
 	 * @return bool True if valid, false otherwise.
 	 */
 	public static function validate_template_type( $value ): bool {
-		return in_array( $value, array( 'design', 'canvas' ), true );
+		return 'canvas' === $value;
 	}
 
 	/**
