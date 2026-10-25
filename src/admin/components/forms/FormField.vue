@@ -15,6 +15,6 @@ defineProps<{
     <slot />
 
     <p v-if="hint" class="ogd:m-0 ogd:text-[11.5px] ogd:!text-[11.5px] ogd:font-light ogd:leading-relaxed ogd:text-gray-400 ogd:!text-gray-400">{{ hint }}</p>
-    <p v-if="error" class="ogd:m-0 ogd:text-[11.5px] ogd:!text-[11.5px] ogd:leading-relaxed ogd:text-rose-500 ogd:!text-rose-500 ogd:flex ogd:items-center ogd:gap-1">{{ error }}</p>
+    <p v-if="error" class="ogd:m-0 ogd:text-[11.5px] ogd:!text-[11.5px] ogd:leading-relaxed ogd:text-destructive ogd:!text-destructive ogd:flex ogd:items-center ogd:gap-1">{{ error }}</p>
   </div>
 </template>

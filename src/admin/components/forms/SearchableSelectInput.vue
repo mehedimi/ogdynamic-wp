@@ -110,7 +110,7 @@ function clearSearchTerm(): void {
         :display-value="displayValue"
         :disabled="disabled"
         :placeholder="placeholder"
-        class="ogd:w-full ogd:rounded-full! ogd:border ogd:border-gray-200! ogd:bg-gray-50 ogd:py-1.5! ogd:pr-11! ogd:pl-6! ogd:text-[13.5px]! ogd:text-gray-900! ogd:outline-none! ogd:transition ogd:placeholder:text-gray-400 ogd:focus:border-rose-400! ogd:focus:bg-white! ogd:focus:shadow-[0_0_0_3px_rgba(244,63,94,0.08)] ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
+        class="ogd:w-full ogd:rounded-full! ogd:border ogd:border-gray-200! ogd:bg-gray-50 ogd:py-1.5! ogd:pr-11! ogd:pl-6! ogd:text-[13.5px]! ogd:text-gray-900! ogd:outline-none! ogd:transition ogd:placeholder:text-gray-400 ogd:focus:border-primary! ogd:focus:bg-white! ogd:focus:shadow-[0_0_0_3px_rgba(99,91,255,0.12)] ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
         @focus="clearSearchTerm"
         @click="clearSearchTerm"
       />
@@ -162,10 +162,10 @@ function clearSearchTerm(): void {
               :key="option.value"
               :value="option.value"
               :text-value="option.label"
-              class="ogd:flex ogd:cursor-pointer ogd:items-center ogd:justify-between ogd:gap-3 ogd:rounded-xl ogd:px-3 ogd:py-2 ogd:text-sm ogd:text-gray-700 ogd:outline-none ogd:transition ogd:data-highlighted:bg-rose-50 ogd:data-highlighted:text-gray-900 ogd:data-[state=checked]:text-gray-900"
+              class="ogd:flex ogd:cursor-pointer ogd:items-center ogd:justify-between ogd:gap-3 ogd:rounded-xl ogd:px-3 ogd:py-2 ogd:text-sm ogd:text-gray-700 ogd:outline-none ogd:transition ogd:data-highlighted:bg-primary-soft ogd:data-highlighted:text-gray-900 ogd:data-[state=checked]:text-gray-900"
             >
               <span class="ogd:truncate">{{ option.label }}</span>
-              <ComboboxItemIndicator class="ogd:shrink-0 ogd:text-rose-500">
+              <ComboboxItemIndicator class="ogd:shrink-0 ogd:text-primary">
                 <svg
                   class="ogd:size-4"
                   viewBox="0 0 24 24"

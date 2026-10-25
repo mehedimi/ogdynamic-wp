@@ -16,6 +16,16 @@ const isLoading = ref(true);
 const activatedPostTypes = computed(() => new Set(activatedTemplates.value));
 const isLoadingState = computed(() => wordpressApi.loading.value || isLoading.value);
 
+// Decorative soft-chip accents (mirrors the app's tone badges); primary
+// stays reserved for actions and selection.
+const POST_TYPE_TONES = [
+  "ogd:border-sky-500/20 ogd:bg-sky-500/10 ogd:text-sky-600",
+  "ogd:border-violet-500/20 ogd:bg-violet-500/10 ogd:text-violet-600",
+  "ogd:border-amber-500/20 ogd:bg-amber-500/10 ogd:text-amber-600",
+  "ogd:border-emerald-500/20 ogd:bg-emerald-500/10 ogd:text-emerald-600",
+  "ogd:border-fuchsia-500/20 ogd:bg-fuchsia-500/10 ogd:text-fuchsia-600",
+];
+
 function isActivated(postType: string): boolean {
   return activatedPostTypes.value.has(postType);
 }
@@ -90,14 +100,15 @@ onMounted(loadData);
        class="ogd:grid ogd:grid-cols-3 ogd:gap-4.5 max-[1100px]:ogd:grid-cols-2 max-[720px]:ogd:grid-cols-1"
      >
        <RouterLink
-         v-for="postType in postTypes"
+         v-for="(postType, index) in postTypes"
         :key="postType.name"
         :to="`/templates/${postType.name}`"
-        class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6 ogd:no-underline ogd:transition-all! ogd:hover:border-rose-100 ogd:hover:shadow-[0_18px_48px_rgba(17,24,39,0.08)]"
+        class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6 ogd:no-underline ogd:transition-all! ogd:hover:border-primary/30 ogd:hover:shadow-[0_18px_48px_rgba(17,24,39,0.08)]"
       >
         <div class="ogd:flex ogd:items-start ogd:justify-between ogd:gap-3">
           <span
-            class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:border-rose-100 ogd:bg-rose-50 ogd:px-2.5 ogd:py-1 ogd:font-display ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide ogd:text-rose-500"
+            class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:px-2.5 ogd:py-1 ogd:font-display ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide"
+            :class="POST_TYPE_TONES[index % POST_TYPE_TONES.length]"
           >
             {{ postType.name }}
           </span>
@@ -105,7 +116,7 @@ onMounted(loadData);
             class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:px-2.5 ogd:py-1 ogd:text-[11px] ogd:font-semibold ogd:tracking-wide"
             :class="
               isActivated(postType.name)
-                ? 'ogd:border ogd:border-emerald-200 ogd:bg-emerald-50 ogd:text-emerald-700'
+                ? 'ogd:border ogd:border-success/20 ogd:bg-success-soft ogd:text-success'
                 : 'ogd:border ogd:border-gray-200 ogd:bg-gray-50 ogd:text-gray-500'
             "
           >
