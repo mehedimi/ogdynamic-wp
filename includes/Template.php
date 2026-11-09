@@ -245,6 +245,8 @@ class Template {
 	 * @return array{
 	 *   key: string,
 	 *   label: string,
+	 *   group?: string,
+	 *   badge?: string,
 	 *   multi?: bool
 	 * }[] Array of available sources for the post type.
 	 */
@@ -258,14 +260,24 @@ class Template {
 			$post_sources     = $filtered_sources[ $post_type ] ?? array();
 		}
 
-		return array_merge( $post_sources, self::get_acf_sources( $post_type ) );
+		// Core sources render in their own "WordPress" dropdown section so
+		// ACF-provided sources are visibly distinct.
+		$core_sources = array_map(
+			static function ( array $source ): array {
+				return $source + array( 'group' => __( 'WordPress', 'ogdynamic' ) );
+			},
+			$post_sources
+		);
+
+		return array_merge( $core_sources, self::get_acf_sources( $post_type ) );
 	}
 
 	/**
 	 * Gets ACF field sources for a post type.
 	 *
 	 * Fields from field groups whose location rules target the post type are
-	 * listed as `acf_{field_key}` sources. Complex nested field types
+	 * listed as `acf_{field_key}` sources, grouped under their field group
+	 * title and flagged with an "ACF" badge. Complex nested field types
 	 * (repeater, flexible content, group) are excluded because they have no
 	 * single scalar value to render.
 	 *
@@ -273,6 +285,8 @@ class Template {
 	 * @return array{
 	 *   key: string,
 	 *   label: string,
+	 *   group: string,
+	 *   badge: string,
 	 *   multi?: bool
 	 * }[] Array of ACF sources.
 	 */
@@ -292,7 +306,9 @@ class Template {
 
 				$sources[] = array(
 					'key'   => 'acf_' . $field['key'],
-					'label' => $field_group['title'] . ': ' . $field['label'],
+					'label' => $field['label'],
+					'group' => $field_group['title'],
+					'badge' => 'ACF',
 				);
 			}
 		}

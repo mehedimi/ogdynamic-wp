@@ -16,6 +16,10 @@ type FieldOption = {
 type MappingSourceOption = {
   key: string;
   label: string;
+  /** Dropdown section the source is listed under (e.g. its ACF field group). */
+  group?: string;
+  /** Pill shown next to the label (e.g. "ACF"). */
+  badge?: string;
   multi?: boolean;
 };
 
@@ -114,7 +118,12 @@ const sourceOptions = computed(() => [
     // Canvas render URLs take flat string params only, so multi-value
     // sources (e.g. tags) cannot be passed and are not offered.
     .filter((source) => !source.multi)
-    .map((d) => ({ value: d.key, label: d.label })),
+    .map((d) => ({
+      value: d.key,
+      label: d.label,
+      group: d.group,
+      badge: d.badge,
+    })),
 ]);
 
 watch(

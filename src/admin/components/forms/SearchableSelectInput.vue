@@ -67,7 +67,7 @@ const groupedOptions = computed(() => {
   const term = searchTerm.value.trim().toLowerCase();
   const matches = term
     ? comboboxOptions.value.filter((option) =>
-        `${option.label} ${option.description ?? ""}`
+        `${option.label} ${option.group ?? ""} ${option.description ?? ""}`
           .toLowerCase()
           .includes(term),
       )
