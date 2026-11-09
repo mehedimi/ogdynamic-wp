@@ -21,6 +21,8 @@ type MappingSourceOption = {
 
 type TemplateMapping = {
   template_id: string;
+  width: number;
+  height: number;
   map: Array<{
     attr_key: string;
     key: string;
@@ -47,6 +49,8 @@ const canvasListFailed = ref(false);
 
 const formPayload = reactive<TemplateMapping>({
   template_id: "",
+  width: OG_IMAGE_WIDTH,
+  height: OG_IMAGE_HEIGHT,
   map: [],
 });
 
@@ -170,6 +174,9 @@ async function loadSelectedTemplate(templateId: string) {
 
   if (!templateId) {
     canvas.value = undefined;
+    // No canvas selected — save falls back to the standard OG size.
+    formPayload.width = OG_IMAGE_WIDTH;
+    formPayload.height = OG_IMAGE_HEIGHT;
     return;
   }
 
@@ -186,6 +193,8 @@ async function loadCanvas(canvasId: string, seq: number) {
   }
 
   canvas.value = data;
+  formPayload.width = data.width;
+  formPayload.height = data.height;
   syncFieldMap();
 }
 
@@ -468,7 +477,8 @@ onMounted(async () => {
         class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-warning/25 ogd:bg-warning-soft ogd:px-3.5 ogd:py-3 ogd:text-[13px] ogd:text-warning-text"
       >
         “{{ canvas.name }}” is {{ canvas.width }}×{{ canvas.height }}px. OG
-        images render at {{ OG_IMAGE_WIDTH }}×{{ OG_IMAGE_HEIGHT }} — resize
+        images render at {{ OG_IMAGE_WIDTH }}×{{ OG_IMAGE_HEIGHT }} and the
+        Twitter image link is only generated for that standard size — resize
         the canvas in the
         <a
           class="ogd:font-semibold ogd:text-warning-text ogd:underline"

@@ -38,7 +38,7 @@
 ### Data Flow
 
 1. Admin sets template mappings per post type (stored as options)
-2. On frontend: `MetaTags` → `ImageGenerator` → `Template::get_mapping()`
+2. On frontend: `MetaTags` → `ImageGenerator` → `Template::get_mapping()`. Mappings store the canvas' `width`/`height`; meta tags use the stored dims (null → standard 1200×630) and the Twitter image link is only emitted for the standard size
 3. `ImageGenerator` resolves field values from post/term objects
 4. Constructs URL by mapping `type`: canvas → `https://cdn.ogdynamic.com/c/{template_id}?{resolved_params}` (legacy design mappings, `type: design` or absent, still render via `d/{template_id}`)
 
@@ -56,7 +56,7 @@ Templates are ogdynamic **canvases** (the design feature has been removed from t
 - `DELETE /ogdynamic/v1/connection` - Disconnect
 - `GET /ogdynamic/v1/templates` - List available templates
 - `GET /ogdynamic/v1/templates/{post_type}` - Get template for post type
-- `PUT /ogdynamic/v1/templates/{post_type}` - Update template mapping (optional `type`: `canvas` only, default `canvas`)
+- `PUT /ogdynamic/v1/templates/{post_type}` - Update template mapping (optional `type`: `canvas` only, default `canvas`; optional `width`/`height` ints, default 1200/630, the canvas' dimensions)
 - `DELETE /ogdynamic/v1/templates/{post_type}` - Remove template mapping
 
 ### Template Fields
