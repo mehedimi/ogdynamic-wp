@@ -152,7 +152,7 @@ async function loadCanvases() {
 
   try {
     const { data } = await cloudApi.request<ApiData<OGDCanvasSummary[]>>(
-      `v1/canvases?status=public&width=${OG_IMAGE_WIDTH}&height=${OG_IMAGE_HEIGHT}`,
+      `v1/canvases?status=public`,
     );
     canvases.value = data;
   } catch {
