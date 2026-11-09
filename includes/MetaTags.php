@@ -58,7 +58,7 @@ class MetaTags {
 		add_filter(
 			'rank_math/opengraph/twitter/image',
 			function ( $attachment_url ) {
-				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_standard_og_image() ) {
+				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_twitter_image() ) {
 					return $attachment_url;
 				}
 
@@ -104,7 +104,7 @@ class MetaTags {
 			esc_url( ImageGenerator::get_image_url() ),
 			intval( ImageGenerator::get_image_width() ),
 			intval( ImageGenerator::get_image_height() ),
-			ImageGenerator::has_standard_og_image()
+			ImageGenerator::has_twitter_image()
 				? sprintf(
 					'<meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="%s" />
@@ -128,7 +128,7 @@ class MetaTags {
 		add_filter(
 			'wpseo_twitter_image',
 			static function ( $image ) {
-				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_standard_og_image() ) {
+				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_twitter_image() ) {
 					return $image;
 				}
 
@@ -172,7 +172,7 @@ class MetaTags {
 				$tags['og:image:width']  = ImageGenerator::get_image_width();
 				$tags['og:image:height'] = ImageGenerator::get_image_height();
 
-				if ( ! ImageGenerator::has_standard_og_image() ) {
+				if ( ! ImageGenerator::has_twitter_image() ) {
 					return $tags;
 				}
 
@@ -306,7 +306,7 @@ class MetaTags {
 		add_filter(
 			'slim_seo_twitter_card_image',
 			static function ( $image ) {
-				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_standard_og_image() ) {
+				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_twitter_image() ) {
 					return $image;
 				}
 

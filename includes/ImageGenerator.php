@@ -25,6 +25,17 @@ class ImageGenerator {
 	public const OG_IMAGE_WIDTH  = 1200;
 	public const OG_IMAGE_HEIGHT = 630;
 
+	/**
+	 * Twitter's recommended summary_large_image dimensions (2:1).
+	 *
+	 * A canvas already sized for Twitter reuses the plain og:image URL as
+	 * the twitter:image link instead of the intent=twitter variant.
+	 *
+	 * @var int
+	 */
+	public const TWITTER_IMAGE_WIDTH  = 1200;
+	public const TWITTER_IMAGE_HEIGHT = 600;
+
 	protected static ?array $query              = null;
 	protected static ?bool $has_generated_image = null;
 
@@ -116,6 +127,11 @@ class ImageGenerator {
 	}
 
 	public static function get_twitter_image_url(): string {
+		// A canvas already sized for Twitter needs no variant render.
+		if ( self::has_twitter_sized_image() ) {
+			return self::get_image_url();
+		}
+
 		$query = is_array( self::$query ) ? self::$query : array();
 
 		if ( 'canvas' === self::$template_type ) {
@@ -207,6 +223,29 @@ class ImageGenerator {
 	public static function has_standard_og_image(): bool {
 		return self::OG_IMAGE_WIDTH === self::get_image_width()
 			&& self::OG_IMAGE_HEIGHT === self::get_image_height();
+	}
+
+	/**
+	 * Whether the mapped image matches Twitter's recommended dimensions.
+	 *
+	 * @return bool
+	 */
+	public static function has_twitter_sized_image(): bool {
+		return self::TWITTER_IMAGE_WIDTH === self::get_image_width()
+			&& self::TWITTER_IMAGE_HEIGHT === self::get_image_height();
+	}
+
+	/**
+	 * Whether a twitter image link may be emitted for the mapped image.
+	 *
+	 * True when the image is the standard OG size (rendered via the
+	 * intent=twitter variant) or Twitter's recommended size (reusing the
+	 * plain og:image URL). Other sizes send no twitter link at all.
+	 *
+	 * @return bool
+	 */
+	public static function has_twitter_image(): bool {
+		return self::has_standard_og_image() || self::has_twitter_sized_image();
 	}
 
 	/**

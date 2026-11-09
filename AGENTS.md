@@ -38,7 +38,7 @@
 ### Data Flow
 
 1. Admin sets template mappings per post type (stored as options)
-2. On frontend: `MetaTags` → `ImageGenerator` → `Template::get_mapping()`. Mappings store the canvas' `width`/`height`; meta tags use the stored dims (null → standard 1200×630) and the Twitter image link is only emitted for the standard size
+2. On frontend: `MetaTags` → `ImageGenerator` → `Template::get_mapping()`. Mappings store the canvas' `width`/`height`; meta tags use the stored dims (null → standard 1200×630) and the Twitter image link is only emitted for Twitter-compatible sizes: 1200×630 renders the `intent=twitter` variant, 1200×600 (Twitter's recommended 2:1) reuses the `og:image` URL as-is, other sizes send just the `og:image` link
 3. `ImageGenerator` resolves field values from post/term objects
 4. Constructs URL by mapping `type`: canvas → `https://cdn.ogdynamic.com/c/{template_id}?{resolved_params}` (legacy design mappings, `type: design` or absent, still render via `d/{template_id}`)
 
