@@ -66,16 +66,20 @@ class ConnectionController {
 	/**
 	 * Gets connection status.
 	 *
+	 * The current access token is included so the admin app can recover a
+	 * stale token after a 401; get_access_token() transparently refreshes
+	 * it server-side before responding.
+	 *
 	 * @return WP_REST_Response REST response with connection status.
 	 */
 	public static function get(): WP_REST_Response {
-		$token     = OAuth::get_access_token();
-		$connected = '' !== $token;
+		$token = OAuth::get_access_token();
 
 		return rest_ensure_response(
 			array(
 				'data' => array(
-					'connected' => $connected,
+					'connected' => '' !== $token,
+					'api_key'   => $token,
 				),
 			)
 		);

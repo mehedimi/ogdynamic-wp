@@ -31,7 +31,6 @@ class OAuth {
 		'oauth_access_token',
 		'oauth_refresh_token',
 		'oauth_expires_at',
-		'oauth_client_id',
 	);
 
 	/**
