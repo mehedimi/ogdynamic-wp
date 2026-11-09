@@ -19,6 +19,10 @@ type SelectOption = {
   label: string;
   value: string;
   group?: string;
+  /** Secondary line rendered beneath the label (e.g. canvas dimensions). */
+  description?: string;
+  /** Pill rendered next to the label (e.g. "Recommended"). */
+  badge?: string;
 };
 
 const EMPTY_VALUE = "__ogdynamic_empty_value__";
@@ -54,6 +58,8 @@ const comboboxOptions = computed(() => {
     label: option.label,
     value: "" === option.value ? EMPTY_VALUE : option.value,
     group: option.group,
+    description: option.description,
+    badge: option.badge,
   }));
 });
 
@@ -61,7 +67,9 @@ const groupedOptions = computed(() => {
   const term = searchTerm.value.trim().toLowerCase();
   const matches = term
     ? comboboxOptions.value.filter((option) =>
-        option.label.toLowerCase().includes(term),
+        `${option.label} ${option.description ?? ""}`
+          .toLowerCase()
+          .includes(term),
       )
     : comboboxOptions.value;
 
@@ -164,7 +172,23 @@ function clearSearchTerm(): void {
               :text-value="option.label"
               class="ogd:flex ogd:cursor-pointer ogd:items-center ogd:justify-between ogd:gap-3 ogd:rounded-xl ogd:px-3 ogd:py-2 ogd:text-sm ogd:text-gray-700 ogd:outline-none ogd:transition ogd:data-highlighted:bg-primary-soft ogd:data-highlighted:text-gray-900 ogd:data-[state=checked]:text-gray-900"
             >
-              <span class="ogd:truncate">{{ option.label }}</span>
+              <span class="ogd:flex ogd:min-w-0 ogd:flex-col ogd:gap-0.5">
+                <span class="ogd:flex ogd:items-center ogd:gap-2">
+                  <span class="ogd:truncate">{{ option.label }}</span>
+                  <span
+                    v-if="option.badge"
+                    class="ogd:shrink-0 ogd:rounded-full ogd:bg-primary-soft ogd:px-2 ogd:py-px ogd:text-[10px] ogd:font-semibold ogd:tracking-wide ogd:text-primary ogd:uppercase"
+                  >
+                    {{ option.badge }}
+                  </span>
+                </span>
+                <span
+                  v-if="option.description"
+                  class="ogd:truncate ogd:text-[11.5px] ogd:text-gray-400"
+                >
+                  {{ option.description }}
+                </span>
+              </span>
               <ComboboxItemIndicator class="ogd:shrink-0 ogd:text-primary">
                 <svg
                   class="ogd:size-4"

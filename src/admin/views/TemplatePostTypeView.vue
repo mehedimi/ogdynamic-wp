@@ -91,11 +91,16 @@ const fields = computed<FieldOption[]>(() => {
   );
 });
 
+const isOgSize = (c: OGDCanvasSummary): boolean =>
+  c.width === OG_IMAGE_WIDTH && c.height === OG_IMAGE_HEIGHT;
+
 const selectorOptions = computed(() => [
   { label: "Select your canvas", value: "" },
   ...canvases.value.map((c) => ({
     label: c.name,
     value: c.id,
+    description: `${c.width}×${c.height}`,
+    badge: isOgSize(c) ? "Recommended" : undefined,
   })),
 ]);
 
