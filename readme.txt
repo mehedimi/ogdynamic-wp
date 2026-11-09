@@ -156,6 +156,7 @@ OG images are generated at 1200x630 pixels, which is the recommended Open Graph 
 == Changelog ==
 
 = Unreleased =
+* New "ogdynamic Canvas Image" block: pick a public canvas in the editor, fill in its dynamic fields with a live preview, and save the generated image straight to the media library
 * Design templates removed: the selector lists canvases only and existing design mappings keep rendering until you replace them with a canvas
 * Admin interface refreshed with the new ogdynamic branding and color scheme
 

@@ -1,0 +1,60 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "ogdynamic/canvas-image",
+	"title": "ogdynamic Canvas Image",
+	"category": "media",
+	"icon": "format-image",
+	"description": "Pick a public ogdynamic canvas, fill in its dynamic fields and save the generated image to the media library.",
+	"keywords": [ "ogdynamic", "canvas", "image", "open graph", "social" ],
+	"textdomain": "ogdynamic",
+	"attributes": {
+		"canvasId": {
+			"type": "string",
+			"default": ""
+		},
+		"canvasName": {
+			"type": "string",
+			"default": ""
+		},
+		"params": {
+			"type": "object",
+			"default": {}
+		},
+		"width": {
+			"type": "number",
+			"default": 0
+		},
+		"height": {
+			"type": "number",
+			"default": 0
+		},
+		"alt": {
+			"type": "string",
+			"default": ""
+		},
+		"attachmentId": {
+			"type": "number",
+			"default": 0
+		},
+		"imageUrl": {
+			"type": "string",
+			"default": ""
+		},
+		"savedQuery": {
+			"type": "string",
+			"default": ""
+		},
+		"savedAt": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": [ "left", "center", "right", "wide", "full" ],
+		"spacing": {
+			"margin": true
+		}
+	}
+}

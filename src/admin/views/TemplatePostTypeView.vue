@@ -554,7 +554,7 @@ onMounted(async () => {
 
       <!-- Field mapping form for the selected OG image template. -->
       <div
-        v-else-if="formPayload.template_id && fields.length"
+        v-else-if="formPayload.template_id"
         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
       >
         <h2
@@ -563,13 +563,21 @@ onMounted(async () => {
           Open Graph image mapping
         </h2>
         <p
+          v-if="fields.length"
           class="ogd:mt-2! ogd:mb-5 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500"
         >
           Link each overridable field to a WordPress source used in the
           generated Open Graph image.
         </p>
 
-        <div class="ogd:grid ogd:gap-4">
+        <div
+          v-if="!fields.length"
+          class="ogd:mt-4 ogd:mb-1 ogd:rounded-[14px] ogd:border ogd:border-gray-100 ogd:bg-gray-50 ogd:px-3.5 ogd:py-3 ogd:text-sm ogd:text-gray-500"
+        >
+          No mappable fields found for this canvas.
+        </div>
+
+        <div v-else class="ogd:grid ogd:gap-4">
           <FormField
             v-for="field in fields"
             :key="field.key"

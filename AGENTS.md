@@ -9,7 +9,8 @@
 - **PHP linting**: `composer lint:php`
 - **PHP fix**: `composer fix:php`
 - **Frontend dev mode**: `pnpm dev` (runs on `http://127.0.0.1:5173`)
-- **Frontend build**: `pnpm build`
+- **Frontend build**: `pnpm build` (admin app + block editor bundle; block only: `pnpm build:block`, watch: `pnpm dev:block`)
+- **Type check**: `pnpm typecheck`
 
 ### Development Flags
 
@@ -34,6 +35,8 @@
 | `ImageGenerator` | `includes/ImageGenerator.php` | Dynamic image URL construction |
 | `MetaTags` | `includes/MetaTags.php` | Output OG/Twitter meta tags |
 | `Admin` | `includes/Admin.php` | Admin page & asset loading |
+| `Block` | `includes/Block.php` | Registers/renders the `ogdynamic/canvas-image` block |
+| `BlockController` | `includes/Controllers/BlockController.php` | Block REST endpoints (canvas proxy, generate & save) |
 
 ### Data Flow
 
@@ -58,6 +61,18 @@ Templates are ogdynamic **canvases** (the design feature has been removed from t
 - `GET /ogdynamic/v1/templates/{post_type}` - Get template for post type
 - `PUT /ogdynamic/v1/templates/{post_type}` - Update template mapping (optional `type`: `canvas` only, default `canvas`; optional `width`/`height` ints, default 1200/630, the canvas' dimensions)
 - `DELETE /ogdynamic/v1/templates/{post_type}` - Remove template mapping
+- `GET /ogdynamic/v1/block/canvases` - Public canvases for the block (`edit_posts`)
+- `GET /ogdynamic/v1/block/canvases/{id}` - Canvas incl. `override_fields` for the block (`edit_posts`)
+- `POST /ogdynamic/v1/block/generate` - `canvas_id`, `params` (flat string map), optional `post_id`, `alt`; saves the rendered image to the media library (`edit_posts` + `upload_files`)
+
+### Canvas Image Block
+
+`ogdynamic/canvas-image` (`blocks/canvas-image/block.json`, TypeScript/React source in `src/block/`, built by `vite.block.config.ts` into `dist/block/ogdynamic-block.{js,css}` as a classic IIFE script — `@wordpress/*` packages are externals mapped to `wp.*` globals, JSX uses the `createElement` pragma, script deps are declared in `Block::register_block()`).
+
+- Editor: the inspector lists public canvases and the selected canvas' `override_fields`; typed values stay in local state and are only committed to the `params` attribute on blur, which is what changes the live preview `<img>` URL (`cdn/c/{id}?{params}`). **Generate & Save** posts to `POST /block/generate`.
+- Attributes JSON stores `canvasId`, `canvasName`, `params`, `width`, `height`, `alt`, `attachmentId`, `imageUrl`, `savedQuery`, `savedAt`. `savedQuery` is compared with the current params to show "Unsaved changes" and disable the button when nothing changed.
+- Server: `BlockController` proxies `v1/canvases` with the stored OAuth token (editors never get the token; permission `edit_posts`, generate also needs `upload_files`). Generate sideloads the CDN image via `download_url()` + `media_handle_sideload()`, tags the attachment with `_ogdynamic_hash` / `_ogdynamic_canvas_id` / `_ogdynamic_params` / `_ogdynamic_source_url`, and reuses an existing attachment with the same hash (md5 of canvas id + canvas `updated_at` revision + sorted flat query) instead of downloading again. Only public canvases are accepted.
+- Frontend: `Block::render()` (dynamic block, `save` returns null) outputs `<figure>` + `wp_get_attachment_image()` of `attachmentId` (falls back to `imageUrl`); nothing is output until an image has been saved.
 
 ### Template Fields
 

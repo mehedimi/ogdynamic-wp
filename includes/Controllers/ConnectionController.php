@@ -7,11 +7,9 @@
 
 namespace OGDynamic\Controllers;
 
-use OGDynamic\Settings;
 use OGDynamic\OAuth;
 use WP_REST_Response;
 use WP_REST_Server;
-use WP_Error;
 
 /**
  * Class ConnectionController

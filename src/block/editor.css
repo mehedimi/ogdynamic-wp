@@ -1,0 +1,65 @@
+.ogd-block {
+  margin: 0;
+}
+
+.ogd-block__preview {
+  position: relative;
+  min-height: 80px;
+  background: #f0f0f1;
+}
+
+.ogd-block__preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ogd-block__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.ogd-block__overlay--error {
+  background: rgba(255, 255, 255, 0.9);
+  color: #cc1818;
+}
+
+.ogd-block__badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #1e1e1e;
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.ogd-block__badge--saved {
+  background: #00a32a;
+}
+
+.ogd-block__field {
+  margin-bottom: 16px;
+}
+
+.ogd-block__field .components-button {
+  margin-top: 4px;
+}
+
+.ogd-block__actions {
+  margin: 16px 0 8px;
+}
+
+.ogd-block__hint {
+  margin: 8px 0 0;
+  color: #757575;
+  font-size: 12px;
+}
