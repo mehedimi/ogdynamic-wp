@@ -61,13 +61,13 @@ onMounted(loadAccount);
             <h2
               class="ogd:mt-4 ogd:mb-1.5 ogd:font-display ogd:text-lg ogd:font-bold ogd:text-gray-900"
             >
-              API connection
+              ogdynamic connection
             </h2>
             <p class="ogd:m-0 ogd:max-w-150 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500">
               {{
                 isConnected
-                  ? "Your API token is valid. OG image templates can be configured now."
-                  : "Add an API key before configuring OG image templates."
+                  ? "Your ogdynamic account is connected. OG image templates can be configured now."
+                  : "Connect your ogdynamic account before configuring OG image templates."
               }}
             </p>
           </div>
