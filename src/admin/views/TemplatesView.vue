@@ -54,7 +54,7 @@ onMounted(loadData);
     <h1
       class="ogd:m-0 ogd:font-display ogd:text-3xl ogd:font-bold ogd:tracking-[-0.03em] ogd:text-gray-900"
     >
-      Templates
+      Open Graph Templates
     </h1>
     <p
       class="ogd:mt-2 ogd:mb-7 ogd:max-w-155 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
