@@ -83,6 +83,6 @@ All endpoints require `manage_options` capability.
 - **Dev mode**: bypasses `dist/` entirely, loads `main.ts` via Vite client — manifest is not used
 - **Token storage**: access tokens cached in transients (prefix `ogdy_`), refresh token in options
 - **Canvas query params are flat strings**: the render service ignores array-style params (`tags[]=`); multi-value sources are excluded from mappings in the mapping UI, and the twitter variant uses flat `intent=twitter` (legacy design mappings use `config[intent]=twitter`)
-- **Canvas index filters**: the mapping page fetches `v1/canvases?status=public&width=1200&height=630` — only public OG-size canvases are selectable; saved mappings pointing elsewhere load by id and warn
+- **Canvas index filters**: the mapping page fetches `v1/canvases?status=public` — all public canvases are selectable regardless of size; saved mappings pointing to private or non-1200×630 canvases load by id and warn
 - **ACF sources**: when ACF is active, `acf_{field_key}` sources are appended per post type and resolved at render time (see `Template::get_acf_sources()` / `ImageGenerator::acf_field_value()`)
 - **No test suite**: manual testing only
