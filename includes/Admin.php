@@ -62,6 +62,11 @@ class Admin {
 
 		$asset = self::asset_files();
 
+		if ( null === $asset ) {
+			add_action( 'admin_notices', array( self::class, 'render_build_notice' ) );
+			return;
+		}
+
 		wp_enqueue_script(
 			'ogdynamic-admin',
 			$asset['js'],
@@ -190,13 +195,21 @@ class Admin {
 	/**
 	 * Gets asset files from Vite manifest.
 	 *
-	 * @return array Array with 'js' and 'css' file paths.
+	 * @return array|null Array with 'js' and 'css' file paths, or null when the production build is missing.
 	 */
-	private static function asset_files(): array {
+	private static function asset_files(): ?array {
 		$manifest_path = OGDYNAMIC_PATH . 'dist/admin/.vite/manifest.json';
 
+		if ( ! file_exists( $manifest_path ) ) {
+			return null;
+		}
+
 		$manifest = wp_json_file_decode( $manifest_path, array( 'associative' => true ) );
-		$entry    = $manifest['src/admin/main.ts'] ?? null;
+		$entry    = is_array( $manifest ) ? ( $manifest['src/admin/main.ts'] ?? null ) : null;
+
+		if ( ! is_array( $entry ) || empty( $entry['file'] ) ) {
+			return null;
+		}
 
 		return array(
 			'js'  => OGDYNAMIC_URL . 'dist/admin/' . $entry['file'],
@@ -207,6 +220,17 @@ class Admin {
 				$entry['css'] ?? array()
 			),
 		);
+	}
+
+	/**
+	 * Shows a notice when the production assets have not been built.
+	 *
+	 * @return void
+	 */
+	public static function render_build_notice(): void {
+		echo '<div class="notice notice-error"><p>' .
+			esc_html__( 'ogdynamic admin assets are missing. Run "pnpm build" in the plugin directory (or enable OGDYNAMIC_DEV for development).', 'ogdynamic' ) .
+			'</p></div>';
 	}
 
 	/**
