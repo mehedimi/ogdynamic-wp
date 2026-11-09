@@ -32,10 +32,31 @@ function ogdynamic_uninstall_delete_options(): void {
 }
 
 /**
+ * Delete all ogdynamic transients for the current site.
+ *
+ * Settings transients use the `ogdy_` key prefix, so the stored option
+ * names are `_transient_ogdy_*` and `_transient_timeout_ogdy_*` — they
+ * do not match the plain `ogdy_` options query above.
+ */
+function ogdynamic_uninstall_delete_transients(): void {
+	global $wpdb;
+
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$wpdb->query(
+		$wpdb->prepare(
+			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+			$wpdb->esc_like( '_transient_ogdy_' ) . '%',
+			$wpdb->esc_like( '_transient_timeout_ogdy_' ) . '%'
+		)
+	);
+}
+
+/**
  * Delete ogdynamic data for the current site.
  */
 function ogdynamic_uninstall_cleanup_site(): void {
 	ogdynamic_uninstall_delete_options();
+	ogdynamic_uninstall_delete_transients();
 }
 
 if ( is_multisite() ) {
