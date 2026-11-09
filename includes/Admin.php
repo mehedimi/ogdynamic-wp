@@ -13,6 +13,7 @@ class Admin {
 	public static function register(): void {
 		add_action( 'admin_menu', array( self::class, 'add_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( self::class, 'enqueue' ) );
+		add_action( 'admin_head', array( self::class, 'print_menu_icon_styles' ) );
 		add_filter( 'script_loader_tag', array( self::class, 'module_script_tag' ), 10, 3 );
 	}
 
@@ -28,7 +29,7 @@ class Admin {
 			'manage_options',
 			'ogdynamic',
 			array( self::class, 'render' ),
-			self::menu_icon(),
+			'none',
 			58
 		);
 
@@ -123,12 +124,31 @@ class Admin {
 	}
 
 	/**
-	 * Returns the menu icon SVG.
+	 * Base64-encoded menu icon SVG (tightly-cropped viewBox so it fills the icon slot).
 	 *
-	 * @return string The base64-encoded SVG icon.
+	 * @var string
 	 */
-	private static function menu_icon(): string {
-		return 'data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjUwIDI0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBhcmlhLWhpZGRlbj0idHJ1ZSI+PHJlY3QgeD0iMjgiIHk9IjI3IiB3aWR0aD0iMTk1IiBoZWlnaHQ9IjE4NSIgcng9IjMzIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIxNCIvPjxjaXJjbGUgY3g9Ijc4LjciIGN5PSI4MS43IiByPSIxNS42IiBmaWxsPSJjdXJyZW50Q29sb3IiLz48cmVjdCB4PSIxMzAuNyIgeT0iNzEuOSIgd2lkdGg9IjYzLjciIGhlaWdodD0iMjgiIHJ4PSIxNCIgZmlsbD0iY3VycmVudENvbG9yIi8+PHJlY3QgeD0iMTMwLjciIHk9IjExNS4zIiB3aWR0aD0iNTQuNiIgaGVpZ2h0PSIyMy44IiByeD0iMTEuOSIgZmlsbD0iY3VycmVudENvbG9yIi8+PHBhdGggZD0iTTUxLjM5OTYgMTY0LjM0OUw4Ni40OTk2IDExOC4wOTlDOTAuODMyOSAxMTIuNDkzIDk1LjU5OTYgMTEyLjk2IDEwMC44IDExOS41TDEzNS45IDE2NC4zNDlDMTQwLjIzMyAxNzEuODIzIDEzOC41IDE3NS41NjEgMTMwLjcgMTc1LjU2MUg2MC40OTk2QzUwLjA5OTYgMTc1LjU2MSA0Ny4wNjYyIDE3MS44MjMgNTEuMzk5NiAxNjQuMzQ5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+PC9zdmc+Cg==';
+	const MENU_ICON_SVG = 'data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIyMSAyMCAyMDkgMTk5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGFyaWEtaGlkZGVuPSJ0cnVlIj48cmVjdCB4PSIyOCIgeT0iMjciIHdpZHRoPSIxOTUiIGhlaWdodD0iMTg1IiByeD0iMzMiIHN0cm9rZT0iY3VycmVudENvbG9yIiBzdHJva2Utd2lkdGg9IjE0Ii8+PGNpcmNsZSBjeD0iNzguNyIgY3k9IjgxLjciIHI9IjE1LjYiIGZpbGw9ImN1cnJlbnRDb2xvciIvPjxyZWN0IHg9IjEzMC43IiB5PSI3MS45IiB3aWR0aD0iNjMuNyIgaGVpZ2h0PSIyOCIgcng9IjE0IiBmaWxsPSJjdXJyZW50Q29sb3IiLz48cmVjdCB4PSIxMzAuNyIgeT0iMTE1LjMiIHdpZHRoPSI1NC42IiBoZWlnaHQ9IjIzLjgiIHJ4PSIxMS45IiBmaWxsPSJjdXJyZW50Q29sb3IiLz48cGF0aCBkPSJNNTEuMzk5NiAxNjQuMzQ5TDg2LjQ5OTYgMTE4LjA5OUM5MC44MzI5IDExMi40OTMgOTUuNTk5NiAxMTIuOTYgMTAwLjggMTE5LjVMMTM1LjkgMTY0LjM0OUMxNDAuMjMzIDE3MS44MjMgMTM4LjUgMTc1LjU2MSAxMzAuNyAxNzUuNTYxSDYwLjQ5OTZDNTAuMDk5NiAxNzUuNTYxIDQ3LjA2NjIgMTcxLjgyMyA1MS4zOTk2IDE2NC4zNDlaIiBmaWxsPSJjdXJyZW50Q29sb3IiLz48L3N2Zz4=';
+
+	/**
+	 * Outputs the admin menu icon CSS.
+	 *
+	 * Core recolors menu icons by setting `color` on the icon container; a base64
+	 * data-URI passed to add_menu_page() is rendered as a background image instead,
+	 * so it keeps a fixed dark color and turns into an unreadable box on the active
+	 * (blue) menu item. Rendering the icon as a CSS mask makes it inherit those
+	 * colors: gray by default, blue on hover, white on the active item.
+	 *
+	 * @return void
+	 */
+	public static function print_menu_icon_styles(): void {
+		echo '<style id="ogdynamic-menu-icon">'
+			. '#adminmenu li#toplevel_page_ogdynamic .wp-menu-image::before{'
+			. 'content:"";display:block;box-sizing:border-box;width:20px;height:20px;'
+			. 'margin:7px auto 0;padding:0;color:inherit;background-color:currentColor;'
+			. '-webkit-mask:url("' . esc_attr( self::MENU_ICON_SVG ) . '") center / contain no-repeat;'
+			. 'mask:url("' . esc_attr( self::MENU_ICON_SVG ) . '") center / contain no-repeat;'
+			. '}</style>';
 	}
 
 	private static function localize_admin_script(): void {
