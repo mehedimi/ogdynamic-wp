@@ -35,7 +35,7 @@ onMounted(loadAccount);
     <p
       class="ogd:mt-2 ogd:mb-6 ogd:max-w-140 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
     >
-      Manage the API connection and OG image templates for this site.
+      Manage the API connection and Open Graph image templates for this site.
     </p>
 
     <div class="ogd:grid ogd:grid-cols-1 ogd:gap-4.5">
@@ -66,8 +66,8 @@ onMounted(loadAccount);
             <p class="ogd:m-0 ogd:max-w-150 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500">
               {{
                 isConnected
-                  ? "Your ogdynamic account is connected. OG image templates can be configured now."
-                  : "Connect your ogdynamic account before configuring OG image templates."
+                  ? "Your ogdynamic account is connected. Open Graph image templates can be configured now."
+                  : "Connect your ogdynamic account before configuring Open Graph image templates."
               }}
             </p>
           </div>
@@ -95,7 +95,7 @@ onMounted(loadAccount);
                 <path d="m14 14 1.5-1.5a2 2 0 0 1 2.8 0L21 15" />
                 <circle cx="16" cy="9" r="1" />
               </svg>
-              Manage OG Templates
+              Manage Open Graph Templates
             </RouterLink>
             <RouterLink
               class="ogd:inline-flex ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border! ogd:border-gray-200! ogd:bg-white! ogd:px-4.5 ogd:py-2.5 ogd:text-[13px]! ogd:font-semibold ogd:text-gray-700! ogd:no-underline ogd:transition ogd:hover:border-primary! ogd:hover:bg-primary-soft! ogd:hover:text-primary!"

@@ -118,7 +118,7 @@ function clearSearchTerm(): void {
         :display-value="displayValue"
         :disabled="disabled"
         :placeholder="placeholder"
-        class="ogd:w-full ogd:rounded-full! ogd:border ogd:border-gray-200! ogd:bg-gray-50 ogd:py-1.5! ogd:pr-11! ogd:pl-6! ogd:text-[13.5px]! ogd:text-gray-900! ogd:outline-none! ogd:transition ogd:placeholder:text-gray-400 ogd:focus:border-primary! ogd:focus:bg-white! ogd:focus:shadow-[0_0_0_3px_rgba(99,91,255,0.12)] ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
+        class="ogd:w-full ogd:rounded-lg! ogd:border ogd:border-gray-200! ogd:bg-gray-50 ogd:py-1.5! ogd:pr-11! ogd:pl-6! ogd:text-[13.5px]! ogd:text-gray-900! ogd:outline-none! ogd:transition ogd:placeholder:text-gray-400 ogd:focus:border-primary! ogd:focus:bg-white! ogd:focus:shadow-[0_0_0_3px_rgba(99,91,255,0.12)] ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
         @focus="clearSearchTerm"
         @click="clearSearchTerm"
       />

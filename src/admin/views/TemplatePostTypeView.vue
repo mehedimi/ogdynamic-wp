@@ -216,7 +216,7 @@ async function save() {
         body: formPayload,
       },
     );
-    success.value = "OG image template updated.";
+    success.value = "Open Graph image template updated.";
     templateExists.value = true;
     legacyDesign.value = false;
   } catch {
@@ -321,7 +321,7 @@ onMounted(async () => {
     <h1
       class="ogd:m-0 ogd:font-display ogd:text-3xl ogd:font-bold ogd:tracking-[-0.03em] ogd:text-gray-900"
     >
-      {{ postTypeLabel }} OG Image Template
+      {{ postTypeLabel }} Open Graph Image Template
     </h1>
     <p
       class="ogd:mt-2! ogd:mb-6 ogd:max-w-140 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
@@ -466,7 +466,7 @@ onMounted(async () => {
         class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-warning/25 ogd:bg-warning-soft ogd:px-3.5 ogd:py-3 ogd:text-[13px] ogd:text-warning-text"
       >
         “{{ canvas.name }}” is {{ canvas.status || "not public" }}. ogdynamic
-        renders OG images only for public canvases — set it to public in the
+        renders Open Graph images only for public canvases — set it to public in the
         <a
           class="ogd:font-semibold ogd:text-warning-text ogd:underline"
           :href="editCanvasUrl || createCanvasUrl"
@@ -485,8 +485,8 @@ onMounted(async () => {
         "
         class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-warning/25 ogd:bg-warning-soft ogd:px-3.5 ogd:py-3 ogd:text-[13px] ogd:text-warning-text"
       >
-        “{{ canvas.name }}” is {{ canvas.width }}×{{ canvas.height }}px. OG
-        images render at {{ OG_IMAGE_WIDTH }}×{{ OG_IMAGE_HEIGHT }} and the
+        “{{ canvas.name }}” is {{ canvas.width }}×{{ canvas.height }}px. Open
+        Graph images render at {{ OG_IMAGE_WIDTH }}×{{ OG_IMAGE_HEIGHT }} and the
         Twitter image link is only generated for that standard size — resize
         the canvas in the
         <a
@@ -560,13 +560,13 @@ onMounted(async () => {
         <h2
           class="ogd:m-0! ogd:font-display ogd:text-base ogd:font-bold ogd:text-gray-900"
         >
-          OG image mapping
+          Open Graph image mapping
         </h2>
         <p
           class="ogd:mt-2! ogd:mb-5 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500"
         >
           Link each overridable field to a WordPress source used in the
-          generated OG image.
+          generated Open Graph image.
         </p>
 
         <div class="ogd:grid ogd:gap-4">

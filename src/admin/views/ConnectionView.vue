@@ -32,7 +32,7 @@ async function disconnect() {
       class="ogd:mt-2 ogd:mb-7 ogd:max-w-155 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
     >
       Connect this WordPress site to ogdynamic to fetch your canvases and
-      generate dynamic OG image URLs.
+      generate dynamic Open Graph image URLs.
     </p>
 
     <article
@@ -125,7 +125,7 @@ async function disconnect() {
       <p
         class="ogd:mt-2 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
       >
-        Once connected, you can create and manage dynamic OG image templates for your store and content.
+        Once connected, you can create and manage dynamic Open Graph image templates for your store and content.
       </p>
 
       <div
@@ -190,7 +190,7 @@ async function disconnect() {
           <p
             class="ogd:mt-2 ogd:text-[13px] ogd:leading-relaxed ogd:text-gray-500"
           >
-            Generate dynamic OG images for blog posts with title, author, and metadata.
+            Generate dynamic Open Graph images for blog posts with title, author, and metadata.
           </p>
         </div>
 

@@ -326,17 +326,17 @@ class Template {
 			array(
 				'name'        => 'default',
 				'label'       => __( 'Default', 'ogdynamic' ),
-				'description' => __( 'OG image template for any post type without a specific template.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for any post type without a specific template.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'post',
 				'label'       => __( 'Single Post', 'ogdynamic' ),
-				'description' => __( 'OG image template for single blog posts.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for single blog posts.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'page',
 				'label'       => __( 'Page', 'ogdynamic' ),
-				'description' => __( 'OG image template for pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for pages.', 'ogdynamic' ),
 			),
 		);
 
@@ -344,7 +344,8 @@ class Template {
 			$post_types[] = array(
 				'name'        => 'product',
 				'label'       => __( 'Product', 'ogdynamic' ),
-				'description' => __( 'OG image template for WooCommerce products.', 'ogdynamic' ),
+				'badge'       => __( 'WooCommerce', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for WooCommerce products.', 'ogdynamic' ),
 			);
 		}
 
@@ -352,37 +353,37 @@ class Template {
 			array(
 				'name'        => 'home',
 				'label'       => __( 'Homepage', 'ogdynamic' ),
-				'description' => __( 'OG image template for the site homepage.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for the site homepage.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'blog',
 				'label'       => __( 'Blog Page', 'ogdynamic' ),
-				'description' => __( 'OG image template for the blog listing page.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for the blog listing page.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'category',
 				'label'       => __( 'Category Archive', 'ogdynamic' ),
-				'description' => __( 'OG image template for category archive pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for category archive pages.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'tag',
 				'label'       => __( 'Tag Archive', 'ogdynamic' ),
-				'description' => __( 'OG image template for tag archive pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for tag archive pages.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'author',
 				'label'       => __( 'Author Archive', 'ogdynamic' ),
-				'description' => __( 'OG image template for author archive pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for author archive pages.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'date',
 				'label'       => __( 'Date Archive', 'ogdynamic' ),
-				'description' => __( 'OG image template for date-based archive pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for date-based archive pages.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'search',
 				'label'       => __( 'Search Results', 'ogdynamic' ),
-				'description' => __( 'OG image template for search results pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for search results pages.', 'ogdynamic' ),
 			),
 		);
 

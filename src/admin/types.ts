@@ -27,6 +27,8 @@ export type PostTypeOption = {
   name: string;
   label: string;
   description?: string;
+  /** Pill shown on the template list card (e.g. "WooCommerce"). */
+  badge?: string;
 };
 
 export type RuntimeConfig = {
