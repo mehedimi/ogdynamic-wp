@@ -43,14 +43,13 @@
 1. Admin sets template mappings per post type (stored as options)
 2. On frontend: `MetaTags` → `ImageGenerator` → `Template::get_mapping()`. Mappings store the canvas' `width`/`height`; meta tags use the stored dims (null → standard 1200×630) and the Twitter image link is only emitted for Twitter-compatible sizes: 1200×630 renders the `intent=twitter` variant, 1200×600 (Twitter's recommended 2:1) reuses the `og:image` URL as-is, other sizes send just the `og:image` link
 3. `ImageGenerator` resolves field values from post/term objects
-4. Constructs URL by mapping `type`: canvas → `https://cdn.ogdynamic.com/c/{template_id}?{resolved_params}` (legacy design mappings, `type: design` or absent, still render via `d/{template_id}`)
+4. Constructs URL `https://cdn.ogdynamic.com/c/{template_id}?{resolved_params}`; mappings store the canvas' `width`/`height` and only `type: canvas` mappings render — stored `type: design` mappings are pruned on read and the post type is treated as unmapped
 
 ### Template Sources (SaaS)
 
 Templates are ogdynamic **canvases** (the design feature has been removed from the plugin):
 
-- **Canvas**: user-designed in the SaaS canvas editor. List/detail via `GET v1/canvases`, `GET v1/canvases/{id}` (scope `canvases:read`). The index supports filters: `status` (lowercase enum, e.g. `public`), `width`/`height` (exact-match integers, 1–10000). The mapping page fetches `v1/canvases?status=public` — all public canvases are selectable, regardless of size. Overridable fields come from `override_fields[]` — `{field, name, type, default}` where `field` is the layer's `fieldId` (the query-param name) and image-type layers take a URL value. Only **public** canvases render OG images; the mapping page warns when a saved mapping points to a private or non-1200×630 canvas (such canvases still load by id).
-- **Legacy designs**: mappings saved with `type: design` (or without a type) are no longer editable — the mapping page shows a notice asking to pick a canvas — but they keep rendering through the `d/{template_id}` CDN segment until replaced or deactivated.
+- **Canvas**: user-designed in the SaaS canvas editor. List/detail via `GET v1/canvases`, `GET v1/canvases/{id}` (scope `canvases:read`). The index supports filters: `status` (lowercase enum, e.g. `public`), `width`/`height` (exact-match integers, 1–10000), and returns a **Laravel cursor pagination** response (`data[]` + `next_cursor`; page via `&cursor=…`). The mapping page fetches `v1/canvases?status=public` page one and infinite-scrolls the canvas selector (loads the next page when the dropdown list is scrolled near its end) — all public canvases are selectable, regardless of size. The block editor loads all pages eagerly through the proxy (a native select has no scroll event). Overridable fields come from `override_fields[]` — `{field, name, type, default}` where `field` is the layer's `fieldId` (the query-param name) and image-type layers take a URL value. Only **public** canvases render OG images; the mapping page warns when a saved mapping points to a private or non-1200×630 canvas (such canvases still load by id).
 
 ### API Endpoints
 
@@ -61,7 +60,7 @@ Templates are ogdynamic **canvases** (the design feature has been removed from t
 - `GET /ogdynamic/v1/templates/{post_type}` - Get template for post type
 - `PUT /ogdynamic/v1/templates/{post_type}` - Update template mapping (optional `type`: `canvas` only, default `canvas`; optional `width`/`height` ints, default 1200/630, the canvas' dimensions)
 - `DELETE /ogdynamic/v1/templates/{post_type}` - Remove template mapping
-- `GET /ogdynamic/v1/block/canvases` - Public canvases for the block (`edit_posts`)
+- `GET /ogdynamic/v1/block/canvases` - Public canvases for the block (`edit_posts`); accepts optional `cursor` and returns `data[]` + `next_cursor` (null when exhausted)
 - `GET /ogdynamic/v1/block/canvases/{id}` - Canvas incl. `override_fields` for the block (`edit_posts`)
 - `POST /ogdynamic/v1/block/generate` - `canvas_id`, `params` (flat string map), optional `post_id`, `alt`, `format` (`png`|`webp`|`jpeg`, default `png`); saves the rendered image to the media library (`edit_posts` + `upload_files`)
 
@@ -120,7 +119,7 @@ Supported sources by post type (see `Template::get_sources()`):
 5. **Transient keys**: All prefixed with `ogdy_` (via `Settings::option_name()`)
 6. **Dev mode bypasses build**: Loads `main.ts` directly via Vite client, no manifest needed
 7. **OAuth scope includes `canvases:read`**: tokens issued before this scope was added lack canvas access — sites must disconnect/reconnect; the template editor shows a reconnect notice when the canvas list fails
-8. **Canvas query params are flat strings**: the render service ignores array-style params (`tags[]=`). Multi-value sources (`tags`, `product_tags`, `product_attributes`) are flagged `multi` in `Template::get_sources()` and excluded from mappings in the mapping UI (dropdown, auto-map, and saved-entry pruning in `syncFieldMap()`). The twitter image variant uses flat `intent=twitter` (legacy design mappings use `config[intent]=twitter`)
+8. **Canvas query params are flat strings**: the render service ignores array-style params (`tags[]=`). Multi-value sources (`tags`, `product_tags`, `product_attributes`) are flagged `multi` in `Template::get_sources()` and excluded from mappings in the mapping UI (dropdown, auto-map, and saved-entry pruning in `syncFieldMap()`). The twitter image variant uses flat `intent=twitter`
 
 ## Testing
 
@@ -137,7 +136,7 @@ No test suite configured. Manual testing required:
 ## External Services
 
 - **API**: `https://ogdynamic.com/api` (`v1/canvases`, `v1/me`)
-- **CDN**: `https://cdn.ogdynamic.com/` (`c/{canvas_id}`; `d/{design_id}` legacy designs only)
+- **CDN**: `https://cdn.ogdynamic.com/` (`c/{canvas_id}`)
 - **SaaS editor**: `https://ogdynamic.com/canvases/create`, `/canvases/{id}/edit`
 - **OAuth endpoint**: `/oauth/token`, `/oauth/authorize`
 - **Redirect URI**: `admin.php?page=ogdynamic-oauth-callback`

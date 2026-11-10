@@ -17,9 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Admin UI re-skinned to the ogdynamic app design system v2.1: purple `#635BFF` primary, slate neutrals, semantic success/warning/destructive tokens, new logo and WordPress menu icon
 
 ### Removed
-- Deprecated design templates: the selector no longer lists designs and the plugin no longer calls `v1/designs` or requests the `designs:read` OAuth scope
-- `PUT /templates/{post_type}` now accepts `type: canvas` only (previously defaulted to `design`)
-- Existing design mappings keep rendering through the `/d/` CDN segment; the mapping page shows a notice asking to replace them with a canvas
+- Deprecated design templates: the selector no longer lists designs, the plugin no longer calls `v1/designs` or requests the `designs:read` OAuth scope, and `PUT /templates/{post_type}` accepts `type: canvas` only
+- Saved `type: design` mappings: they stop rendering and are removed on first load — pick a canvas for the affected post type to generate OG images again
 
 ## [0.2.0] - 2026-10-11
 
