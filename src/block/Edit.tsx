@@ -188,7 +188,10 @@ export default function Edit({
   function commit(next: BlockParams) {
     const cleaned = cleanParams(next);
 
-    if (buildQuery(cleaned) !== currentQuery) {
+    // Compare like-for-like: currentQuery includes the format, so the
+    // candidate query must too — otherwise a no-op blur with a non-PNG
+    // format always looks changed and writes spurious attributes.
+    if (buildQuery(cleaned, format) !== currentQuery) {
       setAttributes({ params: cleaned });
     }
   }
