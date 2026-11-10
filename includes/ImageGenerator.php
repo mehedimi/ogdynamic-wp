@@ -17,8 +17,8 @@ class ImageGenerator {
 	 * Standard OG image dimensions.
 	 *
 	 * Mappings store the canvas' width/height; mappings without stored
-	 * dimensions (legacy design mappings) fall back to these values, and
-	 * the Twitter image link is only emitted for this standard size.
+	 * dimensions fall back to these values, and the Twitter image link is
+	 * only emitted for this standard size.
 	 *
 	 * @var int
 	 */
@@ -51,17 +51,6 @@ class ImageGenerator {
 	 */
 	protected static ?int $image_width  = null;
 	protected static ?int $image_height = null;
-
-	/**
-	 * Whether the mapped template is a canvas or a legacy design.
-	 *
-	 * Designs are removed from the plugin UI; mappings saved with
-	 * `type: design` (or without a type) keep rendering through the
-	 * `/d/` CDN segment until they are replaced with a canvas.
-	 *
-	 * @var string
-	 */
-	protected static string $template_type = 'design';
 
 	public static function get_template_key(): ?string {
 		if ( is_category() ) {
@@ -111,9 +100,7 @@ class ImageGenerator {
 	}
 
 	protected static function get_template_url(): string {
-		$segment = 'canvas' === self::$template_type ? 'c' : 'd';
-
-		return OGDYNAMIC_CDN . $segment . '/' . self::$template_id;
+		return OGDYNAMIC_CDN . 'c/' . self::$template_id;
 	}
 
 	public static function get_image_url(): string {
@@ -134,14 +121,9 @@ class ImageGenerator {
 
 		$query = is_array( self::$query ) ? self::$query : array();
 
-		if ( 'canvas' === self::$template_type ) {
-			// Canvas render URLs take flat string params only; array-style
-			// config params are ignored by the render service.
-			$query['intent'] = 'twitter';
-		} else {
-			// Legacy design mappings use array-style config params.
-			$query['config'] = array( 'intent' => 'twitter' );
-		}
+		// Canvas render URLs take flat string params only; array-style
+		// config params are ignored by the render service.
+		$query['intent'] = 'twitter';
 
 		return self::get_template_url() . '?' . http_build_query( $query );
 	}
@@ -177,10 +159,9 @@ class ImageGenerator {
 			return null;
 		}
 
-		self::$template_id   = (string) $mapping['template_id'];
-		self::$template_type = isset( $mapping['type'] ) && 'canvas' === $mapping['type'] ? 'canvas' : 'design';
-		self::$image_width   = self::mapping_dimension( $mapping, 'width' );
-		self::$image_height  = self::mapping_dimension( $mapping, 'height' );
+		self::$template_id  = (string) $mapping['template_id'];
+		self::$image_width  = self::mapping_dimension( $mapping, 'width' );
+		self::$image_height = self::mapping_dimension( $mapping, 'height' );
 
 		return array(
 			'key'     => $key,
@@ -191,8 +172,7 @@ class ImageGenerator {
 	/**
 	 * Stored image width of the mapped template.
 	 *
-	 * Mappings saved without dimensions (and all legacy mappings) fall
-	 * back to the standard OG width.
+	 * Mappings saved without dimensions fall back to the standard OG width.
 	 *
 	 * @return int
 	 */
@@ -203,8 +183,7 @@ class ImageGenerator {
 	/**
 	 * Stored image height of the mapped template.
 	 *
-	 * Mappings saved without dimensions (and all legacy mappings) fall
-	 * back to the standard OG height.
+	 * Mappings saved without dimensions fall back to the standard OG height.
 	 *
 	 * @return int
 	 */

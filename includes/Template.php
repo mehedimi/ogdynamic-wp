@@ -424,11 +424,23 @@ class Template {
 	/**
 	 * Gets the mapping configuration for a post type.
 	 *
+	 * Mappings saved for the removed design feature (`type: design` or no
+	 * type) are pruned on read so they stop rendering and disappear from
+	 * the activated post types and the mapping UI.
+	 *
 	 * @param string $post_type The post type slug.
 	 * @return array The mapping configuration array.
 	 */
 	public static function get_mapping( string $post_type ): array {
-		return (array) get_option( self::option_name( $post_type ), array() );
+		$mapping = (array) get_option( self::option_name( $post_type ), array() );
+
+		if ( ! empty( $mapping ) && ( $mapping['type'] ?? '' ) !== 'canvas' ) {
+			delete_option( self::option_name( $post_type ) );
+
+			return array();
+		}
+
+		return $mapping;
 	}
 
 	/**

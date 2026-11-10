@@ -220,8 +220,7 @@ class TemplatesController {
 	/**
 	 * Validates template type.
 	 *
-	 * Only canvases are accepted; designs have been removed and existing
-	 * design mappings keep rendering via ImageGenerator until replaced.
+	 * Only canvases are accepted; the design feature has been removed.
 	 *
 	 * @param mixed $value The template type to validate.
 	 * @return bool True if valid, false otherwise.
