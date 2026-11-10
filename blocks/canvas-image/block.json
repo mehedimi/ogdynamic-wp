@@ -29,6 +29,10 @@
 			"type": "number",
 			"default": 0
 		},
+		"format": {
+			"type": "string",
+			"default": "png"
+		},
 		"alt": {
 			"type": "string",
 			"default": ""

@@ -8,9 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Gutenberg block `ogdynamic/canvas-image`: pick any public canvas, fill its dynamic fields in the inspector (the live preview only re-renders when a field loses focus) and use **Generate & Save** to download the rendered image into the media library; the canvas id, field values and attachment id are stored in the block's attributes JSON and the frontend renders the saved media image
+- Gutenberg block `ogdynamic/canvas-image`: pick any public canvas, fill its dynamic fields in the inspector (the live preview only re-renders when a field loses focus) and use **Generate** to download the rendered image into the media library; the canvas id, field values and attachment id are stored in the block's attributes JSON and the frontend renders the saved media image
 - REST endpoints for the block (`GET /block/canvases`, `GET /block/canvases/{id}`, `POST /block/generate`), available to users who can edit posts; the generate endpoint reuses an existing upload for the same canvas and fields instead of downloading again
 - The block editor script is written in TypeScript and built with `pnpm build` into `dist/block` (`vite.block.config.ts`)
+- Image format selection in the block inspector: PNG (default), WebP or JPEG; non-PNG formats request the render with `config[format]=FORMAT`
 
 ### Changed
 - Admin UI re-skinned to the ogdynamic app design system v2.1: purple `#635BFF` primary, slate neutrals, semantic success/warning/destructive tokens, new logo and WordPress menu icon

@@ -51,6 +51,7 @@ export function generateImage(input: {
   params: BlockParams;
   postId: number;
   alt: string;
+  format: string;
 }): Promise<GeneratedImage> {
   return apiFetch<ApiData<GeneratedImage>>({
     path: "ogdynamic/v1/block/generate",
@@ -60,6 +61,7 @@ export function generateImage(input: {
       params: input.params,
       post_id: input.postId,
       alt: input.alt,
+      format: input.format,
     },
   }).then((payload) => payload.data);
 }

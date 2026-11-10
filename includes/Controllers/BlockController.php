@@ -63,6 +63,13 @@ class BlockController {
 	);
 
 	/**
+	 * Image formats the render service accepts for the block.
+	 *
+	 * @var array
+	 */
+	private const FORMATS = array( 'png', 'webp', 'jpeg' );
+
+	/**
 	 * Initializes REST API routes.
 	 *
 	 * @return void
@@ -124,6 +131,12 @@ class BlockController {
 						'type'              => 'string',
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_text_field',
+					),
+					'format'    => array(
+						'required'          => false,
+						'type'              => 'string',
+						'default'           => 'png',
+						'validate_callback' => array( self::class, 'validate_format' ),
 					),
 				),
 			)
@@ -196,6 +209,11 @@ class BlockController {
 		$params    = is_array( $params ) ? $params : array();
 		$post_id   = (int) $request->get_param( 'post_id' );
 		$alt       = (string) $request->get_param( 'alt' );
+		$format    = (string) $request->get_param( 'format' );
+
+		if ( ! in_array( $format, self::FORMATS, true ) ) {
+			$format = 'png';
+		}
 
 		if ( $post_id > 0 && ! current_user_can( 'edit_post', $post_id ) ) {
 			return new WP_Error( 'ogd_forbidden_post', __( 'You are not allowed to attach images to this post.', 'ogdynamic' ), array( 'status' => 403 ) );
@@ -212,6 +230,12 @@ class BlockController {
 		}
 
 		$query = http_build_query( $params );
+
+		// PNG is the render service default; the format is only requested (and
+		// hashed) when it differs so default-format uploads stay reusable.
+		if ( 'png' !== $format ) {
+			$query .= ( '' === $query ? '' : '&' ) . 'config[format]=' . rawurlencode( $format );
+		}
 
 		$hash = md5( $canvas_id . $canvas['updated_at'] . '?' . $query );
 
@@ -238,6 +262,16 @@ class BlockController {
 		self::sync_alt( $attachment, $alt );
 
 		return rest_ensure_response( array( 'data' => self::attachment_payload( $attachment, $canvas, false ) ) );
+	}
+
+	/**
+	 * Validates the render format.
+	 *
+	 * @param mixed $value The format to validate.
+	 * @return bool True if valid, false otherwise.
+	 */
+	public static function validate_format( $value ): bool {
+		return is_string( $value ) && in_array( $value, self::FORMATS, true );
 	}
 
 	/**

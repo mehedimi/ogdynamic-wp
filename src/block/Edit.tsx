@@ -37,6 +37,12 @@ const config = window.ogdynamicBlock ?? {
   settingsUrl: "",
 };
 
+const formatOptions: { label: string; value: string }[] = [
+  { label: "PNG", value: "png" },
+  { label: "WebP", value: "webp" },
+  { label: "JPEG", value: "jpeg" },
+];
+
 function currentPostId(): number {
   const editor = select("core/editor") as
     | { getCurrentPostId?: () => number | string | null }
@@ -50,8 +56,17 @@ export default function Edit({
   attributes,
   setAttributes,
 }: BlockEditProps<BlockAttributes>) {
-  const { canvasId, params, alt, attachmentId, imageUrl, savedQuery, width, height } =
-    attributes;
+  const {
+    canvasId,
+    params,
+    alt,
+    attachmentId,
+    imageUrl,
+    savedQuery,
+    width,
+    height,
+    format,
+  } = attributes;
 
   const blockProps = useBlockProps({ className: "ogd-block" });
 
@@ -124,11 +139,11 @@ export default function Edit({
   }, [params]);
 
   const previewUrl = useMemo(
-    () => (canvasId === "" ? "" : renderUrl(config.cdnUrl, canvasId, params)),
-    [canvasId, params],
+    () => (canvasId === "" ? "" : renderUrl(config.cdnUrl, canvasId, params, format)),
+    [canvasId, params, format],
   );
 
-  const currentQuery = useMemo(() => buildQuery(params), [params]);
+  const currentQuery = useMemo(() => buildQuery(params, format), [params, format]);
   const isSaved = attachmentId > 0 && savedQuery === currentQuery;
   const previewLoading = previewUrl !== "" && loadedUrl !== previewUrl && failedUrl !== previewUrl;
   const previewFailed = previewUrl !== "" && failedUrl === previewUrl;
@@ -192,7 +207,7 @@ export default function Edit({
   async function save() {
     // Include anything still focused/typed so the saved image matches the inputs.
     const next = cleanParams(drafts);
-    const nextQuery = buildQuery(next);
+    const nextQuery = buildQuery(next, format);
 
     setSaving(true);
     setSaveError("");
@@ -203,6 +218,7 @@ export default function Edit({
         params: next,
         postId: currentPostId(),
         alt,
+        format,
       });
 
       setAttributes({
@@ -351,6 +367,13 @@ export default function Edit({
 
         {canvasId !== "" && (
           <PanelBody title={__("Image", "ogdynamic")} initialOpen>
+            <SelectControl
+              __nextHasNoMarginBottom
+              label={__("Image format", "ogdynamic")}
+              value={format}
+              onChange={(next: string) => setAttributes({ format: next })}
+              options={formatOptions}
+            />
             <TextControl
               __nextHasNoMarginBottom
               label={__("Alt text", "ogdynamic")}
@@ -368,7 +391,7 @@ export default function Edit({
                   ? __("Saving…", "ogdynamic")
                   : isSaved
                     ? __("Saved to media library", "ogdynamic")
-                    : __("Generate & Save", "ogdynamic")}
+                    : __("Generate", "ogdynamic")}
               </Button>
             </div>
             {saveError !== "" && (

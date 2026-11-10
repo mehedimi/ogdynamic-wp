@@ -6,6 +6,7 @@ export type BlockAttributes = {
   params: BlockParams;
   width: number;
   height: number;
+  format: string;
   alt: string;
   attachmentId: number;
   imageUrl: string;
