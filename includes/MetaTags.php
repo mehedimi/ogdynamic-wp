@@ -172,7 +172,14 @@ class MetaTags {
 				$tags['og:image:width']  = ImageGenerator::get_image_width();
 				$tags['og:image:height'] = ImageGenerator::get_image_height();
 
-				if ( ! ImageGenerator::has_twitter_image() ) {
+				return $tags;
+			}
+		);
+
+		add_filter(
+			'aioseo_twitter_tags',
+			static function ( $tags ) {
+				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_twitter_image() || ! is_array( $tags ) ) {
 					return $tags;
 				}
 
