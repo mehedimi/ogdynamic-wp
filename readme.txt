@@ -8,7 +8,7 @@ Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Automatically generate beautiful Open Graph images for your WordPress posts, pages, WooCommerce products, and archive pages. Boost your social media link previews on Facebook, Twitter, LinkedIn, and more.
+Automatically generate beautiful Open Graph images for your WordPress posts, pages, WooCommerce products, and archive pages. Boost your social media link previews on Facebook, Twitter, LinkedIn, and more. Need more than OG images? The Canvas Image block generates any canvas size — ad banners, product photo cards, social graphics — straight into your media library.
 
 == Description ==
 
@@ -27,11 +27,12 @@ When you share a link on Facebook, Twitter, LinkedIn, or Slack, the first thing 
 = Features =
 
 * **Dynamic Open Graph Images** — Automatically generate unique OG images for posts, pages, products, and archives using your content
+* **Canvas Image Block** — Generate any canvas size in the block editor — ad banners, product photo cards, social media graphics — and save them to your media library as PNG, WebP, or JPEG
 * **Facebook, Twitter & LinkedIn Ready** — Outputs proper og:image, og:image:width, og:image:height, and twitter:image meta tags
 * **WooCommerce Integration** — Product OG images can include title, price, regular price, sale price, SKU, currency, stock status, rating, review count, categories, tags, and attributes
 * **Archive Page Support** — Generate social images for homepage, blog page, category archives, tag archives, author pages, date archives, and search results
 * **Field Mapping** — Choose exactly which WordPress data appears in each template field using an intuitive admin interface
-* **Canvas Editor** — Design your own OG image templates in the ogdynamic canvas editor; the plugin lists your public 1200x630 canvases, ready to map
+* **Canvas Editor** — Design your own image templates in the ogdynamic canvas editor; the mapping selector lists all your public canvases and recommends the 1200x630 ones
 * **Custom Fields (ACF)** — Map Advanced Custom Fields data (text, image, gallery, link, taxonomy, relationship, and more) into your OG images
 * **SEO Plugin Friendly** — Automatically works alongside Yoast SEO, Rank Math, AIOSEO, SEOPress, The SEO Framework, Squirrly SEO, and Slim SEO without duplicate tags
 * **CDN Delivered** — Images are generated and served from ogdynamic's fast CDN — zero impact on your WordPress server performance
@@ -43,6 +44,7 @@ When you share a link on Facebook, Twitter, LinkedIn, or Slack, the first thing 
 2. Choose a template from your ogdynamic account for each content type (posts, pages, products, archives)
 3. Map your WordPress content fields to the template variables (title, subtitle, image, price, etc.)
 4. ogdynamic automatically generates the right Open Graph image for every page — no ongoing effort needed
+5. For other image sizes, add the ogdynamic Canvas Image block to any post or page to generate ad banners, product photo cards, or social graphics into your media library
 
 = Template Mappings =
 
@@ -75,7 +77,7 @@ Service links:
 * Terms of Service: [https://ogdynamic.com/terms](https://ogdynamic.com/terms)
 * Privacy Policy: [https://ogdynamic.com/privacy](https://ogdynamic.com/privacy)
 
-This plugin's source code is available at [https://github.com/mehedimi/ogdynamic-wp](https://github.com/mehedimi/ogdynamic-wp).
+This plugin's source code is available at [https://github.com/ogdynamic-app/ogdynamic-wp](https://github.com/ogdynamic-app/ogdynamic-wp).
 
 == Screenshots ==
 
@@ -151,12 +153,17 @@ Yes, any public post type is available. You can also set up a Default template a
 
 = What image size does ogdynamic use? =
 
-OG images are generated at 1200x630 pixels, which is the recommended Open Graph image size for Facebook, Twitter/X, LinkedIn, and most social platforms.
+OG images are generated at 1200x630 pixels, which is the recommended Open Graph image size for Facebook, Twitter/X, LinkedIn, and most social platforms. For other sizes, the Canvas Image block generates any canvas — ad banners, product photo cards, and more.
+
+= Can I generate images other than Open Graph images? =
+
+Yes. The ogdynamic Canvas Image block works with any public canvas in your account, whatever its size — ad banners, product photo cards, social media graphics, and more. Pick the canvas in the block editor, fill in its fields with a live preview, and save the rendered image to your media library in PNG, WebP, or JPEG. Open Graph meta tags are only managed when a template mapping is configured.
 
 == Changelog ==
 
 = Unreleased =
-* New "ogdynamic Canvas Image" block: pick a public canvas in the editor, fill in its dynamic fields with a live preview, and save the generated image straight to the media library
+* New "ogdynamic Canvas Image" block: pick a public canvas in the editor, fill in its dynamic fields with a live preview, and save the generated image straight to the media library in PNG, WebP or JPEG format
+* The Canvas Image block accepts canvases of any size — ad banners, product photo cards, social graphics — not just 1200x630 OG images
 * Design templates removed: the selector lists canvases only and existing design mappings keep rendering until you replace them with a canvas
 * Admin interface refreshed with the new ogdynamic branding and color scheme
 
