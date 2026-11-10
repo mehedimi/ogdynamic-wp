@@ -82,6 +82,14 @@ class BlockController {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( self::class, 'get_canvases' ),
 				'permission_callback' => array( self::class, 'can_edit' ),
+				'args'                => array(
+					'cursor' => array(
+						'required'          => false,
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
 			)
 		);
 
@@ -164,10 +172,23 @@ class BlockController {
 	/**
 	 * Lists the public canvases of the connected account.
 	 *
+	 * The cloud API returns a Laravel cursor pagination response; the cursor
+	 * request param is forwarded and `next_cursor` passed through so callers
+	 * can page until it is null.
+	 *
+	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response|WP_Error REST response with canvas summaries.
 	 */
-	public static function get_canvases() {
-		$payload = self::api_get( 'v1/canvases?status=public' );
+	public static function get_canvases( WP_REST_Request $request ) {
+		$cursor = (string) $request->get_param( 'cursor' );
+
+		$path = 'v1/canvases?status=public';
+
+		if ( '' !== $cursor ) {
+			$path .= '&cursor=' . rawurlencode( $cursor );
+		}
+
+		$payload = self::api_get( $path );
 
 		if ( is_wp_error( $payload ) ) {
 			return $payload;
@@ -175,7 +196,24 @@ class BlockController {
 
 		$canvases = is_array( $payload['data'] ?? null ) ? $payload['data'] : array();
 
-		return rest_ensure_response( array( 'data' => $canvases ) );
+		return rest_ensure_response(
+			array(
+				'data'        => $canvases,
+				'next_cursor' => self::next_cursor( $payload ),
+			)
+		);
+	}
+
+	/**
+	 * Extracts the next page cursor from a Laravel cursor pagination payload.
+	 *
+	 * @param array $payload Decoded cloud API response.
+	 * @return string|null Cursor for the next page, null when exhausted.
+	 */
+	private static function next_cursor( array $payload ): ?string {
+		$cursor = $payload['next_cursor'] ?? ( $payload['meta']['next_cursor'] ?? null );
+
+		return is_string( $cursor ) && '' !== $cursor ? $cursor : null;
 	}
 
 	/**

@@ -43,6 +43,14 @@ export type ApiData<T> = {
   data: T;
 };
 
+/** Laravel cursor pagination response from the cloud API. */
+export type CursorPage<T> = {
+  data: T[];
+  next_cursor?: string | null;
+  /** API resources wrap the paginator, nesting the cursor inside `meta`. */
+  meta?: { next_cursor?: string | null };
+};
+
 export interface User {
   id: number;
   name: string;

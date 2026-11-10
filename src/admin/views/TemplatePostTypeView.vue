@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, shallowRef, watch, onMounted } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
-import type { ApiData, OGDCanvas, OGDCanvasSummary } from "../types";
+import type { ApiData, CursorPage, OGDCanvas, OGDCanvasSummary } from "../types";
 import { useOgdApi } from "../composables/useOgdApi";
 import { useOgdCloudApi } from "../composables/useOgdCloudApi";
 import FormField from "../components/forms/FormField.vue";
@@ -41,7 +41,6 @@ const router = useRouter();
 
 const isLoading = ref(true);
 const templateExists = ref(false);
-const legacyDesign = ref(false);
 
 const wordpressApi = useOgdApi();
 const cloudApi = useOgdCloudApi();
@@ -50,6 +49,19 @@ const wpDeleteApi = useOgdApi();
 const canvases = shallowRef<OGDCanvasSummary[]>([]);
 const canvas = shallowRef<OGDCanvas>();
 const canvasListFailed = ref(false);
+
+// Cursor pagination: the selector lists page one, then loads more as the
+// dropdown list is scrolled to its end.
+const nextCursor = ref<string | null>(null);
+const loadingMoreCanvases = ref(false);
+const hasMoreCanvases = computed(() => nextCursor.value !== null);
+
+// Feature-scoped loading state. cloudApi.loading flips on every request —
+// including background loads like load-more — so skeletons and disabled
+// states bind to these instead of re-running the whole page.
+const canvasesLoading = ref(false);
+const templateLoading = ref(false);
+const templateError = ref("");
 
 const formPayload = reactive<TemplateMapping>({
   template_id: "",
@@ -102,15 +114,29 @@ const fields = computed<FieldOption[]>(() => {
 const isOgSize = (c: OGDCanvasSummary): boolean =>
   c.width === OG_IMAGE_WIDTH && c.height === OG_IMAGE_HEIGHT;
 
-const selectorOptions = computed(() => [
-  { label: "Select your canvas", value: "" },
-  ...canvases.value.map((c) => ({
+const selectorOptions = computed(() => {
+  const options = canvases.value.map((c) => ({
     label: c.name,
     value: c.id,
     description: `${c.width}×${c.height}`,
     badge: isOgSize(c) ? "Recommended" : undefined,
-  })),
-]);
+  }));
+
+  // A saved mapping can point at a canvas the list has not paged to yet —
+  // fall back to the loaded canvas detail so the selector displays its
+  // name. Once paging reaches the canvas, the list entry wins.
+  const selected = canvas.value;
+  if (selected && !options.some((option) => option.value === selected.id)) {
+    options.unshift({
+      label: selected.name,
+      value: selected.id,
+      description: `${selected.width}×${selected.height}`,
+      badge: isOgSize(selected) ? "Recommended" : undefined,
+    });
+  }
+
+  return [{ label: "Select your canvas", value: "" }, ...options];
+});
 
 const sourceOptions = computed(() => [
   { value: "", label: "Do not override" },
@@ -138,27 +164,23 @@ async function loadSavedMapping() {
   isLoading.value = true;
   try {
     const payload = await wordpressApi.request<{
-      data: Partial<TemplateMapping> & { type?: string };
+      data: Partial<TemplateMapping>;
       sources: MappingSourceOption[];
     }>(`templates/${postType.value}`);
 
     mappingSources.value = payload.sources;
-    legacyDesign.value = false;
 
     if (!Array.isArray(payload.data)) {
-      // Mappings saved before canvases existed reference deprecated
-      // designs, which can no longer be edited here — leave the form
-      // unconfigured so a canvas can be picked instead.
-      if (payload.data.template_id && payload.data.type !== "canvas") {
-        legacyDesign.value = true;
-        templateExists.value = false;
-        formPayload.map = [];
-        return;
-      }
-
       formPayload.map = payload.data.map || [];
       templateExists.value = true;
       formPayload.template_id = payload.data.template_id || "";
+
+      // Seed the stored dimensions so a save while the canvas detail
+      // request has not resolved (or failed) keeps them instead of
+      // resetting to the standard OG size. loadCanvas() overwrites
+      // these with the live canvas values once it resolves.
+      formPayload.width = payload.data.width ?? OG_IMAGE_WIDTH;
+      formPayload.height = payload.data.height ?? OG_IMAGE_HEIGHT;
     }
   } finally {
     isLoading.value = false;
@@ -167,19 +189,65 @@ async function loadSavedMapping() {
 
 async function loadCanvases() {
   canvasListFailed.value = false;
+  // Drop the stale cursor while refetching so a concurrent load-more
+  // cannot append old pages to the fresh list.
+  nextCursor.value = null;
+
+  canvasesLoading.value = true;
 
   try {
-    const { data } = await cloudApi.request<ApiData<OGDCanvasSummary[]>>(
+    const payload = await cloudApi.request<CursorPage<OGDCanvasSummary>>(
       `v1/canvases?status=public`,
     );
-    canvases.value = data;
+    canvases.value = Array.isArray(payload.data) ? payload.data : [];
+    nextCursor.value = readCursor(payload);
   } catch {
     canvasListFailed.value = true;
+  } finally {
+    canvasesLoading.value = false;
   }
+}
+
+/** Appends the next cursor page to the canvas list (infinite scroll). */
+async function loadMoreCanvases() {
+  if (loadingMoreCanvases.value || nextCursor.value === null) {
+    return;
+  }
+
+  loadingMoreCanvases.value = true;
+
+  try {
+    const payload = await cloudApi.request<CursorPage<OGDCanvasSummary>>(
+      `v1/canvases?status=public&cursor=${encodeURIComponent(nextCursor.value)}`,
+    );
+    const items = Array.isArray(payload.data) ? payload.data : [];
+    const known = new Set(canvases.value.map((item) => item.id));
+
+    canvases.value = [
+      ...canvases.value,
+      ...items.filter((item) => !known.has(item.id)),
+    ];
+
+    // An empty page means the cursor is unreliable — stop paging.
+    nextCursor.value = items.length > 0 ? readCursor(payload) : null;
+  } catch {
+    // Keep the loaded list and cursor; scrolling retries the page.
+  } finally {
+    loadingMoreCanvases.value = false;
+  }
+}
+
+function readCursor(payload: CursorPage<OGDCanvasSummary>): string | null {
+  // Laravel puts the cursor at the top level, but API resources nest the
+  // paginator inside `meta` — accept both shapes.
+  const cursor = payload.next_cursor ?? payload.meta?.next_cursor ?? null;
+
+  return typeof cursor === "string" && cursor !== "" ? cursor : null;
 }
 
 async function loadSelectedTemplate(templateId: string) {
   const seq = ++templateRequestSeq;
+  templateError.value = "";
 
   if (!templateId) {
     canvas.value = undefined;
@@ -193,18 +261,27 @@ async function loadSelectedTemplate(templateId: string) {
 }
 
 async function loadCanvas(canvasId: string, seq: number) {
-  const { data } = await cloudApi.request<ApiData<OGDCanvas>>(
-    `v1/canvases/${canvasId}`,
-  );
+  templateLoading.value = true;
 
-  if (seq !== templateRequestSeq) {
-    return;
+  try {
+    const { data } = await cloudApi.request<ApiData<OGDCanvas>>(
+      `v1/canvases/${canvasId}`,
+    );
+
+    if (seq !== templateRequestSeq) {
+      return;
+    }
+
+    canvas.value = data;
+    formPayload.width = data.width;
+    formPayload.height = data.height;
+    syncFieldMap();
+  } catch {
+    // Keep the previously loaded canvas; surface the failure in the banner.
+    templateError.value = cloudApi.error.value || "Request failed.";
+  } finally {
+    templateLoading.value = false;
   }
-
-  canvas.value = data;
-  formPayload.width = data.width;
-  formPayload.height = data.height;
-  syncFieldMap();
 }
 
 async function save() {
@@ -218,7 +295,6 @@ async function save() {
     );
     success.value = "Open Graph image template updated.";
     templateExists.value = true;
-    legacyDesign.value = false;
   } catch {
     success.value = "";
   }
@@ -367,8 +443,11 @@ onMounted(async () => {
             id="template-id"
             v-model="formPayload.template_id"
             :options="selectorOptions"
-            :disabled="cloudApi.loading.value"
+            :disabled="canvasesLoading || templateLoading"
+            :has-more="hasMoreCanvases"
+            :loading-more="loadingMoreCanvases"
             placeholder="Search canvases"
+            @load-more="loadMoreCanvases"
           />
         </div>
         <div
@@ -379,7 +458,7 @@ onMounted(async () => {
             type="button"
             title="Refresh canvases"
             aria-label="Refresh canvases"
-            :disabled="cloudApi.loading.value"
+            :disabled="canvasesLoading"
             @click="loadCanvases"
           >
             <svg
@@ -448,18 +527,10 @@ onMounted(async () => {
         </div>
       </div>
       <div
-        v-if="cloudApi.error.value && !canvasListFailed"
+        v-if="templateError && !canvasListFailed"
         class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-destructive/25 ogd:bg-destructive/5 ogd:px-3.5 ogd:py-3 ogd:text-destructive"
       >
-        {{ cloudApi.error.value }}
-      </div>
-      <div
-        v-if="legacyDesign"
-        class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-warning/25 ogd:bg-warning-soft ogd:px-3.5 ogd:py-3 ogd:text-[13px] ogd:text-warning-text"
-      >
-        This post type still uses a deprecated design template. It keeps
-        rendering for now, but designs are no longer supported — select a
-        canvas below to replace it.
+        {{ templateError }}
       </div>
       <div
         v-if="canvas && canvas.status !== 'public'"
@@ -520,7 +591,7 @@ onMounted(async () => {
     >
       <!-- Mapping form skeleton while the selected template detail loads. -->
       <div
-        v-if="formPayload.template_id && cloudApi.loading.value"
+        v-if="formPayload.template_id && templateLoading"
         class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6"
       >
         <div class="ogd:animate-pulse">
@@ -668,7 +739,7 @@ onMounted(async () => {
       <!-- Selected template preview. -->
       <div class="ogd:grid ogd:gap-4 ogd:self-start">
         <div
-          v-if="formPayload.template_id && cloudApi.loading.value"
+          v-if="formPayload.template_id && templateLoading"
           class="ogd:overflow-hidden ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white"
         >
           <div class="ogd:animate-pulse">
