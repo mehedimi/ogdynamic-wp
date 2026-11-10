@@ -1,4 +1,4 @@
-import { createElement, Fragment, useEffect, useMemo, useState } from "@wordpress/element";
+import { createElement, Fragment, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "@wordpress/element";
 import { __ } from "@wordpress/i18n";
 import { select } from "@wordpress/data";
 import type { BlockEditProps } from "@wordpress/blocks";
@@ -9,6 +9,7 @@ import {
 } from "@wordpress/block-editor";
 import {
   Button,
+  ComboboxControl,
   Notice,
   PanelBody,
   Placeholder,
@@ -18,9 +19,12 @@ import {
 } from "@wordpress/components";
 import {
   errorMessage,
+  fetchCanvases,
   generateImage,
+  getCanvasListSnapshot,
   loadCanvas,
-  loadCanvases,
+  loadMoreCanvases,
+  subscribeToCanvasList,
 } from "./api";
 import { buildQuery, cleanParams, renderUrl } from "./query";
 import type {
@@ -28,7 +32,6 @@ import type {
   BlockParams,
   Canvas,
   CanvasField,
-  CanvasSummary,
 } from "./types";
 
 const config = window.ogdynamicBlock ?? {
@@ -52,6 +55,144 @@ function currentPostId(): number {
   return Number.isFinite(id) ? id : 0;
 }
 
+function useCanvasList() {
+  return useSyncExternalStore(subscribeToCanvasList, getCanvasListSnapshot);
+}
+
+// How close to the bottom of the suggestion list the next canvas page
+// loads, in pixels.
+const LOAD_MORE_THRESHOLD = 40;
+
+// Delay before checking a freshly opened or appended suggestion list, so
+// short pages can chain before the user reaches for the scrollbar.
+const OPEN_CHECK_DELAY_MS = 300;
+
+type CanvasComboboxProps = {
+  label: string;
+  value: string;
+  options: Array<{ label: string; value: string }>;
+  onChange: (id: string) => void;
+};
+
+/**
+ * ComboboxControl wired for the paged canvas list: the next cursor page
+ * loads when the suggestion list is scrolled near its end, or when the
+ * open list is too short to scroll at all.
+ */
+function CanvasCombobox({
+  label,
+  value,
+  options,
+  onChange,
+}: CanvasComboboxProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  // Preserves the user's scroll position across page appends: captured
+  // when a page load triggers, reapplied once the append settles —
+  // ComboboxControl auto-selects the first suggestion after the list
+  // changes, which scrolls the viewport back to the top.
+  const scrollAnchor = useRef<{ top: number; height: number } | null>(null);
+
+  function restoreScrollAnchor(): void {
+    const anchor = scrollAnchor.current;
+    if (!anchor) {
+      return;
+    }
+
+    scrollAnchor.current = null;
+
+    const el = wrapperRef.current?.querySelector<HTMLElement>(
+      ".components-form-token-field__suggestions-list",
+    );
+
+    if (el) {
+      el.scrollTop = anchor.top + (el.scrollHeight - anchor.height);
+    }
+  }
+
+  function checkLoadMore(): void {
+    const el = wrapperRef.current?.querySelector<HTMLElement>(
+      ".components-form-token-field__suggestions-list",
+    );
+
+    // No suggestion list means the dropdown is closed.
+    if (!el) {
+      return;
+    }
+
+    // Fires when scrolled near the bottom, or when the list is too short
+    // to scroll (otherwise a small first page could never load more).
+    if (
+      el.scrollTop + el.clientHeight >=
+        el.scrollHeight - LOAD_MORE_THRESHOLD ||
+      el.scrollHeight <= el.clientHeight
+    ) {
+      if (loadMoreCanvases()) {
+        scrollAnchor.current = { top: el.scrollTop, height: el.scrollHeight };
+      }
+    }
+  }
+
+  // Scroll events do not bubble, but a capture listener still sees the
+  // inline suggestion list scrolling.
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) {
+      return undefined;
+    }
+
+    const onScroll = (event: Event) => {
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.classList.contains(
+          "components-form-token-field__suggestions-list",
+        )
+      ) {
+        checkLoadMore();
+      }
+    };
+
+    wrapper.addEventListener("scroll", onScroll, true);
+    return () => wrapper.removeEventListener("scroll", onScroll, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // After a page appends, re-anchor the viewport and keep chaining while
+  // the open list is still too short to scroll; runs harmlessly while
+  // the dropdown is closed.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      restoreScrollAnchor();
+      checkLoadMore();
+    }, OPEN_CHECK_DELAY_MS);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options.length]);
+
+  return (
+    <div
+      ref={wrapperRef}
+      onFocusCapture={() => {
+        window.setTimeout(() => {
+          restoreScrollAnchor();
+          checkLoadMore();
+        }, OPEN_CHECK_DELAY_MS);
+      }}
+    >
+      <ComboboxControl
+        __next40pxDefaultSize
+        label={label}
+        value={value}
+        options={options}
+        onChange={(id) => {
+          if (id !== null) {
+            onChange(id);
+          }
+        }}
+      />
+    </div>
+  );
+}
+
 export default function Edit({
   attributes,
   setAttributes,
@@ -70,9 +211,12 @@ export default function Edit({
 
   const blockProps = useBlockProps({ className: "ogd-block" });
 
-  const [canvases, setCanvases] = useState<CanvasSummary[]>([]);
-  const [listLoading, setListLoading] = useState(false);
-  const [listError, setListError] = useState("");
+  // The paged canvas list lives in a shared store so every block
+  // instance in the editor reads (and pages) the same data.
+  const canvasList = useCanvasList();
+  const canvases = canvasList.canvases;
+  const listLoading = canvasList.loading;
+  const listError = canvasList.error ?? "";
 
   const [canvas, setCanvas] = useState<Canvas | null>(null);
   const [canvasError, setCanvasError] = useState("");
@@ -87,23 +231,9 @@ export default function Edit({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
 
-  function fetchCanvases(force: boolean) {
-    setListLoading(true);
-    setListError("");
-
-    loadCanvases(force)
-      .then(setCanvases)
-      .catch((error: unknown) =>
-        setListError(
-          errorMessage(error, __("Your canvases could not be loaded.", "ogdynamic")),
-        ),
-      )
-      .finally(() => setListLoading(false));
-  }
-
   useEffect(() => {
     if (config.connected) {
-      fetchCanvases(false);
+      fetchCanvases();
     }
   }, []);
 
@@ -302,12 +432,10 @@ export default function Edit({
             </Notice>
           ) : (
             <Fragment>
-              <SelectControl
-                __nextHasNoMarginBottom
+              <CanvasCombobox
                 label={__("Public canvas", "ogdynamic")}
                 value={canvasId}
                 options={canvasOptions}
-                disabled={listLoading}
                 onChange={selectCanvas}
               />
               <Button
@@ -425,12 +553,10 @@ export default function Edit({
             }
           >
             {!notConnected && (
-              <SelectControl
-                __nextHasNoMarginBottom
+              <CanvasCombobox
                 label={__("Public canvas", "ogdynamic")}
                 value={canvasId}
                 options={canvasOptions}
-                disabled={listLoading}
                 onChange={selectCanvas}
               />
             )}
