@@ -4,7 +4,7 @@ Tags: open graph, og image, og image generator, social media images, social shar
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,10 +82,12 @@ This plugin's source code is available at [https://github.com/ogdynamic-app/ogdy
 == Screenshots ==
 
 1. **Onboarding screen** — Connect your WordPress site to ogdynamic via OAuth with a single click. See the benefits of dynamic OG images at a glance.
-2. **Dashboard** — View your connection status and account details at a glance, with quick access to manage templates.
-3. **Templates overview** — Browse all available post types and archive pages. Activated templates show a green badge so you can see which content types have OG images configured.
+2. **Dashboard** — View your connection status and account details at a glance, with quick access to manage templates and update the connection.
+3. **Open Graph Templates overview** — Browse all available post types and archive pages. Activated templates show a green badge so you can see which content types have OG images configured.
 4. **Template mapping** — Select a canvas from your ogdynamic account, then map each template field to a WordPress data source with the live preview panel.
 5. **Connection management** — Connect or disconnect your ogdynamic account. While connected, explore feature highlights for products, blog posts, reusable templates, and cross-platform previews.
+6. **Canvas Image block** — Pick a public canvas in the block editor, fill in its dynamic fields with a live preview, and save the generated image straight to the media library.
+7. **Saved canvas image on the frontend** — A banner generated with the Canvas Image block rendered in a post — any canvas size: ad banners, product photo cards, social graphics.
 
 == Installation ==
 
@@ -165,6 +167,12 @@ Yes. The ogdynamic Canvas Image block works with any public canvas in your accou
 
 == Changelog ==
 
+= 0.4.0 =
+* New: saved canvas images can be converted to the regular WordPress Image block with one click, unlocking the full image toolset (sizing, aspect-ratio crop, focal point, caption, link, lightbox)
+* Fix: completing the OAuth connection no longer ends in a "Cannot modify header information" warning — the callback now redirects back to the dashboard before any output is sent
+* Fix: images rendered by the Canvas Image block are fully responsive — they never overflow the post column and keep their aspect ratio
+* Updated the plugin description and added new screenshots of the redesigned admin, the Canvas Image block, and a saved banner on the frontend
+
 = 0.3.0 =
 * New "ogdynamic Canvas Image" block: pick a public canvas in the editor, fill in its dynamic fields with a live preview, and save the generated image straight to the media library in PNG, WebP or JPEG format
 * The Canvas Image block accepts canvases of any size — ad banners, product photo cards, social graphics — not just 1200x630 OG images
@@ -193,6 +201,9 @@ Yes. The ogdynamic Canvas Image block works with any public canvas in your accou
 * Multisite support
 
 == Upgrade Notice ==
+
+= 0.4.0 =
+Saved canvas images can now be converted to the regular WordPress Image block for advanced sizing and captions. This release also fixes the header warning some hosts showed right after connecting via OAuth.
 
 = 0.3.0 =
 Design templates are gone. Saved design mappings stop rendering and are removed — map a canvas to the affected content type to generate Open Graph images again.

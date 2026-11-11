@@ -111,21 +111,26 @@ class Block {
 		$attachment_id = isset( $attributes['attachmentId'] ) ? absint( $attributes['attachmentId'] ) : 0;
 		$alt           = isset( $attributes['alt'] ) ? (string) $attributes['alt'] : '';
 		$image         = '';
+		// Canvases may be any size, so the image must never overflow its
+		// container and keep its aspect ratio.
+		$style = 'max-width:100%;height:auto;';
 
 		if ( $attachment_id > 0 && wp_attachment_is_image( $attachment_id ) ) {
-			$image = wp_get_attachment_image(
-				$attachment_id,
-				'full',
-				false,
-				'' !== $alt ? array( 'alt' => $alt ) : array()
-			);
+			$attr = array( 'style' => $style );
+
+			if ( '' !== $alt ) {
+				$attr['alt'] = $alt;
+			}
+
+			$image = wp_get_attachment_image( $attachment_id, 'full', false, $attr );
 		}
 
 		if ( '' === $image && ! empty( $attributes['imageUrl'] ) ) {
 			$image = sprintf(
-				'<img src="%1$s" alt="%2$s" />',
+				'<img src="%1$s" alt="%2$s" style="%3$s" />',
 				esc_url( (string) $attributes['imageUrl'] ),
-				esc_attr( $alt )
+				esc_attr( $alt ),
+				esc_attr( $style )
 			);
 		}
 

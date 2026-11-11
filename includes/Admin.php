@@ -33,7 +33,7 @@ class Admin {
 			58
 		);
 
-		add_submenu_page(
+		$callback_hook = add_submenu_page(
 			null,
 			__( 'ogdynamic OAuth Callback', 'ogdynamic' ),
 			__( 'ogdynamic OAuth Callback', 'ogdynamic' ),
@@ -41,6 +41,12 @@ class Admin {
 			'ogdynamic-oauth-callback',
 			array( self::class, 'render_oauth_callback' )
 		);
+
+		if ( $callback_hook ) {
+			// The callback performs a redirect, so it must run before any
+			// admin output has been sent (see handle_oauth_callback()).
+			add_action( "load-{$callback_hook}", array( self::class, 'handle_oauth_callback' ) );
+		}
 	}
 
 	/**
@@ -186,9 +192,25 @@ class Admin {
 	/**
 	 * Renders the OAuth callback page.
 	 *
+	 * The actual callback handling runs on the load-* action (see
+	 * handle_oauth_callback()) so the redirect can happen before WordPress
+	 * sends any output. Reaching the renderer means that did not happen.
+	 *
 	 * @return void
 	 */
 	public static function render_oauth_callback(): void {
+		wp_die( esc_html__( 'The ogdynamic OAuth callback could not be processed.', 'ogdynamic' ) );
+	}
+
+	/**
+	 * Handles the OAuth callback request before the admin page renders.
+	 *
+	 * Running during the load-* action (fired before admin-header.php) keeps
+	 * the response headers intact for the redirect back to the dashboard.
+	 *
+	 * @return void
+	 */
+	public static function handle_oauth_callback(): void {
 		ConnectionController::handle_oauth_callback();
 	}
 

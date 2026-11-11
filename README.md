@@ -1,4 +1,4 @@
-# ogdynamic — Open Graph Image Generator for WordPress
+# ogdynamic — Open Graph & Social Media Image Generator for WordPress
 
 ![WordPress](https://img.shields.io/badge/WordPress-6.3%2B-blue)
 ![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple)
