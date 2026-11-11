@@ -1,7 +1,7 @@
 {
   "name": "ogdynamic",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/mehedimi/ogdynamic-wp.git"
@@ -10,7 +10,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
+    "build": "vite build && vite build --config vite.block.config.ts",
+    "build:block": "vite build --config vite.block.config.ts",
+    "dev:block": "vite build --watch --config vite.block.config.ts",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
@@ -24,5 +26,15 @@
     "vue": "^3.5.0",
     "vue-router": "^4.6.4",
     "vue-tsc": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@wordpress/api-fetch": "^8.1.0",
+    "@wordpress/block-editor": "^20.0.0",
+    "@wordpress/blocks": "^17.1.0",
+    "@wordpress/components": "^44.0.0",
+    "@wordpress/data": "^11.1.0",
+    "@wordpress/element": "^10.1.0",
+    "@wordpress/i18n": "^7.1.0"
   }
 }

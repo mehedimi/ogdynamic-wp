@@ -35,7 +35,7 @@ onMounted(loadAccount);
     <p
       class="ogd:mt-2 ogd:mb-6 ogd:max-w-140 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
     >
-      Manage the API connection and OG image templates for this site.
+      Manage the API connection and Open Graph image templates for this site.
     </p>
 
     <div class="ogd:grid ogd:grid-cols-1 ogd:gap-4.5">
@@ -51,8 +51,8 @@ onMounted(loadAccount);
               class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:px-2.5 ogd:py-1 ogd:font-display ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide"
               :class="
                 isConnected
-                  ? 'ogd:border-green-200 ogd:bg-green-50 ogd:text-green-600'
-                  : 'ogd:border-amber-200 ogd:bg-amber-50 ogd:text-amber-600'
+                  ? 'ogd:border-success/20 ogd:bg-success-soft ogd:text-success'
+                  : 'ogd:border-warning/20 ogd:bg-warning-soft ogd:text-warning'
               "
             >
               {{ isConnected ? "Connected" : "Not connected" }}
@@ -61,13 +61,13 @@ onMounted(loadAccount);
             <h2
               class="ogd:mt-4 ogd:mb-1.5 ogd:font-display ogd:text-lg ogd:font-bold ogd:text-gray-900"
             >
-              API connection
+              ogdynamic connection
             </h2>
             <p class="ogd:m-0 ogd:max-w-150 ogd:text-sm ogd:leading-relaxed ogd:text-gray-500">
               {{
                 isConnected
-                  ? "Your API token is valid. OG image templates can be configured now."
-                  : "Add an API key before configuring OG image templates."
+                  ? "Your ogdynamic account is connected. Open Graph image templates can be configured now."
+                  : "Connect your ogdynamic account before configuring Open Graph image templates."
               }}
             </p>
           </div>
@@ -77,7 +77,7 @@ onMounted(loadAccount);
             class="ogd:flex ogd:shrink-0 ogd:flex-wrap ogd:justify-end ogd:gap-2.5 max-[720px]:ogd:w-full max-[720px]:ogd:justify-start"
           >
             <RouterLink
-              class="ogd:inline-flex ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border! ogd:border-gray-900! ogd:bg-gray-900! ogd:px-4.5 ogd:py-2.5 ogd:text-[13px]! ogd:font-semibold ogd:text-white! ogd:no-underline ogd:transition ogd:hover:border-rose-500! ogd:hover:bg-rose-500! ogd:hover:text-white!"
+              class="ogd:inline-flex ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border! ogd:border-primary! ogd:bg-primary! ogd:px-4.5 ogd:py-2.5 ogd:text-[13px]! ogd:font-semibold ogd:text-white! ogd:no-underline ogd:transition ogd:hover:border-primary-hover! ogd:hover:bg-primary-hover! ogd:hover:text-white!"
               to="/templates"
             >
               <svg
@@ -95,10 +95,10 @@ onMounted(loadAccount);
                 <path d="m14 14 1.5-1.5a2 2 0 0 1 2.8 0L21 15" />
                 <circle cx="16" cy="9" r="1" />
               </svg>
-              Manage OG Templates
+              Manage Open Graph Templates
             </RouterLink>
             <RouterLink
-              class="ogd:inline-flex ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border! ogd:border-gray-200! ogd:bg-white! ogd:px-4.5 ogd:py-2.5 ogd:text-[13px]! ogd:font-semibold ogd:text-gray-700! ogd:no-underline ogd:transition ogd:hover:border-rose-200! ogd:hover:bg-rose-50! ogd:hover:text-gray-900!"
+              class="ogd:inline-flex ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border! ogd:border-gray-200! ogd:bg-white! ogd:px-4.5 ogd:py-2.5 ogd:text-[13px]! ogd:font-semibold ogd:text-gray-700! ogd:no-underline ogd:transition ogd:hover:border-primary! ogd:hover:bg-primary-soft! ogd:hover:text-primary!"
               to="/connection"
             >
               <svg
@@ -136,7 +136,7 @@ onMounted(loadAccount);
 
         <div
           v-if="cloudApi.error.value"
-          class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700"
+          class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-destructive/25 ogd:bg-destructive/5 ogd:px-3.5 ogd:py-3 ogd:text-destructive"
         >
           {{ cloudApi.error.value }}
         </div>

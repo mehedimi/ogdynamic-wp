@@ -14,6 +14,7 @@ final class OGDynamic {
 
 	public function boot(): void {
 		RestController::init();
+		Block::register();
 
 		if ( is_admin() ) {
 			Admin::register();

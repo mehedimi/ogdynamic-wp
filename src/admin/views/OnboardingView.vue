@@ -47,7 +47,7 @@ async function connect() {
             class="ogd:flex ogd:items-start ogd:text-[13px] ogd:leading-relaxed ogd:text-gray-600"
           >
             <svg
-              class="ogd:mr-3 ogd:mt-0.5 ogd:size-4 ogd:shrink-0 ogd:text-green-500"
+              class="ogd:mr-3 ogd:mt-0.5 ogd:size-4 ogd:shrink-0 ogd:text-success"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -63,7 +63,7 @@ async function connect() {
             class="ogd:flex ogd:items-start ogd:text-[13px] ogd:leading-relaxed ogd:text-gray-600"
           >
             <svg
-              class="ogd:mr-3 ogd:mt-0.5 ogd:size-4 ogd:shrink-0 ogd:text-green-500"
+              class="ogd:mr-3 ogd:mt-0.5 ogd:size-4 ogd:shrink-0 ogd:text-success"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -79,7 +79,7 @@ async function connect() {
             class="ogd:flex ogd:items-start ogd:text-[13px] ogd:leading-relaxed ogd:text-gray-600"
           >
             <svg
-              class="ogd:mr-3 ogd:mt-0.5 ogd:size-4 ogd:shrink-0 ogd:text-green-500"
+              class="ogd:mr-3 ogd:mt-0.5 ogd:size-4 ogd:shrink-0 ogd:text-success"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -95,7 +95,7 @@ async function connect() {
             class="ogd:flex ogd:items-start ogd:text-[13px] ogd:leading-relaxed ogd:text-gray-600"
           >
             <svg
-              class="ogd:mr-3 ogd:mt-0.5 ogd:size-4 ogd:shrink-0 ogd:text-green-500"
+              class="ogd:mr-3 ogd:mt-0.5 ogd:size-4 ogd:shrink-0 ogd:text-success"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -111,7 +111,7 @@ async function connect() {
       </div>
 
       <button
-        class="ogd:mt-6 ogd:inline-flex ogd:w-full ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-2xl ogd:border ogd:border-transparent ogd:bg-gray-900 ogd:px-5 ogd:py-4 ogd:text-sm ogd:font-semibold ogd:text-white ogd:transition ogd:hover:bg-rose-500 ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
+        class="ogd:mt-6 ogd:inline-flex ogd:w-full ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-2xl ogd:border ogd:border-transparent ogd:bg-primary ogd:px-5 ogd:py-4 ogd:text-sm ogd:font-semibold ogd:text-white ogd:transition ogd:hover:bg-primary-hover ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
         type="button"
         :disabled="connection.loading.value"
         @click="connect"
@@ -137,7 +137,7 @@ async function connect() {
       >
         By connecting, you agree to our
         <a
-          class="ogd:font-medium! ogd:text-rose-500! ogd:hover:underline!"
+          class="ogd:font-medium! ogd:text-primary! ogd:hover:underline!"
           href="https://ogdynamic.com/terms"
           target="_blank"
           rel="noopener noreferrer"
@@ -146,7 +146,7 @@ async function connect() {
         </a>
         and
         <a
-          class="ogd:font-medium! ogd:text-rose-500! ogd:hover:underline!"
+          class="ogd:font-medium! ogd:text-primary! ogd:hover:underline!"
           href="https://ogdynamic.com/privacy"
           target="_blank"
           rel="noopener noreferrer"
@@ -157,7 +157,7 @@ async function connect() {
 
       <div
         v-if="connection.error.value"
-        class="ogd:mt-5 ogd:flex ogd:justify-center ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700"
+        class="ogd:mt-5 ogd:flex ogd:justify-center ogd:rounded-[14px] ogd:border ogd:border-destructive/25 ogd:bg-destructive/5 ogd:px-3.5 ogd:py-3 ogd:text-destructive"
       >
         {{ connection.error.value }}
       </div>

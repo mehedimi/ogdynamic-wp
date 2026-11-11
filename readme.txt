@@ -1,40 +1,41 @@
 === ogdynamic ===
 Contributors: mehedimi
-Tags: open graph images, social media images, og image generator, woocommerce, seo
+Tags: open graph, og image, og image generator, social media images, social share, twitter card, link preview, facebook preview, woocommerce, acf, gutenberg, seo
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Automatically generate beautiful Open Graph images for your WordPress posts, pages, WooCommerce products, and archive pages. Boost your social media link previews on Facebook, Twitter, LinkedIn, and more.
+Auto-generate dynamic Open Graph (OG) images for every post, page, product, and archive — the Open Graph image generator that keeps your social share previews, Facebook link previews, and Twitter cards fresh. Need more than OG images? The Canvas Image Gutenberg block saves any canvas size — ad banners, product photo cards, social graphics — straight to your media library.
 
 == Description ==
 
-When you share a link on Facebook, Twitter, LinkedIn, or Slack, the first thing people see is the link preview image. Without a compelling Open Graph image, your content gets ignored. Most WordPress sites either show the same generic image for every page or rely on the featured image alone — neither makes your content stand out.
+When you share a link on Facebook, Twitter/X, LinkedIn, or Slack, the first thing people see is the link preview image. Without a compelling Open Graph image (og:image), your content gets ignored. Most WordPress sites either show the same generic image for every page or rely on the featured image alone — neither makes your content stand out in the feed.
 
-**ogdynamic** solves this by automatically generating professional, dynamic Open Graph images for every page on your WordPress site. It connects to [ogdynamic.com](https://ogdynamic.com) and uses customizable templates to create unique social media images that include your post title, author, excerpt, product price, categories, and more — all without slowing down your website.
+**ogdynamic** is an Open Graph image generator that automatically creates professional, dynamic OG images for every page on your WordPress site. It connects to [ogdynamic.com](https://ogdynamic.com) and uses your canvas templates to generate a unique social share image for each post, product, or archive — including the post title, author, excerpt, product price, categories, and more — all without slowing down your website. And when you need more than OG images, the Canvas Image block turns any canvas into ad banners, product photo cards, or social media graphics saved right in your media library.
 
 = Why Use ogdynamic? =
 
-* **Increase click-through rates** — Eye-catching social preview images get more clicks from Facebook, Twitter, LinkedIn, and other platforms
-* **Save hours of design work** — No need to manually create share images for every post or product
-* **Works with your existing setup** — Compatible with popular SEO plugins like Yoast SEO, Rank Math, AIOSEO, SEOPress, and more
-* **Set it and forget it** — Configure once and every new post automatically gets its own unique OG image
-* **eCommerce ready** — Full WooCommerce support with product price, SKU, stock status, and attributes in your social images
+* **More clicks from social media** — Eye-catching social preview images and link previews get more clicks from Facebook, Twitter/X, LinkedIn, and other platforms
+* **Save hours of design work** — No need to manually create share images for every post or product; your OG image generator runs on autopilot
+* **Works with your existing setup** — Compatible with popular SEO plugins like Yoast SEO, Rank Math, AIOSEO, SEOPress, and more — no duplicate og:image tags
+* **Set it and forget it** — Configure once and every new post automatically gets its own unique Open Graph image
+* **eCommerce ready** — Full WooCommerce support with product price, SKU, stock status, and attributes in your social media images
 
 = Features =
 
 * **Dynamic Open Graph Images** — Automatically generate unique OG images for posts, pages, products, and archives using your content
-* **Facebook, Twitter & LinkedIn Ready** — Outputs proper og:image, og:image:width, og:image:height, and twitter:image meta tags
+* **Canvas Image Gutenberg Block** — Generate any canvas size in the block editor — ad banners, product photo cards, social media graphics — with a live preview, and save them to your media library as PNG, WebP, or JPEG
+* **Facebook, Twitter/X & LinkedIn Ready** — Outputs proper og:image, og:image:width, og:image:height, twitter:card, and twitter:image meta tags for rich link previews
 * **WooCommerce Integration** — Product OG images can include title, price, regular price, sale price, SKU, currency, stock status, rating, review count, categories, tags, and attributes
-* **Archive Page Support** — Generate social images for homepage, blog page, category archives, tag archives, author pages, date archives, and search results
-* **Field Mapping** — Choose exactly which WordPress data appears in each template field using an intuitive admin interface
-* **Canvas Editor** — Design your own OG image templates in the ogdynamic canvas editor; the plugin lists your public 1200x630 canvases, ready to map
+* **Archive Page Support** — Generate social share images for homepage, blog page, category archives, tag archives, author pages, date archives, and search results
+* **Field Mapping** — Choose exactly which WordPress data appears in each canvas field using an intuitive admin interface
+* **Canvas Editor** — Design your own OG image templates in the ogdynamic canvas editor; the mapping selector lists all your public canvases and recommends the 1200x630 ones
 * **Custom Fields (ACF)** — Map Advanced Custom Fields data (text, image, gallery, link, taxonomy, relationship, and more) into your OG images
-* **SEO Plugin Friendly** — Automatically works alongside Yoast SEO, Rank Math, AIOSEO, SEOPress, The SEO Framework, Squirrly SEO, and Slim SEO without duplicate tags
-* **CDN Delivered** — Images are generated and served from ogdynamic's fast CDN — zero impact on your WordPress server performance
+* **SEO Plugin Friendly** — Works alongside Yoast SEO, Rank Math, AIOSEO, SEOPress, The SEO Framework, Squirrly SEO, and Slim SEO without duplicate Open Graph tags
+* **CDN Delivered** — OG images are generated and served from ogdynamic's fast CDN — zero impact on your WordPress server performance
 * **Fallback Support** — Set a default template for any post type without a specific template configured
 
 = How It Works =
@@ -43,6 +44,7 @@ When you share a link on Facebook, Twitter, LinkedIn, or Slack, the first thing 
 2. Choose a template from your ogdynamic account for each content type (posts, pages, products, archives)
 3. Map your WordPress content fields to the template variables (title, subtitle, image, price, etc.)
 4. ogdynamic automatically generates the right Open Graph image for every page — no ongoing effort needed
+5. For other image sizes, add the ogdynamic Canvas Image block to any post or page to generate ad banners, product photo cards, or social graphics into your media library
 
 = Template Mappings =
 
@@ -75,7 +77,7 @@ Service links:
 * Terms of Service: [https://ogdynamic.com/terms](https://ogdynamic.com/terms)
 * Privacy Policy: [https://ogdynamic.com/privacy](https://ogdynamic.com/privacy)
 
-This plugin's source code is available at [https://github.com/mehedimi/ogdynamic-wp](https://github.com/mehedimi/ogdynamic-wp).
+This plugin's source code is available at [https://github.com/ogdynamic-app/ogdynamic-wp](https://github.com/ogdynamic-app/ogdynamic-wp).
 
 == Screenshots ==
 
@@ -119,7 +121,11 @@ Yes. Image generation happens on ogdynamic's servers, so your WordPress site sta
 
 = What Open Graph tags does this plugin add? =
 
-ogdynamic adds `og:image`, `og:image:width`, `og:image:height`, `twitter:card`, and `twitter:image` meta tags to your pages. Images are 1200x630 pixels — the recommended size for Facebook, Twitter, and LinkedIn link previews.
+ogdynamic adds `og:image`, `og:image:width`, and `og:image:height` meta tags to every configured page. For images sized for Twitter — 1200x630 (the standard Open Graph size) or 1200x600 (Twitter's recommended 2:1 card size) — it also adds `twitter:card` and `twitter:image` so your cards render correctly on X/Twitter.
+
+= Does it support Twitter/X card images? =
+
+Yes. Canvases sized 1200x630 get a Twitter-optimized variant of your OG image, and canvases sized 1200x600 (Twitter's recommended summary_large_image ratio) reuse the Open Graph image directly. Other canvas sizes output the og:image tag only, which most platforms use for link previews.
 
 = Will this slow down my WordPress site? =
 
@@ -151,9 +157,24 @@ Yes, any public post type is available. You can also set up a Default template a
 
 = What image size does ogdynamic use? =
 
-OG images are generated at 1200x630 pixels, which is the recommended Open Graph image size for Facebook, Twitter/X, LinkedIn, and most social platforms.
+OG images are generated at 1200x630 pixels, which is the recommended Open Graph image size for Facebook, Twitter/X, LinkedIn, and most social platforms. For other sizes, the Canvas Image block generates any canvas — ad banners, product photo cards, and more.
+
+= Can I generate images other than Open Graph images? =
+
+Yes. The ogdynamic Canvas Image block works with any public canvas in your account, whatever its size — ad banners, product photo cards, social media graphics, and more. Pick the canvas in the block editor, fill in its fields with a live preview, and save the rendered image to your media library in PNG, WebP, or JPEG. Open Graph meta tags are only managed when a template mapping is configured.
 
 == Changelog ==
+
+= 0.3.0 =
+* New "ogdynamic Canvas Image" block: pick a public canvas in the editor, fill in its dynamic fields with a live preview, and save the generated image straight to the media library in PNG, WebP or JPEG format
+* The Canvas Image block accepts canvases of any size — ad banners, product photo cards, social graphics — not just 1200x630 OG images
+* Design templates removed: the selector lists canvases only and saved design mappings stop rendering (they are removed on first load) — pick a canvas for the affected post type to generate OG images again
+* Admin interface refreshed with the new ogdynamic branding and color scheme
+* The canvas selector lists all public canvases of any size, shows canvas dimensions, and marks 1200x630 canvases as Recommended
+* Mappings remember the canvas size: Twitter card tags are added for Twitter-friendly sizes (1200x630 and 1200x600), other sizes output og:image only
+* ACF fields are grouped by field group with an ACF label in the mapping dropdown
+* Long canvas lists load page by page while you scroll, so accounts with many canvases stay fast
+* Reliability fixes: a stale connection recovers automatically instead of disconnecting, the Twitter image now appears under AIOSEO too, format changes in the block are detected as unsaved changes, and leftover transients are cleaned up on uninstall
 
 = 0.2.0 =
 * Canvas templates: design OG image templates in the ogdynamic canvas editor and map them to your content types (existing design mappings keep working but designs are deprecated)
@@ -172,6 +193,9 @@ OG images are generated at 1200x630 pixels, which is the recommended Open Graph 
 * Multisite support
 
 == Upgrade Notice ==
+
+= 0.3.0 =
+Design templates are gone. Saved design mappings stop rendering and are removed — map a canvas to the affected content type to generate Open Graph images again.
 
 = 0.2.0 =
 Canvas templates are here. If you connected before canvases were introduced, reconnect your ogdynamic account once to refresh access, then map your content types to canvases.

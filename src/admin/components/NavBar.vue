@@ -6,7 +6,7 @@ import Logo from "./Logo.vue";
 
 <template>
   <header
-    class="ogd:mx-auto ogd:mt-4 ogd:sticky ogd:top-9 ogd:flex ogd:h-18 ogd:w-[min(1280px,calc(100%-32px))] ogd:items-center ogd:justify-between ogd:gap-4 ogd:overflow-x-auto ogd:rounded-full ogd:border ogd:border-rose-100 ogd:bg-white/90 ogd:px-6 ogd:shadow-[0_2px_24px_rgba(244,63,94,0.08),0_1px_4px_rgba(0,0,0,0.04)] ogd:backdrop-blur-[18px] ogd:z-50"
+    class="ogd:mx-auto ogd:mt-4 ogd:sticky ogd:top-9 ogd:flex ogd:h-18 ogd:w-[min(1280px,calc(100%-32px))] ogd:items-center ogd:justify-between ogd:gap-4 ogd:overflow-x-auto ogd:rounded-full ogd:border ogd:border-gray-200 ogd:bg-white/90 ogd:px-6 ogd:shadow-[0_2px_24px_rgba(99,91,255,0.10),0_1px_4px_rgba(17,24,39,0.04)] ogd:backdrop-blur-[18px] ogd:z-50"
   >
     <a
       class="ogd:shrink-0 ogd:no-underline ogd:transition-opacity ogd:duration-150 ogd:hover:opacity-80"
@@ -25,8 +25,8 @@ import Logo from "./Logo.vue";
         v-for="item in adminNavigation"
         :key="item.name"
         :to="item.path"
-        class="ogd:flex ogd:shrink-0 ogd:items-center ogd:gap-2 ogd:rounded-full ogd:px-4 ogd:py-1.5 ogd:text-sm ogd:font-medium ogd:text-gray-500! ogd:no-underline ogd:transition-all ogd:duration-150! ogd:hover:bg-rose-50! ogd:hover:text-gray-900!"
-        active-class="ogd:bg-rose-50! ogd:text-gray-900!"
+        class="ogd:flex ogd:shrink-0 ogd:items-center ogd:gap-2 ogd:rounded-full ogd:px-4 ogd:py-1.5 ogd:text-sm ogd:font-medium ogd:text-gray-500! ogd:no-underline ogd:transition-all ogd:duration-150! ogd:hover:bg-primary-soft! ogd:hover:text-gray-900!"
+        active-class="ogd:bg-primary-soft! ogd:text-gray-900!"
       >
         <svg
           v-if="item.name === 'dashboard'"
@@ -65,7 +65,7 @@ import Logo from "./Logo.vue";
     </nav>
 
     <a
-      class="ogd:flex ogd:shrink-0 ogd:items-center ogd:justify-center ogd:rounded-full ogd:bg-gray-900! ogd:px-4 ogd:py-2 ogd:text-sm! ogd:font-semibold ogd:text-white! ogd:no-underline ogd:transition-all ogd:duration-150! ogd:hover:bg-rose-500!"
+      class="ogd:flex ogd:shrink-0 ogd:items-center ogd:justify-center ogd:rounded-full ogd:bg-primary! ogd:px-4 ogd:py-2 ogd:text-sm! ogd:font-semibold ogd:text-white! ogd:no-underline ogd:transition-all ogd:duration-150! ogd:hover:bg-primary-hover!"
       href="https://ogdynamic.com/canvases"
       target="_blank"
       rel="noreferrer"

@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { computed, shallowRef } from "vue";
+import {
+  computed,
+  shallowRef,
+  useTemplateRef,
+  watch,
+  type ComponentPublicInstance,
+} from "vue";
 import {
   ComboboxAnchor,
   ComboboxContent,
@@ -19,6 +25,10 @@ type SelectOption = {
   label: string;
   value: string;
   group?: string;
+  /** Secondary line rendered beneath the label (e.g. canvas dimensions). */
+  description?: string;
+  /** Pill rendered next to the label (e.g. "Recommended"). */
+  badge?: string;
 };
 
 const EMPTY_VALUE = "__ogdynamic_empty_value__";
@@ -32,13 +42,27 @@ const props = withDefaults(
     options: SelectOption[];
     disabled?: boolean;
     placeholder?: string;
+    /** Whether another page of options can be fetched. */
+    hasMore?: boolean;
+    /** Whether the next options page is currently being fetched. */
+    loadingMore?: boolean;
   }>(),
   {
     id: undefined,
     disabled: false,
     placeholder: "Search and select",
+    hasMore: false,
+    loadingMore: false,
   },
 );
+
+const emit = defineEmits<{
+  /** Fired when the option list is scrolled near its end (infinite scroll). */
+  "load-more": [];
+}>();
+
+// How close to the bottom of the list the load-more event fires, in pixels.
+const LOAD_MORE_THRESHOLD = 40;
 
 const comboboxModel = computed({
   get() {
@@ -54,6 +78,8 @@ const comboboxOptions = computed(() => {
     label: option.label,
     value: "" === option.value ? EMPTY_VALUE : option.value,
     group: option.group,
+    description: option.description,
+    badge: option.badge,
   }));
 });
 
@@ -61,7 +87,9 @@ const groupedOptions = computed(() => {
   const term = searchTerm.value.trim().toLowerCase();
   const matches = term
     ? comboboxOptions.value.filter((option) =>
-        option.label.toLowerCase().includes(term),
+        `${option.label} ${option.group ?? ""} ${option.description ?? ""}`
+          .toLowerCase()
+          .includes(term),
       )
     : comboboxOptions.value;
 
@@ -93,6 +121,65 @@ function displayValue(value: unknown): string {
 function clearSearchTerm(): void {
   searchTerm.value = "";
 }
+
+// Whether the input currently has focus; while it does, the user is
+// interacting and its text must not be overwritten.
+const isFocused = shallowRef(false);
+
+function onInputFocus(): void {
+  isFocused.value = true;
+  clearSearchTerm();
+}
+
+// The combobox only derives its display text when the model value changes.
+// When the matching option arrives after mount (e.g. the saved canvas
+// detail resolves once the page is rendered), re-sync the displayed label.
+watch(comboboxOptions, () => {
+  if (isFocused.value) {
+    return;
+  }
+
+  searchTerm.value = displayValue(comboboxModel.value);
+});
+
+// The viewport only exists while the popover is open (portal content), so
+// scroll position checks go through its rendered element.
+const viewport = useTemplateRef<ComponentPublicInstance | null>("viewport");
+
+function viewportElement(): HTMLElement | null {
+  const el = viewport.value?.$el;
+
+  return el instanceof HTMLElement ? el : null;
+}
+
+function nearListEnd(): boolean {
+  if (!props.hasMore || props.loadingMore) {
+    return false;
+  }
+
+  const el = viewportElement();
+
+  if (!el) {
+    return false;
+  }
+
+  // Fires when scrolled near the bottom, or when the page is too short to
+  // scroll at all (otherwise a small first page could never load more).
+  return (
+    el.scrollTop + el.clientHeight >= el.scrollHeight - LOAD_MORE_THRESHOLD ||
+    el.scrollHeight <= el.clientHeight
+  );
+}
+
+function requestLoadMore(): void {
+  if (nearListEnd()) {
+    emit("load-more");
+  }
+}
+
+// Re-check after the popover opens or a fetched page appends options, in case
+// the list is still too short to scroll.
+watch([viewport, () => props.options.length], requestLoadMore, { flush: "post" });
 </script>
 
 <template>
@@ -110,8 +197,9 @@ function clearSearchTerm(): void {
         :display-value="displayValue"
         :disabled="disabled"
         :placeholder="placeholder"
-        class="ogd:w-full ogd:rounded-full! ogd:border ogd:border-gray-200! ogd:bg-gray-50 ogd:py-1.5! ogd:pr-11! ogd:pl-6! ogd:text-[13.5px]! ogd:text-gray-900! ogd:outline-none! ogd:transition ogd:placeholder:text-gray-400 ogd:focus:border-rose-400! ogd:focus:bg-white! ogd:focus:shadow-[0_0_0_3px_rgba(244,63,94,0.08)] ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
-        @focus="clearSearchTerm"
+        class="ogd:w-full ogd:rounded-lg! ogd:border ogd:border-gray-200! ogd:bg-gray-50 ogd:py-1.5! ogd:pr-11! ogd:pl-6! ogd:text-[13.5px]! ogd:text-gray-900! ogd:outline-none! ogd:transition ogd:placeholder:text-gray-400 ogd:focus:border-primary! ogd:focus:bg-white! ogd:focus:shadow-[0_0_0_3px_rgba(99,91,255,0.12)] ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
+        @focus="onInputFocus"
+        @blur="isFocused = false"
         @click="clearSearchTerm"
       />
       <ComboboxTrigger
@@ -140,7 +228,11 @@ function clearSearchTerm(): void {
         :side-offset="6"
         class="ogd:z-999999 ogd:max-h-72 ogd:w-(--reka-combobox-trigger-width) ogd:overflow-hidden ogd:rounded-2xl ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-1.5 ogd:shadow-[0_18px_48px_rgba(17,24,39,0.12)]"
       >
-        <ComboboxViewport class="ogd:max-h-68 ogd:overflow-y-auto">
+        <ComboboxViewport
+          ref="viewport"
+          class="ogd:max-h-68 ogd:overflow-y-auto"
+          @scroll="requestLoadMore"
+        >
           <ComboboxEmpty
             class="ogd:px-3 ogd:py-2.5 ogd:text-sm ogd:text-gray-500"
           >
@@ -162,10 +254,26 @@ function clearSearchTerm(): void {
               :key="option.value"
               :value="option.value"
               :text-value="option.label"
-              class="ogd:flex ogd:cursor-pointer ogd:items-center ogd:justify-between ogd:gap-3 ogd:rounded-xl ogd:px-3 ogd:py-2 ogd:text-sm ogd:text-gray-700 ogd:outline-none ogd:transition ogd:data-highlighted:bg-rose-50 ogd:data-highlighted:text-gray-900 ogd:data-[state=checked]:text-gray-900"
+              class="ogd:flex ogd:cursor-pointer ogd:items-center ogd:justify-between ogd:gap-3 ogd:rounded-xl ogd:px-3 ogd:py-2 ogd:text-sm ogd:text-gray-700 ogd:outline-none ogd:transition ogd:data-highlighted:bg-primary-soft ogd:data-highlighted:text-gray-900 ogd:data-[state=checked]:text-gray-900"
             >
-              <span class="ogd:truncate">{{ option.label }}</span>
-              <ComboboxItemIndicator class="ogd:shrink-0 ogd:text-rose-500">
+              <span class="ogd:flex ogd:min-w-0 ogd:flex-col ogd:gap-0.5">
+                <span class="ogd:flex ogd:items-center ogd:gap-2">
+                  <span class="ogd:truncate">{{ option.label }}</span>
+                  <span
+                    v-if="option.badge"
+                    class="ogd:shrink-0 ogd:rounded-full ogd:bg-primary-soft ogd:px-2 ogd:py-px ogd:text-[10px] ogd:font-semibold ogd:tracking-wide ogd:text-primary ogd:uppercase"
+                  >
+                    {{ option.badge }}
+                  </span>
+                </span>
+                <span
+                  v-if="option.description"
+                  class="ogd:truncate ogd:text-[11.5px] ogd:text-gray-400"
+                >
+                  {{ option.description }}
+                </span>
+              </span>
+              <ComboboxItemIndicator class="ogd:shrink-0 ogd:text-primary">
                 <svg
                   class="ogd:size-4"
                   viewBox="0 0 24 24"
@@ -181,6 +289,24 @@ function clearSearchTerm(): void {
               </ComboboxItemIndicator>
             </ComboboxItem>
           </ComboboxGroup>
+
+          <div
+            v-if="hasMore && loadingMore"
+            class="ogd:flex ogd:items-center ogd:gap-2 ogd:px-3 ogd:py-2.5 ogd:text-[11.5px] ogd:text-gray-400"
+          >
+            <svg
+              class="ogd:size-3.5 ogd:animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            Loading more…
+          </div>
         </ComboboxViewport>
       </ComboboxContent>
     </ComboboxPortal>

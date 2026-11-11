@@ -58,7 +58,11 @@ class MetaTags {
 		add_filter(
 			'rank_math/opengraph/twitter/image',
 			function ( $attachment_url ) {
-				return ImageGenerator::has_generated_image() ? ImageGenerator::get_twitter_image_url() : $attachment_url;
+				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_twitter_image() ) {
+					return $attachment_url;
+				}
+
+				return ImageGenerator::get_twitter_image_url();
 			}
 		);
 
@@ -77,8 +81,8 @@ class MetaTags {
 				}
 
 				return array(
-					'width'  => 1200,
-					'height' => 630,
+					'width'  => ImageGenerator::get_image_width(),
+					'height' => ImageGenerator::get_image_height(),
 					'url'    => ImageGenerator::get_image_url(),
 				);
 			}
@@ -93,14 +97,21 @@ class MetaTags {
 		printf(
 			'<!-- ogdynamic -->
 <meta property="og:image" content="%s" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:image" content="%s" />
-<!-- /ogdynamic -->
+<meta property="og:image:width" content="%d" />
+<meta property="og:image:height" content="%d" />
+%s<!-- /ogdynamic -->
 ',
 			esc_url( ImageGenerator::get_image_url() ),
-			esc_url( ImageGenerator::get_twitter_image_url() )
+			intval( ImageGenerator::get_image_width() ),
+			intval( ImageGenerator::get_image_height() ),
+			ImageGenerator::has_twitter_image()
+				? sprintf(
+					'<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="%s" />
+',
+					esc_url( ImageGenerator::get_twitter_image_url() )
+				)
+				: ''
 		);
 	}
 
@@ -117,7 +128,11 @@ class MetaTags {
 		add_filter(
 			'wpseo_twitter_image',
 			static function ( $image ) {
-				return ImageGenerator::has_generated_image() ? ImageGenerator::get_twitter_image_url() : $image;
+				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_twitter_image() ) {
+					return $image;
+				}
+
+				return ImageGenerator::get_twitter_image_url();
 			}
 		);
 
@@ -131,14 +146,14 @@ class MetaTags {
 		add_filter(
 			'wpseo_opengraph_image_width',
 			static function ( $width ) {
-				return ImageGenerator::has_generated_image() ? 1200 : $width;
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_image_width() : $width;
 			}
 		);
 
 		add_filter(
 			'wpseo_opengraph_image_height',
 			static function ( $height ) {
-				return ImageGenerator::has_generated_image() ? 630 : $height;
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_image_height() : $height;
 			}
 		);
 	}
@@ -154,8 +169,8 @@ class MetaTags {
 				}
 
 				$tags['og:image']        = ImageGenerator::get_image_url();
-				$tags['og:image:width']  = 1200;
-				$tags['og:image:height'] = 630;
+				$tags['og:image:width']  = ImageGenerator::get_image_width();
+				$tags['og:image:height'] = ImageGenerator::get_image_height();
 
 				return $tags;
 			}
@@ -164,7 +179,7 @@ class MetaTags {
 		add_filter(
 			'aioseo_twitter_tags',
 			static function ( $tags ) {
-				if ( ! ImageGenerator::has_generated_image() || ! is_array( $tags ) ) {
+				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_twitter_image() || ! is_array( $tags ) ) {
 					return $tags;
 				}
 
@@ -284,21 +299,25 @@ class MetaTags {
 		add_filter(
 			'slim_seo_open_graph_image_width',
 			static function ( $width ) {
-				return ImageGenerator::has_generated_image() ? 1200 : $width;
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_image_width() : $width;
 			}
 		);
 
 		add_filter(
 			'slim_seo_open_graph_image_height',
 			static function ( $height ) {
-				return ImageGenerator::has_generated_image() ? 630 : $height;
+				return ImageGenerator::has_generated_image() ? ImageGenerator::get_image_height() : $height;
 			}
 		);
 
 		add_filter(
 			'slim_seo_twitter_card_image',
 			static function ( $image ) {
-				return ImageGenerator::has_generated_image() ? ImageGenerator::get_twitter_image_url() : $image;
+				if ( ! ImageGenerator::has_generated_image() || ! ImageGenerator::has_twitter_image() ) {
+					return $image;
+				}
+
+				return ImageGenerator::get_twitter_image_url();
 			}
 		);
 	}

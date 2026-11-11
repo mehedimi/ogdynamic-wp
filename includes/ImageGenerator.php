@@ -13,17 +13,44 @@ use WP_User;
 
 class ImageGenerator {
 
+	/**
+	 * Standard OG image dimensions.
+	 *
+	 * Mappings store the canvas' width/height; mappings without stored
+	 * dimensions fall back to these values, and the Twitter image link is
+	 * only emitted for this standard size.
+	 *
+	 * @var int
+	 */
+	public const OG_IMAGE_WIDTH  = 1200;
+	public const OG_IMAGE_HEIGHT = 630;
+
+	/**
+	 * Twitter's recommended summary_large_image dimensions (2:1).
+	 *
+	 * A canvas already sized for Twitter reuses the plain og:image URL as
+	 * the twitter:image link instead of the intent=twitter variant.
+	 *
+	 * @var int
+	 */
+	public const TWITTER_IMAGE_WIDTH  = 1200;
+	public const TWITTER_IMAGE_HEIGHT = 600;
+
 	protected static ?array $query              = null;
 	protected static ?bool $has_generated_image = null;
 
 	protected static ?string $template_id = null;
 
 	/**
-	 * Whether the mapped template is a canvas or a (deprecated) design.
+	 * Dimensions of the mapped template as saved with the mapping.
 	 *
-	 * @var string
+	 * Null means the mapping has no stored dimensions and the standard
+	 * OG size applies.
+	 *
+	 * @var int|null
 	 */
-	protected static string $template_type = 'design';
+	protected static ?int $image_width  = null;
+	protected static ?int $image_height = null;
 
 	public static function get_template_key(): ?string {
 		if ( is_category() ) {
@@ -73,9 +100,7 @@ class ImageGenerator {
 	}
 
 	protected static function get_template_url(): string {
-		$segment = 'canvas' === self::$template_type ? 'c' : 'd';
-
-		return OGDYNAMIC_CDN . $segment . '/' . self::$template_id;
+		return OGDYNAMIC_CDN . 'c/' . self::$template_id;
 	}
 
 	public static function get_image_url(): string {
@@ -89,15 +114,16 @@ class ImageGenerator {
 	}
 
 	public static function get_twitter_image_url(): string {
+		// A canvas already sized for Twitter needs no variant render.
+		if ( self::has_twitter_sized_image() ) {
+			return self::get_image_url();
+		}
+
 		$query = is_array( self::$query ) ? self::$query : array();
 
-		if ( 'canvas' === self::$template_type ) {
-			// Canvas render URLs take flat string params only; array-style
-			// config params are ignored by the render service.
-			$query['intent'] = 'twitter';
-		} else {
-			$query['config'] = array( 'intent' => 'twitter' );
-		}
+		// Canvas render URLs take flat string params only; array-style
+		// config params are ignored by the render service.
+		$query['intent'] = 'twitter';
 
 		return self::get_template_url() . '?' . http_build_query( $query );
 	}
@@ -133,13 +159,92 @@ class ImageGenerator {
 			return null;
 		}
 
-		self::$template_id   = (string) $mapping['template_id'];
-		self::$template_type = isset( $mapping['type'] ) && 'canvas' === $mapping['type'] ? 'canvas' : 'design';
+		self::$template_id  = (string) $mapping['template_id'];
+		self::$image_width  = self::mapping_dimension( $mapping, 'width' );
+		self::$image_height = self::mapping_dimension( $mapping, 'height' );
 
 		return array(
 			'key'     => $key,
 			'mapping' => $mapping,
 		);
+	}
+
+	/**
+	 * Stored image width of the mapped template.
+	 *
+	 * Mappings saved without dimensions fall back to the standard OG width.
+	 *
+	 * @return int
+	 */
+	public static function get_image_width(): int {
+		return self::$image_width ?? self::OG_IMAGE_WIDTH;
+	}
+
+	/**
+	 * Stored image height of the mapped template.
+	 *
+	 * Mappings saved without dimensions fall back to the standard OG height.
+	 *
+	 * @return int
+	 */
+	public static function get_image_height(): int {
+		return self::$image_height ?? self::OG_IMAGE_HEIGHT;
+	}
+
+	/**
+	 * Whether the mapped image uses the standard OG dimensions.
+	 *
+	 * Twitter cards expect the standard 1200px x 630px size, so the
+	 * twitter image link is only emitted for it.
+	 *
+	 * @return bool
+	 */
+	public static function has_standard_og_image(): bool {
+		return self::OG_IMAGE_WIDTH === self::get_image_width()
+			&& self::OG_IMAGE_HEIGHT === self::get_image_height();
+	}
+
+	/**
+	 * Whether the mapped image matches Twitter's recommended dimensions.
+	 *
+	 * @return bool
+	 */
+	public static function has_twitter_sized_image(): bool {
+		return self::TWITTER_IMAGE_WIDTH === self::get_image_width()
+			&& self::TWITTER_IMAGE_HEIGHT === self::get_image_height();
+	}
+
+	/**
+	 * Whether a twitter image link may be emitted for the mapped image.
+	 *
+	 * True when the image is the standard OG size (rendered via the
+	 * intent=twitter variant) or Twitter's recommended size (reusing the
+	 * plain og:image URL). Other sizes send no twitter link at all.
+	 *
+	 * @return bool
+	 */
+	public static function has_twitter_image(): bool {
+		return self::has_standard_og_image() || self::has_twitter_sized_image();
+	}
+
+	/**
+	 * Normalizes a dimension stored with a mapping.
+	 *
+	 * Returns null when the mapping carries no usable dimension, which
+	 * falls back to the standard OG size.
+	 *
+	 * @param array  $mapping Template field mapping.
+	 * @param string $key     'width' or 'height'.
+	 * @return int|null Dimension or null when absent/invalid.
+	 */
+	private static function mapping_dimension( array $mapping, string $key ): ?int {
+		if ( ! isset( $mapping[ $key ] ) || ! is_numeric( $mapping[ $key ] ) ) {
+			return null;
+		}
+
+		$value = (int) $mapping[ $key ];
+
+		return $value >= 1 && $value <= 10000 ? $value : null;
 	}
 
 	private static function get_mapping_attrs( string $key, array $mapping ): array {

@@ -245,6 +245,8 @@ class Template {
 	 * @return array{
 	 *   key: string,
 	 *   label: string,
+	 *   group?: string,
+	 *   badge?: string,
 	 *   multi?: bool
 	 * }[] Array of available sources for the post type.
 	 */
@@ -258,14 +260,24 @@ class Template {
 			$post_sources     = $filtered_sources[ $post_type ] ?? array();
 		}
 
-		return array_merge( $post_sources, self::get_acf_sources( $post_type ) );
+		// Core sources render in their own "WordPress" dropdown section so
+		// ACF-provided sources are visibly distinct.
+		$core_sources = array_map(
+			static function ( array $source ): array {
+				return $source + array( 'group' => __( 'WordPress', 'ogdynamic' ) );
+			},
+			$post_sources
+		);
+
+		return array_merge( $core_sources, self::get_acf_sources( $post_type ) );
 	}
 
 	/**
 	 * Gets ACF field sources for a post type.
 	 *
 	 * Fields from field groups whose location rules target the post type are
-	 * listed as `acf_{field_key}` sources. Complex nested field types
+	 * listed as `acf_{field_key}` sources, grouped under their field group
+	 * title and flagged with an "ACF" badge. Complex nested field types
 	 * (repeater, flexible content, group) are excluded because they have no
 	 * single scalar value to render.
 	 *
@@ -273,6 +285,8 @@ class Template {
 	 * @return array{
 	 *   key: string,
 	 *   label: string,
+	 *   group: string,
+	 *   badge: string,
 	 *   multi?: bool
 	 * }[] Array of ACF sources.
 	 */
@@ -292,7 +306,9 @@ class Template {
 
 				$sources[] = array(
 					'key'   => 'acf_' . $field['key'],
-					'label' => $field_group['title'] . ': ' . $field['label'],
+					'label' => $field['label'],
+					'group' => $field_group['title'],
+					'badge' => 'ACF',
 				);
 			}
 		}
@@ -310,17 +326,17 @@ class Template {
 			array(
 				'name'        => 'default',
 				'label'       => __( 'Default', 'ogdynamic' ),
-				'description' => __( 'OG image template for any post type without a specific template.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for any post type without a specific template.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'post',
 				'label'       => __( 'Single Post', 'ogdynamic' ),
-				'description' => __( 'OG image template for single blog posts.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for single blog posts.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'page',
 				'label'       => __( 'Page', 'ogdynamic' ),
-				'description' => __( 'OG image template for pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for pages.', 'ogdynamic' ),
 			),
 		);
 
@@ -328,7 +344,8 @@ class Template {
 			$post_types[] = array(
 				'name'        => 'product',
 				'label'       => __( 'Product', 'ogdynamic' ),
-				'description' => __( 'OG image template for WooCommerce products.', 'ogdynamic' ),
+				'badge'       => __( 'WooCommerce', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for WooCommerce products.', 'ogdynamic' ),
 			);
 		}
 
@@ -336,37 +353,37 @@ class Template {
 			array(
 				'name'        => 'home',
 				'label'       => __( 'Homepage', 'ogdynamic' ),
-				'description' => __( 'OG image template for the site homepage.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for the site homepage.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'blog',
 				'label'       => __( 'Blog Page', 'ogdynamic' ),
-				'description' => __( 'OG image template for the blog listing page.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for the blog listing page.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'category',
 				'label'       => __( 'Category Archive', 'ogdynamic' ),
-				'description' => __( 'OG image template for category archive pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for category archive pages.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'tag',
 				'label'       => __( 'Tag Archive', 'ogdynamic' ),
-				'description' => __( 'OG image template for tag archive pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for tag archive pages.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'author',
 				'label'       => __( 'Author Archive', 'ogdynamic' ),
-				'description' => __( 'OG image template for author archive pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for author archive pages.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'date',
 				'label'       => __( 'Date Archive', 'ogdynamic' ),
-				'description' => __( 'OG image template for date-based archive pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for date-based archive pages.', 'ogdynamic' ),
 			),
 			array(
 				'name'        => 'search',
 				'label'       => __( 'Search Results', 'ogdynamic' ),
-				'description' => __( 'OG image template for search results pages.', 'ogdynamic' ),
+				'description' => __( 'Open Graph image template for search results pages.', 'ogdynamic' ),
 			),
 		);
 
@@ -407,11 +424,23 @@ class Template {
 	/**
 	 * Gets the mapping configuration for a post type.
 	 *
+	 * Mappings saved for the removed design feature (`type: design` or no
+	 * type) are pruned on read so they stop rendering and disappear from
+	 * the activated post types and the mapping UI.
+	 *
 	 * @param string $post_type The post type slug.
 	 * @return array The mapping configuration array.
 	 */
 	public static function get_mapping( string $post_type ): array {
-		return (array) get_option( self::option_name( $post_type ), array() );
+		$mapping = (array) get_option( self::option_name( $post_type ), array() );
+
+		if ( ! empty( $mapping ) && ( $mapping['type'] ?? '' ) !== 'canvas' ) {
+			delete_option( self::option_name( $post_type ) );
+
+			return array();
+		}
+
+		return $mapping;
 	}
 
 	/**

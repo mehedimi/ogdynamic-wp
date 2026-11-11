@@ -7,6 +7,7 @@
 
 namespace OGDynamic;
 
+use OGDynamic\Controllers\BlockController;
 use OGDynamic\Controllers\ConnectionController;
 use OGDynamic\Controllers\TemplatesController;
 
@@ -16,6 +17,7 @@ class RestController {
 	}
 
 	public static function register_routes(): void {
+		BlockController::init();
 		ConnectionController::init();
 		TemplatesController::init();
 	}

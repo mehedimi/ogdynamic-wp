@@ -89,6 +89,7 @@ rm -f vendor/composer/tmp-*.zip~
 echo "Creating ${PLUGIN_SLUG}.zip..."
 rm -f "${ZIP_FILE}"
 zip -qr "${ZIP_FILE}" \
+	blocks \
 	CHANGELOG.md \
 	composer.json \
 	dist \

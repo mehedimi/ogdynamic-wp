@@ -32,7 +32,7 @@ async function disconnect() {
       class="ogd:mt-2 ogd:mb-7 ogd:max-w-155 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
     >
       Connect this WordPress site to ogdynamic to fetch your canvases and
-      generate dynamic OG image URLs.
+      generate dynamic Open Graph image URLs.
     </p>
 
     <article
@@ -44,8 +44,8 @@ async function disconnect() {
             class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:px-2.5 ogd:py-1 ogd:font-display ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide"
             :class="
               isConnected
-                ? 'ogd:border-green-200 ogd:bg-green-50 ogd:text-green-600'
-                : 'ogd:border-amber-200 ogd:bg-amber-50 ogd:text-amber-600'
+                ? 'ogd:border-success/20 ogd:bg-success-soft ogd:text-success'
+                : 'ogd:border-warning/20 ogd:bg-warning-soft ogd:text-warning'
             "
           >
             {{ connectionStatus }}
@@ -67,7 +67,7 @@ async function disconnect() {
 
         <button
           v-if="isConnected"
-          class="ogd:inline-flex ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border ogd:border-rose-200 ogd:bg-white ogd:px-[18px] ogd:py-2.5 ogd:text-[13px] ogd:font-semibold ogd:text-rose-500 ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
+          class="ogd:inline-flex ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-full ogd:border ogd:border-destructive/40 ogd:bg-white ogd:px-[18px] ogd:py-2.5 ogd:text-[13px] ogd:font-semibold ogd:text-destructive ogd:transition ogd:hover:border-destructive ogd:hover:bg-destructive ogd:hover:text-white ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
           type="button"
           :disabled="connection.loading.value"
           @click="disconnect"
@@ -78,7 +78,7 @@ async function disconnect() {
 
       <button
         v-if="!isConnected"
-        class="ogd:mt-7 ogd:inline-flex ogd:w-full ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-2xl ogd:border ogd:border-transparent ogd:bg-gray-900 ogd:px-5 ogd:py-4 ogd:text-sm ogd:font-semibold ogd:text-white ogd:transition ogd:hover:bg-rose-500 ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
+        class="ogd:mt-7 ogd:inline-flex ogd:w-full ogd:cursor-pointer ogd:items-center ogd:justify-center ogd:gap-2 ogd:rounded-2xl ogd:border ogd:border-transparent ogd:bg-primary ogd:px-5 ogd:py-4 ogd:text-sm ogd:font-semibold ogd:text-white ogd:transition ogd:hover:bg-primary-hover ogd:disabled:cursor-not-allowed ogd:disabled:opacity-50"
         type="button"
         :disabled="connection.loading.value"
         @click="connect"
@@ -101,13 +101,13 @@ async function disconnect() {
 
       <div
         v-if="connection.error.value"
-        class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-rose-200 ogd:bg-rose-50 ogd:px-3.5 ogd:py-3 ogd:text-rose-700"
+        class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-destructive/25 ogd:bg-destructive/5 ogd:px-3.5 ogd:py-3 ogd:text-destructive"
       >
         {{ connection.error.value }}
       </div>
       <div
         v-if="success"
-        class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-green-200 ogd:bg-green-50 ogd:px-3.5 ogd:py-3 ogd:text-green-800"
+        class="ogd:mt-4 ogd:rounded-[14px] ogd:border ogd:border-success/25 ogd:bg-success-soft ogd:px-3.5 ogd:py-3 ogd:text-success-text"
       >
         {{ success }}
       </div>
@@ -125,7 +125,7 @@ async function disconnect() {
       <p
         class="ogd:mt-2 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
       >
-        Once connected, you can create and manage dynamic OG image templates for your store and content.
+        Once connected, you can create and manage dynamic Open Graph image templates for your store and content.
       </p>
 
       <div
@@ -135,7 +135,7 @@ async function disconnect() {
           class="ogd:rounded-[14px] ogd:border ogd:border-gray-200 ogd:bg-white ogd:p-5"
         >
           <div
-            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-rose-50 ogd:text-rose-600"
+            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-sky-500/10 ogd:text-sky-600"
           >
             <svg
               class="ogd:size-5"
@@ -167,7 +167,7 @@ async function disconnect() {
           class="ogd:rounded-[14px] ogd:border ogd:border-gray-200 ogd:bg-white ogd:p-5"
         >
           <div
-            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-rose-50 ogd:text-rose-600"
+            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-violet-500/10 ogd:text-violet-600"
           >
             <svg
               class="ogd:size-5"
@@ -190,7 +190,7 @@ async function disconnect() {
           <p
             class="ogd:mt-2 ogd:text-[13px] ogd:leading-relaxed ogd:text-gray-500"
           >
-            Generate dynamic OG images for blog posts with title, author, and metadata.
+            Generate dynamic Open Graph images for blog posts with title, author, and metadata.
           </p>
         </div>
 
@@ -198,7 +198,7 @@ async function disconnect() {
           class="ogd:rounded-[14px] ogd:border ogd:border-gray-200 ogd:bg-white ogd:p-5"
         >
           <div
-            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-rose-50 ogd:text-rose-600"
+            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-amber-500/10 ogd:text-amber-600"
           >
             <svg
               class="ogd:size-5"
@@ -231,7 +231,7 @@ async function disconnect() {
           class="ogd:rounded-[14px] ogd:border ogd:border-gray-200 ogd:bg-white ogd:p-5"
         >
           <div
-            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-rose-50 ogd:text-rose-600"
+            class="ogd:mb-3 ogd:flex ogd:h-10 ogd:w-10 ogd:items-center ogd:justify-center ogd:rounded-lg ogd:bg-emerald-500/10 ogd:text-emerald-600"
           >
             <svg
               class="ogd:size-5"

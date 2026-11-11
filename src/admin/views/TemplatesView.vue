@@ -4,6 +4,18 @@ import { RouterLink } from "vue-router";
 import { useOgdApi } from "../composables/useOgdApi";
 import type { PostTypeOption } from "../types";
 
+import defaultIcon from "../assets/icons/default.svg?raw";
+import postIcon from "../assets/icons/post.svg?raw";
+import pageIcon from "../assets/icons/page.svg?raw";
+import productIcon from "../assets/icons/product.svg?raw";
+import homeIcon from "../assets/icons/home.svg?raw";
+import blogIcon from "../assets/icons/blog.svg?raw";
+import categoryIcon from "../assets/icons/category.svg?raw";
+import tagIcon from "../assets/icons/tag.svg?raw";
+import authorIcon from "../assets/icons/author.svg?raw";
+import dateIcon from "../assets/icons/date.svg?raw";
+import searchIcon from "../assets/icons/search.svg?raw";
+
 type TemplatesResponse = {
   data: PostTypeOption[];
   templates: string[];
@@ -15,6 +27,36 @@ const postTypes = ref<PostTypeOption[]>([]);
 const isLoading = ref(true);
 const activatedPostTypes = computed(() => new Set(activatedTemplates.value));
 const isLoadingState = computed(() => wordpressApi.loading.value || isLoading.value);
+
+// Decorative soft-chip accents (mirrors the app's tone badges); primary
+// stays reserved for actions and selection. Each post type maps to a
+// Lucide-style SVG icon (stroke, 24x24) instead of a text badge.
+const NOT_ACTIVATED_TONE = "ogd:text-gray-400";
+const ACTIVATED_TONE = "ogd:text-primary";
+
+// Each post type renders its SVG file from assets/icons/ (Vite handles
+// loading at build time) instead of a text badge.
+const POST_TYPE_ICONS: Record<string, string> = {
+  default: defaultIcon,
+  post: postIcon,
+  page: pageIcon,
+  product: productIcon,
+  home: homeIcon,
+  blog: blogIcon,
+  category: categoryIcon,
+  tag: tagIcon,
+  author: authorIcon,
+  date: dateIcon,
+  search: searchIcon,
+};
+
+function postTypeTone(postType: string): string {
+  return isActivated(postType) ? ACTIVATED_TONE : NOT_ACTIVATED_TONE;
+}
+
+function postTypeIcon(postType: string): string {
+  return POST_TYPE_ICONS[postType] ?? POST_TYPE_ICONS.default;
+}
 
 function isActivated(postType: string): boolean {
   return activatedPostTypes.value.has(postType);
@@ -44,13 +86,13 @@ onMounted(loadData);
     <h1
       class="ogd:m-0 ogd:font-display ogd:text-3xl ogd:font-bold ogd:tracking-[-0.03em] ogd:text-gray-900"
     >
-      Templates
+      Open Graph Templates
     </h1>
     <p
       class="ogd:mt-2 ogd:mb-7 ogd:max-w-155 ogd:text-[15px] ogd:leading-relaxed ogd:text-gray-500"
     >
-      Choose a post type to configure the OG image template WordPress should use
-      when generating social share images.
+      Choose a post type to configure the Open Graph image template WordPress
+      should use when generating social share images.
     </p>
 
     <div
@@ -90,22 +132,26 @@ onMounted(loadData);
        class="ogd:grid ogd:grid-cols-3 ogd:gap-4.5 max-[1100px]:ogd:grid-cols-2 max-[720px]:ogd:grid-cols-1"
      >
        <RouterLink
-         v-for="postType in postTypes"
+         v-for="(postType, index) in postTypes"
         :key="postType.name"
         :to="`/templates/${postType.name}`"
-        class="ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6 ogd:no-underline ogd:transition-all! ogd:hover:border-rose-100 ogd:hover:shadow-[0_18px_48px_rgba(17,24,39,0.08)]"
+        :class="[
+          'ogd:rounded-[20px] ogd:border ogd:border-gray-100 ogd:bg-white ogd:p-6 ogd:no-underline ogd:transition-all! ogd:hover:border-primary/30 ogd:hover:shadow-[0_18px_48px_rgba(17,24,39,0.08)]',
+          !isActivated(postType.name) ? 'ogd:opacity-60 ogd:hover:opacity-100' : '',
+        ]"
       >
         <div class="ogd:flex ogd:items-start ogd:justify-between ogd:gap-3">
           <span
-            class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:border ogd:border-rose-100 ogd:bg-rose-50 ogd:px-2.5 ogd:py-1 ogd:font-display ogd:text-[11px] ogd:font-bold ogd:uppercase ogd:tracking-wide ogd:text-rose-500"
-          >
-            {{ postType.name }}
-          </span>
+            class="ogd:inline-flex ogd:size-9 ogd:items-center ogd:justify-center [&>svg]:ogd:h-8 [&>svg]:ogd:w-auto [&>svg]:ogd:max-w-9 [&>svg]:ogd:shrink-0"
+            :class="postTypeTone(postType.name)"
+            aria-hidden="true"
+            v-html="postTypeIcon(postType.name)"
+          />
           <span
             class="ogd:inline-flex ogd:items-center ogd:rounded-full ogd:px-2.5 ogd:py-1 ogd:text-[11px] ogd:font-semibold ogd:tracking-wide"
             :class="
               isActivated(postType.name)
-                ? 'ogd:border ogd:border-emerald-200 ogd:bg-emerald-50 ogd:text-emerald-700'
+                ? 'ogd:border ogd:border-success/20 ogd:bg-success-soft ogd:text-success'
                 : 'ogd:border ogd:border-gray-200 ogd:bg-gray-50 ogd:text-gray-500'
             "
           >

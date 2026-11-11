@@ -7,6 +7,7 @@
 
 namespace OGDynamic\Controllers;
 
+use OGDynamic\ImageGenerator;
 use OGDynamic\Template;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -71,6 +72,20 @@ class TemplatesController {
 							'required'          => true,
 							'validate_callback' => array( self::class, 'validate_map' ),
 							'sanitize_callback' => array( self::class, 'sanitize_map' ),
+						),
+						'width'       => array(
+							'required' => false,
+							'type'     => 'integer',
+							'default'  => ImageGenerator::OG_IMAGE_WIDTH,
+							'minimum'  => 1,
+							'maximum'  => 10000,
+						),
+						'height'      => array(
+							'required' => false,
+							'type'     => 'integer',
+							'default'  => ImageGenerator::OG_IMAGE_HEIGHT,
+							'minimum'  => 1,
+							'maximum'  => 10000,
 						),
 						'post_type'   => array(
 							'required'          => true,
@@ -147,15 +162,22 @@ class TemplatesController {
 		$template_id = (string) $request->get_param( 'template_id' );
 		$type        = (string) $request->get_param( 'type' );
 		$map         = $request->get_param( 'map' );
+		$width       = (int) $request->get_param( 'width' );
+		$height      = (int) $request->get_param( 'height' );
 
 		if ( '' === $type ) {
-			$type = 'design';
+			$type = 'canvas';
 		}
 
 		$value = array(
 			'template_id' => $template_id,
 			'type'        => $type,
 			'map'         => is_array( $map ) ? $map : array(),
+			// Canvas dimensions drive og:image:width/height and gate the
+			// twitter image link; absent values fall back to the standard
+			// OG size server-side.
+			'width'       => $width,
+			'height'      => $height,
 		);
 
 		Template::update_mapping( $post_type, $value );
@@ -198,11 +220,13 @@ class TemplatesController {
 	/**
 	 * Validates template type.
 	 *
+	 * Only canvases are accepted; the design feature has been removed.
+	 *
 	 * @param mixed $value The template type to validate.
 	 * @return bool True if valid, false otherwise.
 	 */
 	public static function validate_template_type( $value ): bool {
-		return in_array( $value, array( 'design', 'canvas' ), true );
+		return 'canvas' === $value;
 	}
 
 	/**

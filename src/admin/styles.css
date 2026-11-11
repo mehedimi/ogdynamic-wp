@@ -5,22 +5,32 @@
   --font-display: "Outfit", sans-serif;
   --font-body: "DM Sans", sans-serif;
 
-  /* Rose scale */
-  --color-rose-50: #fff1f2;
-  --color-rose-100: #ffe4e6;
-  --color-rose-200: #fecdd3;
-  --color-rose-300: #fda4af;
-  --color-rose-400: #fb7185;
-  --color-rose-500: #f43f5e;
+  /* Brand primary — mirrors the ogdynamic app design system v2.1 */
+  --color-primary: #635bff;
+  --color-primary-hover: #5750e0;
+  --color-primary-soft: #eeeefe;
 
-  /* Gray scale */
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-900: #111827;
+  /* Semantic status colors */
+  --color-success: #2e9e6b;
+  --color-success-text: #1f7a4e;
+  --color-success-soft: #e7f5ee;
+
+  --color-warning: #e8590c;
+  --color-warning-text: #c2410c;
+  --color-warning-soft: #fdeee3;
+
+  --color-destructive: #e5484d;
+
+  /* Gray scale (Tailwind slate — the brand's cool-neutral ramp) */
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+  --color-gray-950: #020617;
 }

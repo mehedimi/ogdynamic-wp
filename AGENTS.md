@@ -9,7 +9,8 @@
 - **PHP linting**: `composer lint:php`
 - **PHP fix**: `composer fix:php`
 - **Frontend dev mode**: `pnpm dev` (runs on `http://127.0.0.1:5173`)
-- **Frontend build**: `pnpm build`
+- **Frontend build**: `pnpm build` (admin app + block editor bundle; block only: `pnpm build:block`, watch: `pnpm dev:block`)
+- **Type check**: `pnpm typecheck`
 
 ### Development Flags
 
@@ -34,20 +35,21 @@
 | `ImageGenerator` | `includes/ImageGenerator.php` | Dynamic image URL construction |
 | `MetaTags` | `includes/MetaTags.php` | Output OG/Twitter meta tags |
 | `Admin` | `includes/Admin.php` | Admin page & asset loading |
+| `Block` | `includes/Block.php` | Registers/renders the `ogdynamic/canvas-image` block |
+| `BlockController` | `includes/Controllers/BlockController.php` | Block REST endpoints (canvas proxy, generate & save) |
 
 ### Data Flow
 
 1. Admin sets template mappings per post type (stored as options)
-2. On frontend: `MetaTags` → `ImageGenerator` → `Template::get_mapping()`
+2. On frontend: `MetaTags` → `ImageGenerator` → `Template::get_mapping()`. Mappings store the canvas' `width`/`height`; meta tags use the stored dims (null → standard 1200×630) and the Twitter image link is only emitted for Twitter-compatible sizes: 1200×630 renders the `intent=twitter` variant, 1200×600 (Twitter's recommended 2:1) reuses the `og:image` URL as-is, other sizes send just the `og:image` link
 3. `ImageGenerator` resolves field values from post/term objects
-4. Constructs URL by mapping `type`: canvas → `https://cdn.ogdynamic.com/c/{template_id}?{resolved_params}`, design → `https://cdn.ogdynamic.com/d/{template_id}?{resolved_params}`
+4. Constructs URL `https://cdn.ogdynamic.com/c/{template_id}?{resolved_params}`; mappings store the canvas' `width`/`height` and only `type: canvas` mappings render — stored `type: design` mappings are pruned on read and the post type is treated as unmapped
 
 ### Template Sources (SaaS)
 
-Templates come from the ogdynamic SaaS in two flavors; the mapping option stores which one (`type: 'canvas' | 'design'`, absent = design for backward compatibility):
+Templates are ogdynamic **canvases** (the design feature has been removed from the plugin):
 
-- **Canvas** (primary): user-designed in the SaaS canvas editor. List/detail via `GET v1/canvases`, `GET v1/canvases/{id}` (scope `canvases:read`). The index supports filters: `status` (lowercase enum, e.g. `public`), `width`/`height` (exact-match integers, 1–10000). The mapping page fetches `v1/canvases?status=public&width=1200&height=630` — only public OG-size canvases are selectable. Overridable fields come from `override_fields[]` — `{field, name, type, default}` where `field` is the layer's `fieldId` (the query-param name) and image-type layers take a URL value. Only **public** canvases render OG images; the mapping page warns when a saved mapping points to a private or non-1200×630 canvas (such canvases fall out of the filtered list but still load by id).
-- **Design** (deprecated, to be removed): list/detail via `GET v1/designs`, `GET v1/designs/{id}?include=template` (scope `designs:read`). Fields come from `template.schema[].fields[]` with `allowOverride`. The selector lists designs under a deprecated group (only when the account owns any) and shows a deprecation notice while one is selected.
+- **Canvas**: user-designed in the SaaS canvas editor. List/detail via `GET v1/canvases`, `GET v1/canvases/{id}` (scope `canvases:read`). The index supports filters: `status` (lowercase enum, e.g. `public`), `width`/`height` (exact-match integers, 1–10000), and returns a **Laravel cursor pagination** response (`data[]` + `next_cursor`; page via `&cursor=…`). Both canvas pickers fetch `v1/canvases?status=public` page one and infinite-scroll (load the next page when the dropdown list is scrolled near its end or too short to scroll) — all public canvases are selectable, regardless of size. The block editor picker is a `ComboboxControl` wrapper (`CanvasCombobox` in `src/block/Edit.tsx`) whose shared paged store lives in `src/block/api.ts`; scroll position is re-anchored across page appends because ComboboxControl auto-selects the first suggestion when the list changes. Overridable fields come from `override_fields[]` — `{field, name, type, default}` where `field` is the layer's `fieldId` (the query-param name) and image-type layers take a URL value. Only **public** canvases render OG images; the mapping page warns when a saved mapping points to a private or non-1200×630 canvas (such canvases still load by id).
 
 ### API Endpoints
 
@@ -56,8 +58,20 @@ Templates come from the ogdynamic SaaS in two flavors; the mapping option stores
 - `DELETE /ogdynamic/v1/connection` - Disconnect
 - `GET /ogdynamic/v1/templates` - List available templates
 - `GET /ogdynamic/v1/templates/{post_type}` - Get template for post type
-- `PUT /ogdynamic/v1/templates/{post_type}` - Update template mapping (optional `type`: `design`|`canvas`, default `design`)
+- `PUT /ogdynamic/v1/templates/{post_type}` - Update template mapping (optional `type`: `canvas` only, default `canvas`; optional `width`/`height` ints, default 1200/630, the canvas' dimensions)
 - `DELETE /ogdynamic/v1/templates/{post_type}` - Remove template mapping
+- `GET /ogdynamic/v1/block/canvases` - Public canvases for the block (`edit_posts`); accepts optional `cursor` and returns `data[]` + `next_cursor` (null when exhausted)
+- `GET /ogdynamic/v1/block/canvases/{id}` - Canvas incl. `override_fields` for the block (`edit_posts`)
+- `POST /ogdynamic/v1/block/generate` - `canvas_id`, `params` (flat string map), optional `post_id`, `alt`, `format` (`png`|`webp`|`jpeg`, default `png`); saves the rendered image to the media library (`edit_posts` + `upload_files`)
+
+### Canvas Image Block
+
+`ogdynamic/canvas-image` (`blocks/canvas-image/block.json`, TypeScript/React source in `src/block/`, built by `vite.block.config.ts` into `dist/block/ogdynamic-block.{js,css}` as a classic IIFE script — `@wordpress/*` packages are externals mapped to `wp.*` globals, JSX uses the `createElement` pragma, script deps are declared in `Block::register_block()`).
+
+- Editor: the inspector lists public canvases and the selected canvas' `override_fields`; typed values stay in local state and are only committed to the `params` attribute on blur, which is what changes the live preview `<img>` URL (`cdn/c/{id}?{params}`). A Format dropdown (PNG, WebP, JPEG) appends `config[format]=FORMAT` to the preview and render URLs for non-PNG choices. **Generate** posts to `POST /block/generate`.
+- Attributes JSON stores `canvasId`, `canvasName`, `params`, `width`, `height`, `format`, `alt`, `attachmentId`, `imageUrl`, `savedQuery`, `savedAt`. `savedQuery` is compared with the current params to show "Unsaved changes" and disable the button when nothing changed.
+- Server: `BlockController` proxies `v1/canvases` with the stored OAuth token (editors never get the token; permission `edit_posts`, generate also needs `upload_files`). Generate sideloads the CDN image via `download_url()` + `media_handle_sideload()`, tags the attachment with `_ogdynamic_hash` / `_ogdynamic_canvas_id` / `_ogdynamic_params` / `_ogdynamic_source_url`, and reuses an existing attachment with the same hash (md5 of canvas id + canvas `updated_at` revision + sorted flat query) instead of downloading again; a non-PNG `format` appends `config[format]=FORMAT` to the render URL and hash. Only public canvases are accepted.
+- Frontend: `Block::render()` (dynamic block, `save` returns null) outputs `<figure>` + `wp_get_attachment_image()` of `attachmentId` (falls back to `imageUrl`); nothing is output until an image has been saved.
 
 ### Template Fields
 
@@ -66,7 +80,7 @@ Supported sources by post type (see `Template::get_sources()`):
 - **Posts/Pages**: `post_title`, `excerpt`, `trimmed_content`, `featured_image`, `author_name`, `published_date`, `modified_date`, `category`, `tags`
 - **Products**: All post fields + `product_short_description`, `product_price`, `regular_price`, `sale_price`, `sku`, `product_category`, `product_tags`, `product_attributes`, `stock_status`, `rating`, `review_count`
 
-**ACF**: When Advanced Custom Fields is active, fields from field groups whose location rules target the post type are appended as mappable sources — key `acf_{acf_field_key}`, label `"{Group title}: {Field label}"` (see `Template::get_acf_sources()`). At render time (`ImageGenerator::acf_field_value()`): image/file/gallery fields resolve to an attachment URL in any return format (galleries use the first image), link fields to their URL, multi-value fields join scalar members, post titles, and term names with `, `, and everything else is cast to a tag-free string. Repeater/flexible-content/group fields are excluded (no single scalar value). Sources vanish gracefully (value `''`) if ACF is deactivated after mappings are saved.
+**ACF**: When Advanced Custom Fields is active, fields from field groups whose location rules target the post type are appended as mappable sources — key `acf_{acf_field_key}`, label `{Field label}`, `group` set to the field group title, and an `ACF` badge; the source dropdown groups core sources under "WordPress" and ACF ones under each field group title (see `Template::get_acf_sources()`). At render time (`ImageGenerator::acf_field_value()`): image/file/gallery fields resolve to an attachment URL in any return format (galleries use the first image), link fields to their URL, multi-value fields join scalar members, post titles, and term names with `, `, and everything else is cast to a tag-free string. Repeater/flexible-content/group fields are excluded (no single scalar value). Sources vanish gracefully (value `''`) if ACF is deactivated after mappings are saved.
 
 ## Conventions
 
@@ -101,11 +115,11 @@ Supported sources by post type (see `Template::get_sources()`):
 1. **Composer required**: Plugin checks for `vendor/autoload.php` and shows admin notice if missing
 2. **SEO plugin conflicts**: `MetaTags` hooks into Rank Math, Yoast, AIOSEO, SEOPress, The SEO Framework, Squirrly, and Slim SEO to avoid duplicate meta output
 3. **OAuth callback**: Handled via `ogdynamic-oauth-callback` admin page (no menu)
-4. **Template ID format**: 26-char ULID string (regex: `/^[0-9A-HJKMNP-TV-Z]{26}$/i`) — same format for canvases and designs
+4. **Template ID format**: 26-char ULID string (regex: `/^[0-9A-HJKMNP-TV-Z]{26}$/i`)
 5. **Transient keys**: All prefixed with `ogdy_` (via `Settings::option_name()`)
 6. **Dev mode bypasses build**: Loads `main.ts` directly via Vite client, no manifest needed
 7. **OAuth scope includes `canvases:read`**: tokens issued before this scope was added lack canvas access — sites must disconnect/reconnect; the template editor shows a reconnect notice when the canvas list fails
-8. **Canvas query params are flat strings**: the render service ignores array-style params (`tags[]=`), unlike designs. Multi-value sources (`tags`, `product_tags`, `product_attributes`) are flagged `multi` in `Template::get_sources()` and excluded from canvas mappings in the mapping UI (dropdown, auto-map, and saved-entry pruning in `syncFieldMap()`). The twitter image variant uses flat `intent=twitter` for canvases; designs use `config[intent]=twitter`
+8. **Canvas query params are flat strings**: the render service ignores array-style params (`tags[]=`). Multi-value sources (`tags`, `product_tags`, `product_attributes`) are flagged `multi` in `Template::get_sources()` and excluded from mappings in the mapping UI (dropdown, auto-map, and saved-entry pruning in `syncFieldMap()`). The twitter image variant uses flat `intent=twitter`
 
 ## Testing
 
@@ -121,8 +135,8 @@ No test suite configured. Manual testing required:
 
 ## External Services
 
-- **API**: `https://ogdynamic.com/api` (`v1/canvases`, `v1/designs`, `v1/me`)
-- **CDN**: `https://cdn.ogdynamic.com/` (`c/{canvas_id}` for canvases, `d/{design_id}` for designs)
+- **API**: `https://ogdynamic.com/api` (`v1/canvases`, `v1/me`)
+- **CDN**: `https://cdn.ogdynamic.com/` (`c/{canvas_id}`)
 - **SaaS editor**: `https://ogdynamic.com/canvases/create`, `/canvases/{id}/edit`
 - **OAuth endpoint**: `/oauth/token`, `/oauth/authorize`
 - **Redirect URI**: `admin.php?page=ogdynamic-oauth-callback`

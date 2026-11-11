@@ -1,118 +1,3 @@
-export type OGDColor = [number, number, number, number];
-export type OGDSpacing = [number, number, number, number];
-
-export type OGDDesignSpecItem = {
-  label: string;
-  value: string;
-};
-
-export type OGDDesignContentValue = string | OGDDesignSpecItem[];
-
-export type OGDDesignContent = Record<
-  string,
-  OGDDesignContentValue | undefined
->;
-
-export type OGDDesignTextStyle = {
-  font?: string;
-  size?: number;
-  color?: OGDColor;
-  weight?: number;
-  italic?: boolean;
-  letterSpacing?: number;
-  lineHeight?: number;
-  display?: string;
-  margin?: OGDSpacing;
-  padding?: OGDSpacing;
-  borderColor?: OGDColor;
-  borderWidth?: number;
-  borderRadius?: number;
-  bgColor?: OGDColor;
-  objectFit?: string;
-  width?: number;
-  height?: number;
-};
-
-export type OGDDesignSpecStyle = {
-  item?: OGDDesignTextStyle;
-  label?: OGDDesignTextStyle;
-  value?: OGDDesignTextStyle;
-};
-
-export type OGDDesignStyle = {
-  bgColor?: OGDColor;
-  accentColor?: OGDColor;
-  title?: OGDDesignTextStyle;
-  description?: OGDDesignTextStyle;
-  category?: OGDDesignTextStyle;
-  readTime?: OGDDesignTextStyle;
-  cta?: OGDDesignTextStyle;
-  price?: OGDDesignTextStyle;
-  priceLabel?: OGDDesignTextStyle;
-  storeName?: OGDDesignTextStyle;
-  logoUrl?: OGDDesignTextStyle;
-  productImageUrl?: OGDDesignTextStyle;
-  specs?: OGDDesignSpecStyle;
-  [key: string]: OGDColor | OGDDesignTextStyle | OGDDesignSpecStyle | undefined;
-};
-
-export type OGDDesignSchemaField = {
-  key: string;
-  type: string;
-  label: string;
-  rules: string[];
-  allowOverride: boolean;
-};
-
-export type OGDDesignSchemaGroup = {
-  label: string;
-  fields: OGDDesignSchemaField[];
-};
-
-export type OGDDesignTemplate = {
-  id: string;
-  ident_name: string;
-  name: string;
-  description: string;
-  category: string;
-  schema: OGDDesignSchemaGroup[];
-  content: OGDDesignContent;
-  style: OGDDesignStyle;
-  created_at: string;
-  updated_at: string;
-};
-
-export type OGDDesignListItem = {
-  id: string;
-  user_id: number;
-  ident_name: string;
-  name: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-};
-
-export type OGDDesignConfig = {
-  format: string;
-};
-
-export type OGDDesignDetail = {
-  id: string;
-  user_id: number;
-  ident_name: string;
-  name: string;
-  title?: string;
-  content: OGDDesignContent;
-  style: OGDDesignStyle;
-  config: OGDDesignConfig;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  template: OGDDesignTemplate;
-};
-
-export type OGDDesign = OGDDesignDetail;
-
 export type OGDCanvasOverrideField = {
   field: string;
   name: string;
@@ -142,6 +27,8 @@ export type PostTypeOption = {
   name: string;
   label: string;
   description?: string;
+  /** Pill shown on the template list card (e.g. "WooCommerce"). */
+  badge?: string;
 };
 
 export type RuntimeConfig = {
@@ -154,6 +41,14 @@ export type RuntimeConfig = {
 
 export type ApiData<T> = {
   data: T;
+};
+
+/** Laravel cursor pagination response from the cloud API. */
+export type CursorPage<T> = {
+  data: T[];
+  next_cursor?: string | null;
+  /** API resources wrap the paginator, nesting the cursor inside `meta`. */
+  meta?: { next_cursor?: string | null };
 };
 
 export interface User {
