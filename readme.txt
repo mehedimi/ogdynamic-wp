@@ -4,7 +4,7 @@ Tags: open graph, og image, og image generator, social media images, social shar
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -165,11 +165,16 @@ Yes. The ogdynamic Canvas Image block works with any public canvas in your accou
 
 == Changelog ==
 
-= Unreleased =
+= 0.3.0 =
 * New "ogdynamic Canvas Image" block: pick a public canvas in the editor, fill in its dynamic fields with a live preview, and save the generated image straight to the media library in PNG, WebP or JPEG format
 * The Canvas Image block accepts canvases of any size — ad banners, product photo cards, social graphics — not just 1200x630 OG images
 * Design templates removed: the selector lists canvases only and saved design mappings stop rendering (they are removed on first load) — pick a canvas for the affected post type to generate OG images again
 * Admin interface refreshed with the new ogdynamic branding and color scheme
+* The canvas selector lists all public canvases of any size, shows canvas dimensions, and marks 1200x630 canvases as Recommended
+* Mappings remember the canvas size: Twitter card tags are added for Twitter-friendly sizes (1200x630 and 1200x600), other sizes output og:image only
+* ACF fields are grouped by field group with an ACF label in the mapping dropdown
+* Long canvas lists load page by page while you scroll, so accounts with many canvases stay fast
+* Reliability fixes: a stale connection recovers automatically instead of disconnecting, the Twitter image now appears under AIOSEO too, format changes in the block are detected as unsaved changes, and leftover transients are cleaned up on uninstall
 
 = 0.2.0 =
 * Canvas templates: design OG image templates in the ogdynamic canvas editor and map them to your content types (existing design mappings keep working but designs are deprecated)
@@ -189,7 +194,7 @@ Yes. The ogdynamic Canvas Image block works with any public canvas in your accou
 
 == Upgrade Notice ==
 
-= Unreleased =
+= 0.3.0 =
 Design templates are gone. Saved design mappings stop rendering and are removed — map a canvas to the affected content type to generate Open Graph images again.
 
 = 0.2.0 =

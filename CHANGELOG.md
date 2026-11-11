@@ -5,16 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-11-11
 
 ### Added
 - Gutenberg block `ogdynamic/canvas-image`: pick any public canvas, fill its dynamic fields in the inspector (the live preview only re-renders when a field loses focus) and use **Generate** to download the rendered image into the media library; the canvas id, field values and attachment id are stored in the block's attributes JSON and the frontend renders the saved media image
 - REST endpoints for the block (`GET /block/canvases`, `GET /block/canvases/{id}`, `POST /block/generate`), available to users who can edit posts; the generate endpoint reuses an existing upload for the same canvas and fields instead of downloading again
 - The block editor script is written in TypeScript and built with `pnpm build` into `dist/block` (`vite.block.config.ts`)
 - Image format selection in the block inspector: PNG (default), WebP or JPEG; non-PNG formats request the render with `config[format]=FORMAT`
+- Canvas selectors list all public canvases regardless of size, showing each canvas' dimensions with a Recommended badge on 1200x630
+- Canvas mappings store the canvas' `width`/`height`; Twitter card meta is only emitted for Twitter-compatible sizes — 1200x630 renders the `intent=twitter` variant, 1200x600 reuses the `og:image` URL as `twitter:image`, other sizes output `og:image` only
+- ACF sources are grouped under their field group titles with an `ACF` badge in the field mapping dropdown
+- Cursor pagination for canvas lists: the admin mapping selector and the block editor picker lazy-load pages (`next_cursor`) while scrolling, so accounts with many canvases stay responsive
 
 ### Changed
 - Admin UI re-skinned to the ogdynamic app design system v2.1: purple `#635BFF` primary, slate neutrals, semantic success/warning/destructive tokens, new logo and WordPress menu icon
+- Templates admin page renamed to "Open Graph Templates", with per-post-type SVG icons in the overview
+
+### Fixed
+- A stale OAuth token no longer disconnects the site: the connection recovers on a 401 and `GET /connection` returns the refreshed access token without a page reload
+- An admin notice is shown when the production build is missing
+- The admin menu icon renders as a CSS mask so it follows the admin menu colors
+- `ogdy_*` transients are deleted during uninstall
+- The Twitter image is also emitted through AIOSEO's dedicated Twitter tags filter
+- The block's "Unsaved changes" detection compares the format-augmented query, so switching formats (PNG/WebP/JPEG) is detected correctly
 
 ### Removed
 - Deprecated design templates: the selector no longer lists designs, the plugin no longer calls `v1/designs` or requests the `designs:read` OAuth scope, and `PUT /templates/{post_type}` accepts `type: canvas` only
