@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-11-11
+
+### Added
+- "Convert to Image block" transform on the Canvas Image block: once an image is saved to the media library, the block can be handed off to `core/image` with one click for the full WordPress image toolset (sizing, aspect-ratio crop, focal point, caption, link, lightbox)
+- Refreshed plugin screenshots (wp.org `assets/`) covering the redesigned admin UI, the Canvas Image block, and a saved banner rendered on the frontend
+
+### Changed
+- Plugin tagline and description now cover the full feature set — Open Graph and social media image generation plus any-size canvas images (ad banners, product photo cards, social graphics)
+
+### Fixed
+- The OAuth callback no longer fails with "Cannot modify header information - headers already sent": the token exchange and redirect now run on the admin `load-*` action before any output instead of inside the page render callback
+- Canvas images rendered on the frontend by the Canvas Image block can no longer overflow their container: the `<img>` element gets inline `max-width:100%` and `height:auto`
+
 ## [0.3.0] - 2026-11-11
 
 ### Added

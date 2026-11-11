@@ -88,21 +88,33 @@ rm -f vendor/composer/tmp-*.zip~
 
 echo "Creating ${PLUGIN_SLUG}.zip..."
 rm -f "${ZIP_FILE}"
-zip -qr "${ZIP_FILE}" \
-	blocks \
-	CHANGELOG.md \
-	composer.json \
-	dist \
-	includes \
-	languages \
-	ogdynamic.php \
-	readme.txt \
-	uninstall.php \
-	vendor \
-	-x '*/.DS_Store' \
-	-x '*/.gitkeep' \
-	-x '*/Thumbs.db' \
-	-x 'vendor/bin/*' \
-	-x 'vendor/squizlabs/php_codesniffer/*'
+
+# WordPress' plugin uploader expects the archive to contain a single
+# ${PLUGIN_SLUG}/ directory holding the plugin files. Stage the include list
+# under that prefix via a symlink (no copy needed) and zip from there, so the
+# archive layout is correct regardless of the repository's local folder name.
+STAGING_DIR="$(mktemp -d)"
+trap 'rm -rf "${STAGING_DIR}"' EXIT
+ln -s "${ROOT_DIR}" "${STAGING_DIR}/${PLUGIN_SLUG}"
+
+(
+	cd "${STAGING_DIR}"
+	zip -qr "${ZIP_FILE}" \
+		"${PLUGIN_SLUG}/blocks" \
+		"${PLUGIN_SLUG}/CHANGELOG.md" \
+		"${PLUGIN_SLUG}/composer.json" \
+		"${PLUGIN_SLUG}/dist" \
+		"${PLUGIN_SLUG}/includes" \
+		"${PLUGIN_SLUG}/languages" \
+		"${PLUGIN_SLUG}/ogdynamic.php" \
+		"${PLUGIN_SLUG}/readme.txt" \
+		"${PLUGIN_SLUG}/uninstall.php" \
+		"${PLUGIN_SLUG}/vendor" \
+		-x '*/.DS_Store' \
+		-x '*/.gitkeep' \
+		-x '*/Thumbs.db' \
+		-x "${PLUGIN_SLUG}/vendor/bin/*" \
+		-x "${PLUGIN_SLUG}/vendor/squizlabs/php_codesniffer/*"
+)
 
 echo "Created ${ZIP_FILE}"
