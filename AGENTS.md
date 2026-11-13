@@ -120,6 +120,7 @@ Supported sources by post type (see `Template::get_sources()`):
 6. **Dev mode bypasses build**: Loads `main.ts` directly via Vite client, no manifest needed
 7. **OAuth scope includes `canvases:read`**: tokens issued before this scope was added lack canvas access — sites must disconnect/reconnect; the template editor shows a reconnect notice when the canvas list fails
 8. **Canvas query params are flat strings**: the render service ignores array-style params (`tags[]=`). Multi-value sources (`tags`, `product_tags`, `product_attributes`) are flagged `multi` in `Template::get_sources()` and excluded from mappings in the mapping UI (dropdown, auto-map, and saved-entry pruning in `syncFieldMap()`). The twitter image variant uses flat `intent=twitter`
+9. **Render URL params decode HTML entities**: WordPress can store field values entity-encoded (`&#8211;` for an en dash — common with feed-imported posts), and `http_build_query()` URL-encodes them literally, so the canvas would render the entity text. `ImageGenerator::build_query()` decodes one entity pass (`html_entity_decode`, `ENT_QUOTES | ENT_HTML5`) on every resolved value before encoding; double-encoded entities survive as one layer
 
 ## Testing
 
