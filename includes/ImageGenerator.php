@@ -110,7 +110,7 @@ class ImageGenerator {
 			return $url;
 		}
 
-		return $url . '?' . http_build_query( self::$query );
+		return $url . '?' . self::build_query( self::$query );
 	}
 
 	public static function get_twitter_image_url(): string {
@@ -125,7 +125,7 @@ class ImageGenerator {
 		// config params are ignored by the render service.
 		$query['intent'] = 'twitter';
 
-		return self::get_template_url() . '?' . http_build_query( $query );
+		return self::get_template_url() . '?' . self::build_query( $query );
 	}
 
 	public static function get_attrs(): ?array {
@@ -834,5 +834,47 @@ class ImageGenerator {
 				return '' !== trim( (string) $value );
 			}
 		);
+	}
+
+	/**
+	 * Build the render service query string from resolved field values.
+	 *
+	 * WordPress can store field values with HTML entities (imported posts
+	 * often carry "&#8211;" instead of an en dash). The entities are
+	 * decoded before URL-encoding, otherwise the canvas renders the entity
+	 * strings as literal text.
+	 *
+	 * @param array $query Resolved field values keyed by attribute name.
+	 * @return string URL-encoded query string.
+	 */
+	private static function build_query( array $query ): string {
+		return http_build_query( self::decode_entities( $query ) );
+	}
+
+	/**
+	 * Decode HTML entities in a resolved field value.
+	 *
+	 * Decodes a single pass per value, so double-encoded entities stay
+	 * intact; strings without entities are returned unchanged. Arrays
+	 * (multi-value sources) are decoded recursively.
+	 *
+	 * @param string|array $value Resolved field value.
+	 * @return string|array Decoded value.
+	 */
+	private static function decode_entities( $value ) {
+		if ( is_array( $value ) ) {
+			return array_map( array( self::class, 'decode_entities' ), $value );
+		}
+
+		if ( ! is_string( $value ) ) {
+			return $value;
+		}
+
+		$charset = get_bloginfo( 'charset' );
+		if ( '' === $charset ) {
+			$charset = 'UTF-8';
+		}
+
+		return html_entity_decode( $value, ENT_QUOTES | ENT_HTML5, $charset );
 	}
 }
