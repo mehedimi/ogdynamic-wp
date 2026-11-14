@@ -4,7 +4,7 @@ Tags: open graph, og image, og image generator, social media images, social shar
 Requires at least: 6.3
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -167,6 +167,9 @@ Yes. The ogdynamic Canvas Image block works with any public canvas in your accou
 
 == Changelog ==
 
+= 0.5.0 =
+* Fix: generated OG images no longer render HTML entity codes as literal text (dashes and quotes showing up as number-and-semicolon codes). Titles and fields stored HTML-encoded — common with feed-imported posts — are decoded before the image is generated. Existing posts are fixed automatically after updating, no editing or re-import needed
+
 = 0.4.0 =
 * New: saved canvas images can be converted to the regular WordPress Image block with one click, unlocking the full image toolset (sizing, aspect-ratio crop, focal point, caption, link, lightbox)
 * Fix: completing the OAuth connection no longer ends in a "Cannot modify header information" warning — the callback now redirects back to the dashboard before any output is sent
@@ -201,6 +204,9 @@ Yes. The ogdynamic Canvas Image block works with any public canvas in your accou
 * Multisite support
 
 == Upgrade Notice ==
+
+= 0.5.0 =
+Fixes the HTML entity artifacts some generated OG images showed instead of real characters (mainly feed-imported posts). Updating fixes existing posts automatically — no re-import needed.
 
 = 0.4.0 =
 Saved canvas images can now be converted to the regular WordPress Image block for advanced sizing and captions. This release also fixes the header warning some hosts showed right after connecting via OAuth.
