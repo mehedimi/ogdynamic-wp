@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-11-14
+
+### Fixed
+- OG images no longer render HTML entities as literal text: field values stored HTML-encoded (e.g. `&#8211;` instead of an en dash, `&#8222;` instead of `„`) are decoded once before the render URL query is built, so canvases render the actual characters. Mainly affected feed-imported posts; applies to every mapped field on `og:image` and the Twitter variant, across all SEO plugin integrations
+
 ## [0.4.0] - 2026-11-11
 
 ### Added
